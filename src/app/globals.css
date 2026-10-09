@@ -1,0 +1,87 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --team-primary: #2563eb;
+  --team-secondary: #ffffff;
+}
+
+@theme inline {
+  --color-bg: #0a0b0d;
+  --color-surface: #13151a;
+  --color-surface-2: #1b1e25;
+  --color-surface-3: #242833;
+  --color-border: #2a2e37;
+  --color-text: #f4f5f7;
+  --color-muted: #9aa1ad;
+  --color-team: var(--team-primary);
+  --color-team-2: var(--team-secondary);
+  --color-win: #22c55e;
+  --color-loss: #ef4444;
+  --color-warning: #f59e0b;
+  --color-success: #22c55e;
+
+  --font-display: var(--font-rubik), system-ui, sans-serif;
+  --font-sans: var(--font-heebo), system-ui, sans-serif;
+
+  --radius-card: 0.875rem;
+  --shadow-glow: 0 0 0 1px color-mix(in oklab, var(--team-primary) 35%, transparent),
+    0 10px 40px -12px color-mix(in oklab, var(--team-primary) 55%, transparent);
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    min-height: 100dvh;
+  }
+  :focus-visible {
+    outline: 2px solid var(--team-primary);
+    outline-offset: 2px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@utility num {
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+@utility court-bg {
+  background-image:
+    radial-gradient(ellipse 80% 60% at 50% -10%, color-mix(in oklab, var(--team-primary) 28%, transparent), transparent 70%),
+    radial-gradient(circle at 50% 120%, transparent 38%, rgb(255 255 255 / 0.05) 38.3%, transparent 38.8%),
+    linear-gradient(180deg, #111318 0%, #0a0b0d 100%);
+}
+
+@utility card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+}
+
+@utility pb-safe {
+  padding-bottom: max(env(safe-area-inset-bottom), 0px);
+}
+
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
