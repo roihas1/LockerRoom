@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Team } from "@/types/domain";
-import { TeamLogo } from "@/components/common/team-logo";
+import { AppMark } from "@/components/common/team-logo";
 import { he } from "@/config/strings";
 import { AdminLink } from "./admin-link";
 import { DesktopNav } from "./desktop-nav";
@@ -11,7 +11,7 @@ export function SiteHeader({ team }: { team: Team }) {
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4 md:h-16">
         <Link href="/" className="flex min-w-0 items-center gap-2.5">
           <span data-easter-logo className="shrink-0 touch-manipulation select-none [-webkit-touch-callout:none]">
-            <TeamLogo team={team} className="size-9" priority />
+            <AppMark className="size-9" priority />
           </span>
           <span className="min-w-0 leading-tight">
             <span data-user-content className="block truncate font-display text-base font-extrabold">

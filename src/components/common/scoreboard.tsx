@@ -3,7 +3,7 @@ import { he } from "@/config/strings";
 import { gameResult } from "@/lib/stats/games";
 import { cn } from "@/lib/utils/cn";
 import type { Game, Team } from "@/types/domain";
-import { OpponentBadge, TeamLogo } from "./team-logo";
+import { AppMark, OpponentBadge } from "./team-logo";
 
 /** Our team is always on the start (right) side; scores sit next to each team name. */
 export function ScoreBoard({ game, team, size = "md" }: { game: Game; team: Team; size?: "md" | "lg" }) {
@@ -15,7 +15,7 @@ export function ScoreBoard({ game, team, size = "md" }: { game: Game; team: Team
   return (
     <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
       <div className="flex flex-col items-center gap-2 text-center">
-        <TeamLogo team={team} className={logoClass} />
+        <AppMark className={logoClass} />
         <span data-user-content className="font-display text-sm font-bold md:text-base">
           {team.name}
         </span>

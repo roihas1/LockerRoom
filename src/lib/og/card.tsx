@@ -2,8 +2,11 @@ import "server-only";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ImageResponse } from "next/og";
-import { APP_BACKGROUND, ballSvgDataUri, loadBrand } from "./brand";
+import { APP_BACKGROUND, loadBrand, markTileDataUri } from "./brand";
 import { stripEmoji, toVisualRtl, wrapLines } from "./bidi";
+import { loadImage } from "./image";
+
+export { loadImage };
 
 export const OG_SIZE = { width: 1200, height: 630 };
 
@@ -14,19 +17,6 @@ const fontsPromise = Promise.all([
 
 /** Visual-order Hebrew without emoji: the renderer only does left-to-right and has no emoji font. */
 const t = (text: string) => toVisualRtl(stripEmoji(text));
-
-/** Fetches a remote image as a data URI. Only PNG/JPEG render reliably; anything else falls back to no image. */
-export async function loadImage(url: string | null | undefined): Promise<string | null> {
-  if (!url || !url.startsWith("http")) return null;
-  try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(3000) });
-    const type = res.headers.get("content-type") ?? "";
-    if (!res.ok || !/image\/(png|jpe?g)/.test(type)) return null;
-    return `data:${type};base64,${Buffer.from(await res.arrayBuffer()).toString("base64")}`;
-  } catch {
-    return null;
-  }
-}
 
 export interface ShareCard {
   eyebrow?: string;
@@ -79,7 +69,7 @@ export async function renderShareCard(card: ShareCard) {
           <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
             <div style={{ display: "flex", fontSize: 34, fontWeight: 800 }}>{t(brand.name)}</div>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={brand.logoUrl ?? ballSvgDataUri(accent)} width={72} height={72} alt="" style={{ borderRadius: 36 }} />
+            <img src={markTileDataUri(accent, { rounded: true })} width={72} height={72} alt="" />
           </div>
         </div>
 

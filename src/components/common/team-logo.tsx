@@ -1,14 +1,19 @@
 import Image from "next/image";
-import type { Team } from "@/types/domain";
+import mark from "@/assets/brand/mark.svg";
 import { opponentLogo } from "@/config/opponents";
 import { he } from "@/config/strings";
 import { cn } from "@/lib/utils/cn";
-import { MediaImage } from "./media-image";
 
-export function TeamLogo({ team, className, priority }: { team: Pick<Team, "logo">; className?: string; priority?: boolean }) {
+/** The app's own mark on a team-color tile; deliberately not the uploaded club crest. */
+export function AppMark({ className, priority }: { className?: string; priority?: boolean }) {
   return (
-    <span className={cn("relative block shrink-0 overflow-hidden rounded-full", className)}>
-      <MediaImage media={team.logo} fallback="/placeholders/logo.svg" alt={he.media.teamLogo} sizes="96px" priority={priority} />
+    <span
+      className={cn(
+        "relative block shrink-0 overflow-hidden rounded-full bg-radial-[at_50%_25%] from-team via-team/60 to-[#081633]",
+        className,
+      )}
+    >
+      <Image src={mark} alt={he.media.teamLogo} fill sizes="96px" priority={priority} className="translate-y-[2%] scale-90 object-contain" />
     </span>
   );
 }

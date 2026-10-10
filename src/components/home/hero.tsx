@@ -1,5 +1,5 @@
 import { MediaImage } from "@/components/common/media-image";
-import { TeamLogo } from "@/components/common/team-logo";
+import { AppMark } from "@/components/common/team-logo";
 import { he } from "@/config/strings";
 import type { Season, Team } from "@/types/domain";
 
@@ -23,7 +23,7 @@ export function Hero({
       </div>
       <div className="flex min-h-56 flex-col justify-end gap-3 px-5 pt-10 pb-5 md:min-h-64 md:px-8 md:pb-6">
         <div className="flex items-center gap-3">
-          <TeamLogo team={team} className="size-12 border-2 border-team-2/60 md:size-16" priority />
+          <AppMark className="size-12 border-2 border-team-2/60 md:size-16" priority />
           <div>
             <h1 data-user-content className="font-display text-2xl leading-tight font-black md:text-4xl">
               {team.name}

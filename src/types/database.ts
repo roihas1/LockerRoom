@@ -229,6 +229,16 @@ export type PushSubscriptionRow = {
   last_success_at: string | null;
 };
 
+export type PushBroadcastRow = {
+  id: number;
+  title: string;
+  body: string;
+  url: string;
+  sent_count: number;
+  created_by: string | null;
+  created_at: string;
+};
+
 export type CoachRow = {
   id: number;
   name: string;
@@ -265,6 +275,7 @@ export type Database = {
       media_players: Table<MediaPlayerRow, "media_id" | "player_id">;
       game_events: Table<GameEventRow, "game_id" | "kind" | "value">;
       push_subscriptions: Table<PushSubscriptionRow, "endpoint" | "p256dh" | "auth">;
+      push_broadcasts: Table<PushBroadcastRow, "title">;
     };
     Views: Record<never, never>;
     Functions: {

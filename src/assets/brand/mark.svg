@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img">
+  <defs>
+    <radialGradient id="ball" cx="38%" cy="32%" r="75%">
+      <stop offset="0" stop-color="#ffb070"/>
+      <stop offset="0.5" stop-color="#f97316"/>
+      <stop offset="1" stop-color="#9a3412"/>
+    </radialGradient>
+    <radialGradient id="shine" cx="35%" cy="28%" r="40%">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="clip"><circle cx="256" cy="200" r="122"/></clipPath>
+  </defs>
+  <path d="M96 318 A160 32 0 0 1 416 318" fill="none" stroke="#c2410c" stroke-width="16" stroke-linecap="round"/>
+  <g stroke="#ffffff" stroke-opacity="0.92" stroke-width="9" stroke-linecap="round" fill="none">
+    <path d="M104 326 L174 456"/>
+    <path d="M408 326 L338 456"/>
+    <path d="M160 344 L216 460"/>
+    <path d="M352 344 L296 460"/>
+    <path d="M104 326 L216 460"/>
+    <path d="M408 326 L296 460"/>
+    <path d="M160 344 L296 460"/>
+    <path d="M352 344 L216 460"/>
+    <path d="M140 392 Q256 414 372 392"/>
+  </g>
+  <circle cx="256" cy="200" r="122" fill="url(#ball)"/>
+  <g clip-path="url(#clip)" fill="none" stroke="#3b1406" stroke-width="10" stroke-linecap="round">
+    <path d="M134 204 Q256 238 378 204"/>
+    <path d="M262 78 Q230 200 262 322"/>
+    <path d="M166 116 Q236 200 164 292"/>
+    <path d="M356 116 Q288 200 358 292"/>
+  </g>
+  <circle cx="256" cy="200" r="122" fill="url(#shine)"/>
+  <path d="M96 318 A160 32 0 0 0 416 318" fill="none" stroke="#fb923c" stroke-width="18" stroke-linecap="round"/>
+</svg>

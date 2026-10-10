@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  BellRing,
   ClipboardList,
   LayoutDashboard,
   type LucideIcon,
@@ -32,6 +33,7 @@ const contentLinks: NavLink[] = [
   { href: "/admin/coaches", label: he.admin.coaches, icon: Whistle },
   { href: "/admin/plays", label: he.admin.exercises, icon: ClipboardList },
   { href: "/admin/locker-room", label: he.admin.posts, icon: Newspaper },
+  { href: "/admin/notifications", label: he.admin.notifications, icon: BellRing },
 ];
 
 const accountLinks: NavLink[] = [

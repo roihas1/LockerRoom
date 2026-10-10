@@ -13,26 +13,40 @@ function configure(): boolean {
   const publicKey = vapidPublicKey();
   const privateKey = process.env.VAPID_PRIVATE_KEY;
   if (!publicKey || !privateKey) return (configured = false);
-  webpush.setVapidDetails(process.env.VAPID_SUBJECT || "mailto:admin@example.com", publicKey, privateKey);
-  return (configured = true);
+  try {
+    webpush.setVapidDetails(process.env.VAPID_SUBJECT || "mailto:admin@example.com", publicKey, privateKey);
+    return (configured = true);
+  } catch (err) {
+    console.error("Invalid VAPID settings (VAPID_SUBJECT must start with mailto: or https:)", err);
+    return (configured = false);
+  }
 }
 
 export function isPushConfigured(): boolean {
   return !isDemoMode() && configure() && createServiceClient() !== null;
 }
 
+/** Number of subscribed devices, or null when push isn't set up on this deployment. */
+export async function countPushDevices(): Promise<number | null> {
+  if (!isPushConfigured()) return null;
+  const { count, error } = await createServiceClient()!.from("push_subscriptions").select("id", { count: "exact", head: true });
+  return error ? null : (count ?? 0);
+}
+
 /**
- * Sends a notification to every device subscribed to `topic`. Never throws: push is a side effect and must
- * not fail the admin action that triggered it. Expired subscriptions (404/410) are removed.
+ * Sends a notification to every device subscribed to `topic`, or to every device when `topic` is "all".
+ * Never throws: push is a side effect and must not fail the admin action that triggered it.
+ * Expired subscriptions (404/410) are removed.
  */
-export async function sendPush(topic: PushTopic, message: PushMessage): Promise<{ sent: number; removed: number }> {
+export async function sendPush(topic: PushTopic | "all", message: PushMessage): Promise<{ sent: number; removed: number }> {
   const result = { sent: 0, removed: 0 };
   try {
     if (isDemoMode() || !configure()) return result;
     const client = createServiceClient();
     if (!client) return result;
 
-    const { data: subs, error } = await client.from("push_subscriptions").select("id, endpoint, p256dh, auth").contains("topics", [topic]);
+    const query = client.from("push_subscriptions").select("id, endpoint, p256dh, auth");
+    const { data: subs, error } = topic === "all" ? await query : await query.contains("topics", [topic]);
     if (error || !subs?.length) return result;
 
     const payload = JSON.stringify(message);
