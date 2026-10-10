@@ -11,7 +11,7 @@ export function AdminShell({ children, email }: { children: ReactNode; email: st
   return (
     <div className="min-h-dvh bg-bg">
       {demo ? <DemoBanner /> : null}
-      <header className="border-b border-border bg-surface">
+      <header className="border-b border-border bg-surface pt-safe">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
           <div>
             <p className="font-display text-lg font-bold">{he.admin.title}</p>

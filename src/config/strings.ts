@@ -707,6 +707,7 @@ export const he = {
     enableNotifications: "הפעלת התראות",
     disableNotifications: "כיבוי התראות",
     notificationsOn: "התראות פעילות",
+    openNotification: "פתיחה",
     notificationsBlocked: "ההתראות חסומות בדפדפן. אפשר לאשר אותן בהגדרות האתר.",
     notificationsUnsupported: "הדפדפן הזה לא תומך בהתראות.",
     notificationsUnavailable: "התראות עדיין לא הוגדרו באתר.",

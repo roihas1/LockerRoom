@@ -86,6 +86,23 @@
     outline: 2px solid var(--team-primary);
     outline-offset: 2px;
   }
+  /* Tailwind v4 dropped the pointer cursor on buttons; restore it for everything clickable. */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  [role="tab"],
+  [role="menuitem"],
+  [role="option"],
+  summary,
+  select:not(:disabled),
+  input:is([type="checkbox"], [type="radio"], [type="file"], [type="color"], [type="range"], [type="submit"], [type="button"], [type="reset"]):not(:disabled),
+  label:has(input:is([type="checkbox"], [type="radio"], [type="file"]):not(:disabled)),
+  [data-easter-logo] {
+    cursor: pointer;
+  }
+  :is(button, select, input, textarea):disabled,
+  label:has(input:is([type="checkbox"], [type="radio"], [type="file"]):disabled) {
+    cursor: not-allowed;
+  }
   /* Easter egg: session-only "on fire" theme. Overrides the team colors set inline on <html>. */
   html.fire-mode body {
     --team-primary: #ff5a1f;
@@ -167,6 +184,11 @@
 
 @utility pb-safe {
   padding-bottom: max(env(safe-area-inset-bottom), 0px);
+}
+
+/* The installed iPhone app draws under the status bar (black-translucent), so top bars pad past it. */
+@utility pt-safe {
+  padding-top: max(env(safe-area-inset-top), 0px);
 }
 
 @utility scrollbar-none {

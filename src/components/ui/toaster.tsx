@@ -7,6 +7,7 @@ export function Toaster() {
     <Sonner
       dir="rtl"
       position="top-center"
+      mobileOffset={{ top: "calc(env(safe-area-inset-top) + 12px)" }}
       theme="dark"
       toastOptions={{
         classNames: {

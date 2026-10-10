@@ -7,7 +7,7 @@ import { DesktopNav } from "./desktop-nav";
 
 export function SiteHeader({ team }: { team: Team }) {
   return (
-    <header data-easter-header className="sticky top-0 z-40 border-b border-border/70 bg-bg/85 backdrop-blur-lg">
+    <header data-easter-header className="sticky top-0 z-40 border-b border-border/70 bg-bg/85 pt-safe backdrop-blur-lg">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4 md:h-16">
         <Link href="/" className="flex min-w-0 items-center gap-2.5">
           <span data-easter-logo className="shrink-0 touch-manipulation select-none [-webkit-touch-callout:none]">
