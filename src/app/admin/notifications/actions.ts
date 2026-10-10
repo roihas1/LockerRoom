@@ -29,7 +29,27 @@ export async function sendBroadcastAction(_prev: ActionResult | null, formData: 
   });
   if (!parsed.success) return actionFromZod(parsed.error);
 
-  const { title, body, url } = parsed.data;
+  return deliver(parsed.data, userId);
+}
+
+export async function resendBroadcastAction(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const { userId } = await requireAdmin();
+  const demoBlock = blockDemoMutation();
+  if (demoBlock) return demoBlock;
+  if (!isPushConfigured()) return actionFail(he.admin.broadcast.notConfigured, "push_unavailable");
+
+  const id = Number(formData.get("broadcastId"));
+  if (!Number.isInteger(id) || id <= 0) return actionFail(he.errors.notFound, "not_found");
+
+  const supabase = await createSessionClient();
+  const { data: original } = await supabase.from("push_broadcasts").select("title, body, url").eq("id", id).maybeSingle();
+  if (!original) return actionFail(he.errors.notFound, "not_found");
+
+  return deliver(original, userId);
+}
+
+async function deliver(message: { title: string; body: string; url: string }, userId: string | null): Promise<ActionResult> {
+  const { title, body, url } = message;
   const { sent } = await sendPush("all", { title, body, url, tag: `broadcast-${Date.now()}` });
 
   const supabase = await createSessionClient();

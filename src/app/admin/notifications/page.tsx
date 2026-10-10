@@ -9,6 +9,7 @@ import { createSessionClient } from "@/lib/supabase/server";
 import { formatShortDate, formatTime } from "@/lib/utils/dates";
 import { BroadcastForm } from "./broadcast-form";
 import { BROADCAST_LINKS } from "./links";
+import { ResendButton } from "./resend-button";
 
 const t = he.admin.broadcast;
 
@@ -72,7 +73,10 @@ export default async function AdminNotificationsPage() {
                     {BROADCAST_LINKS.find((l) => l.url === item.url)?.label ?? item.url}
                   </p>
                 </div>
-                <Badge tone={item.sent_count > 0 ? "win" : "neutral"}>{t.historyCount(item.sent_count)}</Badge>
+                <div className="flex shrink-0 flex-col items-end gap-2">
+                  <Badge tone={item.sent_count > 0 ? "win" : "neutral"}>{t.historyCount(item.sent_count)}</Badge>
+                  <ResendButton broadcastId={item.id} title={item.title} devices={devices ?? 0} disabled={demo || !devices} />
+                </div>
               </li>
             ))}
           </ul>

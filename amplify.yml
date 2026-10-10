@@ -10,6 +10,8 @@ frontend:
       commands:
         # Amplify only exposes console env vars to the SSR runtime when they are written to .env.production at build time.
         - env | grep -E '^(NEXT_PUBLIC_|SUPABASE_SERVICE_ROLE_KEY|SITE_ALLOW_INDEXING|VAPID_PRIVATE_KEY|VAPID_SUBJECT|PUSH_DISPATCH_SECRET)' >> .env.production || true
+        # Without a public site URL, QR codes, share previews and calendar links point at localhost. Default to the branch domain.
+        - if [ -z "$NEXT_PUBLIC_SITE_URL" ]; then echo "NEXT_PUBLIC_SITE_URL=https://${AWS_BRANCH}.${AWS_APP_ID}.amplifyapp.com" >> .env.production; fi
         - npm run build
   artifacts:
     baseDirectory: .next

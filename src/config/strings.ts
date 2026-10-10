@@ -614,6 +614,8 @@ export const he = {
       history: "נשלחו לאחרונה",
       noHistory: "עוד לא נשלחו התראות.",
       historyCount: (n: number) => (n === 1 ? "מכשיר אחד" : `${n} מכשירים`),
+      resend: "שליחה שוב",
+      resendConfirm: (n: number) => (n === 1 ? "לשלוח שוב למכשיר אחד?" : `לשלוח שוב ל־${n} מכשירים?`),
       links: {
         home: "דף הבית",
         games: "משחקים",
