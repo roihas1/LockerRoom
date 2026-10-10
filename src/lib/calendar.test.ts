@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Game, Team } from "@/types/domain";
-import { buildIcs, gameCalendarEvent, googleCalendarUrl, isCalendarEligible } from "./calendar";
+import { buildIcs, gameCalendarEvent, gameDayReminder, googleCalendarUrl, isCalendarEligible } from "./calendar";
 
 const team: Team = {
   name: "בני הרצליה",
@@ -62,6 +62,31 @@ describe("buildIcs", () => {
   it("keeps every line within 75 octets", () => {
     const encoder = new TextEncoder();
     for (const line of ics.split("\r\n")) expect(encoder.encode(line).length).toBeLessThanOrEqual(75);
+  });
+});
+
+describe("gameDayReminder", () => {
+  it("alerts at 09:00 Israel time on game day, across DST", () => {
+    expect(gameDayReminder(new Date("2026-10-28T18:00:00Z")).toISOString()).toBe("2026-10-28T07:00:00.000Z");
+    expect(gameDayReminder(new Date("2026-07-14T17:00:00Z")).toISOString()).toBe("2026-07-14T06:00:00.000Z");
+  });
+
+  it("falls back to an hour before early tip-offs", () => {
+    expect(gameDayReminder(new Date("2026-10-28T06:30:00Z")).toISOString()).toBe("2026-10-28T05:30:00.000Z");
+  });
+});
+
+describe("calendar feed", () => {
+  const events = [game, { ...game, id: 5, status: "final" as const }].map((g) =>
+    gameCalendarEvent(g, team, "https://example.com"),
+  );
+  const ics = buildIcs(events, new Date("2026-10-09T00:00:00Z"), team.name);
+
+  it("contains every game and alarms only upcoming ones", () => {
+    expect(ics.match(/BEGIN:VEVENT/g)).toHaveLength(2);
+    expect(ics.match(/BEGIN:VALARM/g)).toHaveLength(1);
+    expect(ics).toContain("TRIGGER;VALUE=DATE-TIME:20261028T070000Z\r\n");
+    expect(ics).toContain("X-WR-CALNAME:");
   });
 });
 

@@ -97,6 +97,15 @@ export type PlayerRow = {
   updated_at: string;
 };
 
+export type PlayerContactRow = {
+  player_id: number;
+  email: string | null;
+  phone: string | null;
+  birth_date: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type GameRow = {
   id: number;
   season_id: number;
@@ -112,6 +121,7 @@ export type GameRow = {
   player_of_game_id: number | null;
   potg_note: string | null;
   play_of_game_media_id: string | null;
+  reminder_sent_for: string | null;
   is_published: boolean;
   created_at: string;
   updated_at: string;
@@ -199,6 +209,7 @@ export type Database = {
       team: Table<TeamRow, "name" | "short_name">;
       seasons: Table<SeasonRow, "name" | "slug" | "start_date" | "end_date">;
       players: Table<PlayerRow, "name">;
+      player_contacts: Table<PlayerContactRow, "player_id">;
       games: Table<GameRow, "season_id" | "opponent" | "tipoff_at">;
       player_game_stats: Table<PlayerGameStatRow, "game_id" | "player_id">;
       exercises: Table<ExerciseRow, "title" | "category">;

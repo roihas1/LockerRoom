@@ -3,6 +3,7 @@ import { EmptyState } from "@/components/common/empty-state";
 import { PageHeader, SectionHeader } from "@/components/common/section-header";
 import { GameCard } from "@/components/games/game-card";
 import { SeasonSelect } from "@/components/games/season-select";
+import { SubscribeCalendar } from "@/components/games/subscribe-calendar";
 import { he } from "@/config/strings";
 import { getData } from "@/lib/data";
 import { getSeasonContext } from "@/lib/data/season";
@@ -44,6 +45,7 @@ export default async function GamesPage({ searchParams }: PageProps<"/games">) {
                   <GameCard key={g.id} game={g} teamShortName={team.shortName} />
                 ))}
               </div>
+              <SubscribeCalendar />
             </section>
           ) : null}
           <section>

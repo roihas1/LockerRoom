@@ -3,6 +3,7 @@ import { siteConfig } from "@/config/site";
 import type { Game, Team } from "@/types/domain";
 
 const GAME_DURATION_MINUTES = 150;
+const REMINDER_HOUR = 9;
 
 export interface CalendarEvent {
   uid: string;
@@ -12,6 +13,29 @@ export interface CalendarEvent {
   start: Date;
   end: Date;
   url: string;
+  /** When to alert; omitted for games that are no longer upcoming. */
+  alarm?: Date;
+}
+
+/** Offset of `timeZone` from UTC at `date`, in minutes (e.g. 180 for Israel summer time). */
+function timeZoneOffsetMinutes(date: Date, timeZone: string): number {
+  const name = new Intl.DateTimeFormat("en-US", { timeZone, timeZoneName: "longOffset" })
+    .formatToParts(date)
+    .find((p) => p.type === "timeZoneName")?.value;
+  const match = name?.match(/GMT([+-])(\d{2}):(\d{2})/);
+  if (!match) return 0;
+  const minutes = Number(match[2]) * 60 + Number(match[3]);
+  return match[1] === "-" ? -minutes : minutes;
+}
+
+/** 09:00 local time on the day of `start`; one hour before tip-off for early games. */
+export function gameDayReminder(start: Date, timeZone: string = siteConfig.timeZone): Date {
+  const offset = timeZoneOffsetMinutes(start, timeZone);
+  const local = new Date(start.getTime() + offset * 60_000);
+  const morning = new Date(
+    Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate(), REMINDER_HOUR) - offset * 60_000,
+  );
+  return morning < start ? morning : new Date(start.getTime() - 60 * 60_000);
 }
 
 export function isCalendarEligible(game: Game): boolean {
@@ -27,7 +51,16 @@ export function gameCalendarEvent(game: Game, team: Team, siteUrl: string): Cale
       : `${team.name} ${he.result.vs} ${game.opponent}`;
   const url = `${siteUrl.replace(/\/$/, "")}/games/${game.id}`;
   const description = [game.roundNumber ? he.games.round(game.roundNumber) : null, url].filter(Boolean).join("\n");
-  return { uid: `game-${game.id}@${new URL(url).host}`, title, description, location: game.location, start, end, url };
+  return {
+    uid: `game-${game.id}@${new URL(url).host}`,
+    title,
+    description,
+    location: game.location,
+    start,
+    end,
+    url,
+    ...(isCalendarEligible(game) ? { alarm: gameDayReminder(start) } : {}),
+  };
 }
 
 /** `20261028T180000Z` */
@@ -72,13 +105,8 @@ function foldIcsLine(line: string): string {
   return parts.join("\r\n ");
 }
 
-export function buildIcs(event: CalendarEvent, now: Date = new Date()): string {
-  const lines = [
-    "BEGIN:VCALENDAR",
-    "VERSION:2.0",
-    "PRODID:-//LockerRoom//Games//HE",
-    "CALSCALE:GREGORIAN",
-    "METHOD:PUBLISH",
+function eventLines(event: CalendarEvent, now: Date): string[] {
+  return [
     "BEGIN:VEVENT",
     `UID:${event.uid}`,
     `DTSTAMP:${utcStamp(now)}`,
@@ -88,7 +116,40 @@ export function buildIcs(event: CalendarEvent, now: Date = new Date()): string {
     `DESCRIPTION:${escapeIcsText(event.description)}`,
     ...(event.location ? [`LOCATION:${escapeIcsText(event.location)}`] : []),
     `URL:${event.url}`,
+    ...(event.alarm
+      ? [
+          "BEGIN:VALARM",
+          "ACTION:DISPLAY",
+          `DESCRIPTION:${escapeIcsText(event.title)}`,
+          `TRIGGER;VALUE=DATE-TIME:${utcStamp(event.alarm)}`,
+          "END:VALARM",
+        ]
+      : []),
     "END:VEVENT",
+  ];
+}
+
+/** A single event, or a whole subscribable calendar when `name` is given. */
+export function buildIcs(
+  events: CalendarEvent | CalendarEvent[],
+  now: Date = new Date(),
+  name?: string,
+): string {
+  const lines = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//LockerRoom//Games//HE",
+    "CALSCALE:GREGORIAN",
+    "METHOD:PUBLISH",
+    ...(name
+      ? [
+          `X-WR-CALNAME:${escapeIcsText(name)}`,
+          `X-WR-TIMEZONE:${siteConfig.timeZone}`,
+          "REFRESH-INTERVAL;VALUE=DURATION:PT6H",
+          "X-PUBLISHED-TTL:PT6H",
+        ]
+      : []),
+    ...[events].flat().flatMap((event) => eventLines(event, now)),
     "END:VCALENDAR",
   ];
   return `${lines.map(foldIcsLine).join("\r\n")}\r\n`;
