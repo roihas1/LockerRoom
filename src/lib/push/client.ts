@@ -114,3 +114,20 @@ export async function disablePush(): Promise<void> {
     body: JSON.stringify({ endpoint }),
   }).catch(() => null);
 }
+
+export type PushState = "loading" | "unsupported" | "needs-install" | "unavailable" | "blocked" | "off" | "on";
+
+export async function detectPushState(): Promise<PushState> {
+  if (!vapidPublicKey()) return "unavailable";
+  if (detectPlatform() === "ios" && !isStandalone()) return "needs-install";
+  if (!isPushSupported()) return "unsupported";
+  if (Notification.permission === "denied") return "blocked";
+  return (await currentSubscription()) && Notification.permission === "granted" ? "on" : "off";
+}
+
+/** Lets every notification widget on the page re-check after one of them changes the subscription. */
+export const PUSH_CHANGE_EVENT = "lr:push-change";
+
+export function announcePushChange() {
+  window.dispatchEvent(new Event(PUSH_CHANGE_EVENT));
+}

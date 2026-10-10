@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Team } from "@/types/domain";
+import { NotificationsBell } from "@/components/app/notifications-banner";
 import { AppMark } from "@/components/common/team-logo";
 import { he } from "@/config/strings";
 import { AdminLink } from "./admin-link";
@@ -22,6 +23,7 @@ export function SiteHeader({ team }: { team: Team }) {
         </Link>
         <div className="flex items-center gap-3">
           <DesktopNav />
+          <NotificationsBell />
           <AdminLink />
         </div>
       </div>

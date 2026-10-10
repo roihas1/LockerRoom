@@ -12,6 +12,11 @@ export const siteConfig = {
     primaryColor: "#2563eb",
     secondaryColor: "#ffffff",
   },
+  /** IBBA (ibasketball.co.il) SportsPress IDs. The table ID changes every season. */
+  league: {
+    tableId: 1501342,
+    teamId: 1498342,
+  },
 };
 
 export function getSiteUrl(): string {

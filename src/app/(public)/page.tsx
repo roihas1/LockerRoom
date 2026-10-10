@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import { EmptyState } from "@/components/common/empty-state";
 import { PullToRefresh } from "@/components/common/pull-to-refresh";
 import { SectionHeader } from "@/components/common/section-header";
@@ -8,6 +8,7 @@ import { GameCard } from "@/components/games/game-card";
 import { Hero } from "@/components/home/hero";
 import { LastGameCard } from "@/components/home/last-game-card";
 import { NextGameCard } from "@/components/home/next-game-card";
+import { StandingsCard } from "@/components/home/standings-card";
 import { FeedItem } from "@/components/locker-room/feed-item";
 import { PlayGrid } from "@/components/home/play-grid";
 import { LeaderCard } from "@/components/stats/leader-board";
@@ -17,18 +18,19 @@ import { he } from "@/config/strings";
 import { getData } from "@/lib/data";
 import { getSeasonContext } from "@/lib/data/season";
 import { homeMode, type HomeMode } from "@/lib/home/mode";
+import { getLeagueTable } from "@/lib/league/table";
 import { teamSeasonAverages } from "@/lib/stats/aggregate";
 import { currentStreak, gameResult, lastGame, nextGame, record } from "@/lib/stats/games";
 import { computeLeaders } from "@/lib/stats/leaders";
 
 const HOME_PLAYS_LIMIT = 6;
 
-type SectionKey = "games" | "quote" | "teamStats" | "leaders" | "plays" | "recent" | "feed";
+type SectionKey = "games" | "standings" | "quote" | "teamStats" | "leaders" | "plays" | "recent" | "feed";
 
 const sectionOrder: Record<HomeMode, SectionKey[]> = {
-  gameDay: ["games", "leaders", "plays", "quote", "teamStats", "recent", "feed"],
-  postGame: ["games", "feed", "leaders", "quote", "teamStats", "recent", "plays"],
-  default: ["quote", "games", "teamStats", "leaders", "plays", "recent", "feed"],
+  gameDay: ["games", "standings", "leaders", "plays", "quote", "teamStats", "recent", "feed"],
+  postGame: ["games", "standings", "feed", "leaders", "quote", "teamStats", "recent", "plays"],
+  default: ["quote", "games", "standings", "teamStats", "leaders", "plays", "recent", "feed"],
 };
 
 export default async function HomePage() {
@@ -73,6 +75,11 @@ export default async function HomePage() {
           {mode === "gameDay" && last ? <div className="opacity-80">{lastCard}</div> : null}
         </section>
       ),
+    standings: (
+      <Suspense fallback={null}>
+        <HomeStandings />
+      </Suspense>
+    ),
     quote: <QuoteOfDay players={[...ctx.playersById.values()]} coaches={coaches} />,
     teamStats: ctx.completed.length ? (
       <section>
@@ -125,8 +132,19 @@ export default async function HomePage() {
       <div className="space-y-10">
         <Hero team={team} season={ctx.season} record={rec} streak={currentStreak(ctx.games)} />
         {last && gameResult(last) === "win" ? <WinConfetti id={`game-${last.id}`} /> : null}
-        {sectionOrder[mode].map((key) => (sections[key] ? <div key={key}>{sections[key]}</div> : null))}
+        {sectionOrder[mode].map((key) => (sections[key] ? <div key={key} className="empty:hidden">{sections[key]}</div> : null))}
       </div>
     </PullToRefresh>
+  );
+}
+
+/** Streams in separately so a slow IBBA response never holds up the rest of the home page. */
+async function HomeStandings() {
+  const table = await getLeagueTable();
+  if (!table) return null;
+  return (
+    <div className="md:max-w-md">
+      <StandingsCard table={table} />
+    </div>
   );
 }

@@ -6,6 +6,7 @@ export const he = {
     home: "ראשי",
     games: "משחקים",
     stats: "סטטיסטיקות",
+    standings: "טבלה",
     training: "מהלכים",
     roster: "סגל",
     lockerRoom: "לוקר רום",
@@ -205,6 +206,14 @@ export const he = {
     allGames: "לכל המשחקים",
     allStats: "לכל הסטטיסטיקות",
     toLockerRoom: "ללוקר רום",
+    standings: {
+      title: "המיקום בליגה",
+      placeLabel: "מקום",
+      place: (rank: number, total: number) => `מקום ${rank} מתוך ${total}`,
+      outOf: (total: number) => `מתוך ${total}`,
+      notStarted: "העונה עוד לא התחילה",
+      fullTable: "לטבלה המלאה",
+    },
     countdown: { days: "ימים", hours: "שעות", minutes: "דקות", seconds: "שניות", started: "המשחק התחיל!" },
   },
 
@@ -232,9 +241,6 @@ export const he = {
     addToCalendar: "הוספה ליומן",
     googleCalendar: "יומן Google",
     otherCalendar: "Apple / Outlook",
-    subscribeCalendar: "כל המשחקים ביומן",
-    subscribeHint: "הרשמה חד־פעמית לתזכורת בבוקר כל משחק. משחקים חדשים ושינויים מתעדכנים אוטומטית",
-    subscribeReminders: "הרשמה לתזכורות",
     navigate: "ניווט לאולם",
     waze: "Waze",
   },
@@ -248,6 +254,20 @@ export const he = {
     teamAverages: "ממוצעים קבוצתיים",
     sortBy: "מיון לפי",
     minGames: (n: number) => `מינימום ${n} משחקים לדירוג`,
+  },
+
+  standingsPage: {
+    title: "טבלת הליגה",
+    pos: "מיקום",
+    team: "קבוצה",
+    wins: "ניצ'",
+    losses: "הפ'",
+    pointsFor: "קלעה",
+    pointsAgainst: "ספגה",
+    diff: "הפרש",
+    leaguePoints: "נק'",
+    source: "מקור: איגוד הכדורסל",
+    notStarted: "העונה עוד לא התחילה. כולם במקום הראשון, נהנים מזה כל עוד אפשר.",
   },
 
   roster: {
@@ -309,6 +329,7 @@ export const he = {
     videos: { title: "עדיין אין סרטונים", text: "אף אחד לא צילם. אולי זה לטובה." },
     posts: { title: "הלוקר רום עדיין שקט", text: "חשוד. בדרך כלל אי אפשר להשתיק אותם." },
     boxScore: { title: "עדיין לא הוזנו נתונים", text: "הסטטיסטיקאי עוד מחפש עט." },
+    standings: { title: "הטבלה לא זמינה כרגע", text: "האתר של האיגוד לקח פסק זמן. נסו שוב עוד מעט." },
     notFound: { title: "הכדור יצא מהמגרש", text: "הדף הזה לא קיים. כנראה מישהו זרק אותו ליציע." },
     error: { title: "איבוד כדור!", text: "משהו השתבש אצלנו. לוקחים פסק זמן ומנסים שוב." },
   },
@@ -713,6 +734,11 @@ export const he = {
     notificationsUnavailable: "התראות עדיין לא הוגדרו באתר.",
     notificationsFailed: "לא הצלחנו להפעיל התראות. נסו שוב.",
     saved: "ההעדפות נשמרו",
+    banner: {
+      title: "לא לפספס אף משחק 🏀",
+      text: "תזכורת ביום המשחק, התראה כשעולים לפרקט ותוצאה בסוף. בלי ספאם, מבטיחים.",
+      choose: "בחירת התראות",
+    },
     topics: {
       games: "תזכורות ותוצאות משחקים",
       live: "המשחק התחיל (שידור חי)",

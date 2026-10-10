@@ -1,4 +1,4 @@
-import { BarChart3, CalendarDays, ClipboardList, Flame, Home, Users, type LucideIcon } from "lucide-react";
+import { BarChart3, CalendarDays, ClipboardList, Flame, Home, ListOrdered, Users, type LucideIcon } from "lucide-react";
 import { he } from "@/config/strings";
 
 export interface NavItem {
@@ -11,6 +11,7 @@ export const navItems: NavItem[] = [
   { href: "/", label: he.nav.home, icon: Home },
   { href: "/games", label: he.nav.games, icon: CalendarDays },
   { href: "/stats", label: he.nav.stats, icon: BarChart3 },
+  { href: "/standings", label: he.nav.standings, icon: ListOrdered },
   { href: "/plays", label: he.nav.training, icon: ClipboardList },
   { href: "/players", label: he.nav.roster, icon: Users },
   { href: "/locker-room", label: he.nav.lockerRoom, icon: Flame },

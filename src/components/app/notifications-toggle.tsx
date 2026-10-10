@@ -6,56 +6,38 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/form-controls";
 import { he } from "@/config/strings";
-import {
-  currentSubscription,
-  detectPlatform,
-  disablePush,
-  enablePush,
-  isPushSupported,
-  isStandalone,
-  readTopics,
-  updateTopics,
-} from "@/lib/push/client";
-import { PUSH_TOPICS, vapidPublicKey, type PushTopic } from "@/lib/push/topics";
+import { announcePushChange, disablePush, enablePush, readTopics, updateTopics, type EnableResult, type PushState } from "@/lib/push/client";
+import { PUSH_TOPICS, type PushTopic } from "@/lib/push/topics";
+import { usePushState } from "./use-push-state";
 
-type State = "loading" | "unsupported" | "needs-install" | "unavailable" | "blocked" | "off" | "on";
-
-async function detectState(): Promise<State> {
-  if (!vapidPublicKey()) return "unavailable";
-  if (detectPlatform() === "ios" && !isStandalone()) return "needs-install";
-  if (!isPushSupported()) return "unsupported";
-  if (Notification.permission === "denied") return "blocked";
-  return (await currentSubscription()) && Notification.permission === "granted" ? "on" : "off";
+/** Shared by the toggle and the banner so both report failures the same way. */
+export function stateAfterFailedEnable(reason: Extract<EnableResult, { ok: false }>["reason"]): PushState {
+  if (reason === "denied") return Notification.permission === "denied" ? "blocked" : "off";
+  if (reason === "unsupported") return "unsupported";
+  if (reason === "unavailable" || reason === "demo") return "unavailable";
+  return "off";
 }
 
 export function NotificationsToggle() {
-  const [state, setState] = useState<State>("loading");
+  const [state, setState] = usePushState();
   const [topics, setTopics] = useState<PushTopic[]>([...PUSH_TOPICS]);
   const [pending, startTransition] = useTransition();
 
   useEffect(() => {
-    let alive = true;
-    void detectState().then((next) => {
-      if (!alive) return;
-      setState(next);
-      setTopics(readTopics());
-    });
-    return () => {
-      alive = false;
-    };
-  }, []);
+    const frame = requestAnimationFrame(() => setTopics(readTopics()));
+    return () => cancelAnimationFrame(frame);
+  }, [state]);
 
   const enable = () =>
     startTransition(async () => {
       const result = await enablePush(topics);
       if (result.ok) {
         setState("on");
+        announcePushChange();
         toast.success(he.app.notificationsOn);
         return;
       }
-      if (result.reason === "denied") setState(Notification.permission === "denied" ? "blocked" : "off");
-      else if (result.reason === "unsupported") setState("unsupported");
-      else if (result.reason === "unavailable" || result.reason === "demo") setState("unavailable");
+      setState(stateAfterFailedEnable(result.reason));
       toast.error(result.reason === "denied" ? he.app.notificationsBlocked : he.app.notificationsFailed);
     });
 
@@ -63,6 +45,7 @@ export function NotificationsToggle() {
     startTransition(async () => {
       await disablePush();
       setState("off");
+      announcePushChange();
     });
 
   const toggleTopic = (topic: PushTopic, checked: boolean) => {
@@ -92,7 +75,7 @@ export function NotificationsToggle() {
             : null;
 
   return (
-    <section className="card space-y-4 p-5" aria-busy={state === "loading"}>
+    <section id="notifications" className="card scroll-mt-24 space-y-4 p-5" aria-busy={state === "loading"}>
       <div className="flex items-center justify-between gap-3">
         <h2 className="flex items-center gap-2 font-display text-lg font-bold">
           <Bell className="size-5 text-team" aria-hidden />

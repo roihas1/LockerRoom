@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ViewTransition, type ReactNode } from "react";
 import { InstallBanner } from "@/components/app/install-prompt";
+import { NotificationsBanner } from "@/components/app/notifications-banner";
 import { EasterEggs } from "@/components/fun/easter-eggs";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { SiteHeader } from "@/components/layout/site-header";
@@ -19,6 +20,7 @@ export default async function PublicLayout({ children }: { children: ReactNode }
       </a>
       <SiteHeader team={team} />
       <main id="main" className="mx-auto w-full max-w-6xl px-4 pt-5 pb-6 md:pt-8 md:pb-16">
+        <NotificationsBanner />
         <ViewTransition>{children}</ViewTransition>
       </main>
       <footer className="mx-auto hidden max-w-6xl items-center justify-between px-4 pb-10 text-xs text-muted md:flex">
