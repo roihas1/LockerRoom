@@ -402,6 +402,13 @@ export const he = {
       finishNotLive: "ניתן לסיים רק משחק שמסומן כחי.",
       started: "המשחק החי התחיל ✓",
       finished: "המשחק הסתיים ✓",
+      selectPlayer: "בחירת שחקן",
+      editScore: "עריכת ניקוד",
+      editPlayerPoints: "עריכת נקודות השחקן",
+      subtract1: "-1",
+      confirm: "אישור",
+      cancel: "ביטול",
+      manageRoster: "שחקנים במשחק",
     },
     playerForm: {
       name: "שם מלא",

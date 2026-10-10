@@ -8,6 +8,7 @@ import { finishLiveGameAction, startLiveGameAction } from "@/app/admin/games/liv
 import { gameStatusLabels } from "@/config/labels";
 import { he } from "@/config/strings";
 import { LiveStatsOpponent } from "@/components/admin/live-stats/live-stats-opponent";
+import { LiveStatsPlayerGrid } from "@/components/admin/live-stats/live-stats-player-grid";
 import { LiveStatsPlayerPanel } from "@/components/admin/live-stats/live-stats-player-panel";
 import { LiveStatsRoster } from "@/components/admin/live-stats/live-stats-roster";
 import { LiveStatsStickyScores } from "@/components/admin/live-stats/live-stats-sticky-scores";
@@ -57,6 +58,10 @@ export function LiveStatsApp({
     initState(clientStateFromSnapshot(initialSnapshot));
     // Re-init when navigating to another game or after server refresh.
   }, [game.id, initialSnapshot, initState]);
+
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const playedPlayers = players.filter((p) => state.playedPlayerIds.includes(p.id));
+  const selectedPlayer = playedPlayers.find((p) => p.id === selectedId) ?? playedPlayers[0] ?? null;
 
   const pointsSum = sumPlayedPoints(state);
   const sumWarning =
@@ -117,7 +122,14 @@ export function LiveStatsApp({
 
       {demo ? <p className="rounded-xl border border-warning/40 bg-warning/10 px-3 py-2 text-sm">{he.admin.liveStats.demoBlocked}</p> : null}
 
-      <LiveStatsStickyScores teamScore={state.teamScore} opponentScore={state.opponentScore} opponentName={game.opponent} />
+      <LiveStatsStickyScores
+        teamScore={state.teamScore}
+        opponentScore={state.opponentScore}
+        opponentName={game.opponent}
+        disabled={scoringDisabled}
+        onTeamScore={(teamScore) => setState({ ...state, teamScore })}
+        onOpponentScore={(opponentScore) => setState({ ...state, opponentScore })}
+      />
 
       {!isLive && !isFinal ? (
         <>
@@ -135,11 +147,9 @@ export function LiveStatsApp({
 
       {isLive || isFinal ? (
         <>
-          {isLive ? (
-            <LiveStatsRoster players={players} state={state} disabled={scoringDisabled} onChange={(next) => setState(next)} />
-          ) : null}
+          <LiveStatsPlayerGrid players={players} state={state} selectedId={selectedPlayer?.id ?? null} onSelect={setSelectedId} />
 
-          <LiveStatsPlayerPanel players={players} state={state} disabled={scoringDisabled} onChange={(next) => setState(next)} />
+          <LiveStatsPlayerPanel player={selectedPlayer} state={state} disabled={scoringDisabled} onChange={(next) => setState(next)} />
 
           <LiveStatsOpponent state={state} disabled={scoringDisabled} onChange={(next) => setState(next)} />
 
@@ -155,6 +165,17 @@ export function LiveStatsApp({
               </Button>
             ) : null}
           </div>
+
+          {isLive ? (
+            <details className="group rounded-(--radius-card) border border-border bg-surface-2">
+              <summary className="cursor-pointer list-none px-4 py-3 text-sm font-bold">
+                {he.admin.liveStats.manageRoster} ({state.playedPlayerIds.length})
+              </summary>
+              <div className="border-t border-border p-4">
+                <LiveStatsRoster players={players} state={state} disabled={scoringDisabled} onChange={(next) => setState(next)} />
+              </div>
+            </details>
+          ) : null}
         </>
       ) : null}
 

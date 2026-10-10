@@ -1,8 +1,8 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, Minus, Plus } from "lucide-react";
-import { useState } from "react";
+import { Minus, Plus } from "lucide-react";
 import { he } from "@/config/strings";
+import { LiveStatsEditableNumber } from "@/components/admin/live-stats/live-stats-editable-number";
 import { Button } from "@/components/ui/button";
 import { emptyLiveLine, type LiveStatsClientState } from "@/lib/live-stats/form-data";
 import type { Player } from "@/types/domain";
@@ -51,25 +51,20 @@ function StatStepper({
 }
 
 export function LiveStatsPlayerPanel({
-  players,
+  player,
   state,
   onChange,
   disabled,
 }: {
-  players: Player[];
+  player: Player | null;
   state: LiveStatsClientState;
   onChange: (next: LiveStatsClientState) => void;
   disabled: boolean;
 }) {
-  const playedPlayers = players.filter((p) => state.playedPlayerIds.includes(p.id));
-  const [index, setIndex] = useState(0);
-
-  if (playedPlayers.length === 0) {
+  if (!player) {
     return <p className="text-sm text-muted">{he.admin.statsEntry.whoPlayedHint}</p>;
   }
 
-  const safeIndex = Math.min(index, playedPlayers.length - 1);
-  const player = playedPlayers[safeIndex]!;
   const line = state.lines[player.id] ?? emptyLiveLine(player.id);
 
   const patchLine = (patch: Partial<typeof line>, teamDelta = 0) => {
@@ -84,81 +79,74 @@ export function LiveStatsPlayerPanel({
     patchLine({ [key]: Math.max(0, line[key] + delta) });
   };
 
-  const addPoints = (n: number) => {
-    patchLine({ points: line.points + n }, n);
+  /** Player points and team score move together so the sum check stays meaningful. */
+  const setPoints = (next: number) => {
+    const points = Math.max(0, next);
+    patchLine({ points }, points - line.points);
   };
 
   return (
-    <section className="space-y-4">
-      <div className="flex items-center justify-between gap-2">
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          disabled={safeIndex <= 0}
-          onClick={() => setIndex(safeIndex - 1)}
-        >
-          <ChevronRight className="size-4" aria-hidden />
-          {he.admin.statsEntry.prevPlayer}
-        </Button>
-        <p className="text-center text-sm font-semibold">
-          {player.name} ({safeIndex + 1}/{playedPlayers.length})
-        </p>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          disabled={safeIndex >= playedPlayers.length - 1}
-          onClick={() => setIndex(safeIndex + 1)}
-        >
-          {he.admin.statsEntry.nextPlayer}
-          <ChevronLeft className="size-4" aria-hidden />
-        </Button>
+    <section className="rounded-(--radius-card) border border-border bg-surface p-4 shadow-sm">
+      <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-bold">
+        {player.jerseyNumber != null ? <span className="num text-team">#{player.jerseyNumber}</span> : null}
+        <span data-user-content>{player.name}</span>
+      </h2>
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <span className="text-xs text-muted">{he.stats.pointsLong}</span>
+        <LiveStatsEditableNumber
+          value={line.points}
+          label={he.admin.liveStats.editPlayerPoints}
+          disabled={disabled}
+          onCommit={setPoints}
+          className="text-3xl font-black"
+        />
       </div>
-
-      <div className="rounded-(--radius-card) border border-border bg-surface p-4 shadow-sm">
-        <p className="mb-3 text-xs text-muted">{he.stats.pointsLong}</p>
-        <div className="mb-4 flex flex-wrap gap-2">
-          <Button type="button" variant="secondary" size="lg" disabled={disabled} onClick={() => addPoints(1)}>
-            {he.admin.statsEntry.add1}
+      <div className="mb-4 grid grid-cols-4 gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="lg"
+          disabled={disabled || line.points <= 0}
+          onClick={() => setPoints(line.points - 1)}
+          className="num"
+        >
+          {he.admin.liveStats.subtract1}
+        </Button>
+        {([1, 2, 3] as const).map((n) => (
+          <Button key={n} type="button" variant="secondary" size="lg" disabled={disabled} onClick={() => setPoints(line.points + n)}>
+            {he.admin.statsEntry[`add${n}`]}
           </Button>
-          <Button type="button" variant="secondary" size="lg" disabled={disabled} onClick={() => addPoints(2)}>
-            {he.admin.statsEntry.add2}
-          </Button>
-          <Button type="button" variant="secondary" size="lg" disabled={disabled} onClick={() => addPoints(3)}>
-            {he.admin.statsEntry.add3}
-          </Button>
-        </div>
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <StatStepper
-            label={he.stats.reboundsLong}
-            value={line.rebounds}
-            disabled={disabled}
-            onDec={() => bump("rebounds", -1)}
-            onInc={() => bump("rebounds", 1)}
-          />
-          <StatStepper
-            label={he.stats.assistsLong}
-            value={line.assists}
-            disabled={disabled}
-            onDec={() => bump("assists", -1)}
-            onInc={() => bump("assists", 1)}
-          />
-          <StatStepper
-            label={he.stats.turnoversLong}
-            value={line.turnovers}
-            disabled={disabled}
-            onDec={() => bump("turnovers", -1)}
-            onInc={() => bump("turnovers", 1)}
-          />
-          <StatStepper
-            label={he.stats.stealsLong}
-            value={line.steals}
-            disabled={disabled}
-            onDec={() => bump("steals", -1)}
-            onInc={() => bump("steals", 1)}
-          />
-        </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <StatStepper
+          label={he.stats.reboundsLong}
+          value={line.rebounds}
+          disabled={disabled}
+          onDec={() => bump("rebounds", -1)}
+          onInc={() => bump("rebounds", 1)}
+        />
+        <StatStepper
+          label={he.stats.assistsLong}
+          value={line.assists}
+          disabled={disabled}
+          onDec={() => bump("assists", -1)}
+          onInc={() => bump("assists", 1)}
+        />
+        <StatStepper
+          label={he.stats.turnoversLong}
+          value={line.turnovers}
+          disabled={disabled}
+          onDec={() => bump("turnovers", -1)}
+          onInc={() => bump("turnovers", 1)}
+        />
+        <StatStepper
+          label={he.stats.stealsLong}
+          value={line.steals}
+          disabled={disabled}
+          onDec={() => bump("steals", -1)}
+          onInc={() => bump("steals", 1)}
+        />
       </div>
     </section>
   );

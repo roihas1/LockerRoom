@@ -35,7 +35,7 @@ export function Countdown({ to }: { to: string }) {
     { v: p.minutes, l: he.home.countdown.minutes },
   ];
   return (
-    <div className="flex justify-center gap-2" role="timer" aria-live="off">
+    <div dir="ltr" className="flex justify-center gap-2" role="timer" aria-live="off">
       {cells.map((c) => (
         <div key={c.l} className="min-w-16 rounded-xl border border-border bg-black/30 px-3 py-2 text-center">
           <span className="num block text-2xl font-black text-team">{String(c.v).padStart(2, "0")}</span>

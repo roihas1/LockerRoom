@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { MapPin } from "lucide-react";
 import { ResultBadge } from "@/components/common/result-badge";
+import { OpponentBadge } from "@/components/common/team-logo";
 import { homeAwayLabels } from "@/config/labels";
 import { he } from "@/config/strings";
 import { gameResult, isUpcomingGame } from "@/lib/stats/games";
@@ -30,11 +31,14 @@ export function GameCard({ game, teamShortName, compact = false }: { game: Game;
           <ResultBadge game={game} />
         </div>
         <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-xs text-muted">{he.result.vs}</p>
-            <p data-user-content className="truncate font-display text-lg font-extrabold">
-              {game.opponent}
-            </p>
+          <div className="flex min-w-0 items-center gap-3">
+            <OpponentBadge name={game.opponent} className="size-11 text-lg" />
+            <div className="min-w-0">
+              <p className="text-xs text-muted">{he.result.vs}</p>
+              <p data-user-content className="truncate font-display text-lg font-extrabold">
+                {game.opponent}
+              </p>
+            </div>
           </div>
           {hasScore ? (
             <bdi dir="ltr" className="num shrink-0 text-3xl font-black">

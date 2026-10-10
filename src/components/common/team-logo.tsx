@@ -1,4 +1,6 @@
+import Image from "next/image";
 import type { Team } from "@/types/domain";
+import { opponentLogo } from "@/config/opponents";
 import { he } from "@/config/strings";
 import { cn } from "@/lib/utils/cn";
 import { MediaImage } from "./media-image";
@@ -11,8 +13,16 @@ export function TeamLogo({ team, className, priority }: { team: Pick<Team, "logo
   );
 }
 
-/** Neutral badge for opponents, which have no stored logo. */
+/** League logo when the opponent is known, otherwise a neutral initial badge. */
 export function OpponentBadge({ name, className }: { name: string; className?: string }) {
+  const logo = opponentLogo(name);
+  if (logo) {
+    return (
+      <span aria-hidden className={cn("relative block shrink-0 overflow-hidden rounded-full bg-white", className)}>
+        <Image src={logo} alt="" fill sizes="96px" quality={70} className="object-contain p-[12%]" />
+      </span>
+    );
+  }
   return (
     <span
       aria-hidden
