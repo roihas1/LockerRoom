@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { connection } from "next/server";
 import type { Database, MediaRow } from "@/types/database";
 import type { FeedItem, Media } from "@/types/domain";
-import { toAward, toExercise, toGame, toMedia, toPlayer, toPost, toSeason, toStatLine, toTeam } from "./mappers";
+import { toAward, toCoach, toExercise, toGame, toMedia, toPlayer, toPost, toSeason, toStatLine, toTeam } from "./mappers";
 import type { DataSource } from "./types";
 
 type Client = SupabaseClient<Database>;
@@ -145,6 +145,22 @@ export function createSupabaseSource(client: Client, { includeDrafts = false } =
       const row = maybe(await client.from("players").select("*").eq("id", id).maybeSingle());
       if (!row) return null;
       return toPlayer(row, await mediaLookup([row.photo_media_id]));
+    },
+
+    async getCoaches({ includeInactive = false } = {}) {
+      await connection();
+      let q = client.from("coaches").select("*");
+      if (!includeInactive) q = q.eq("is_active", true);
+      const rows = must(await q.order("sort_order").order("id"));
+      const lookup = await mediaLookup(rows.map((r) => r.photo_media_id));
+      return rows.map((r) => toCoach(r, lookup));
+    },
+
+    async getCoach(id) {
+      await connection();
+      const row = maybe(await client.from("coaches").select("*").eq("id", id).maybeSingle());
+      if (!row) return null;
+      return toCoach(row, await mediaLookup([row.photo_media_id]));
     },
 
     async getPlayerMedia(playerId, limit) {

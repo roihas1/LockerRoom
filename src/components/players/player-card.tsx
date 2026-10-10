@@ -3,13 +3,14 @@ import { MediaImage } from "@/components/common/media-image";
 import { positionLabels } from "@/config/labels";
 import { he } from "@/config/strings";
 import type { Player } from "@/types/domain";
+import { PlayerTag } from "./player-tag";
 
 /** Trading-card style roster tile. */
 export function PlayerCard({ player, priority }: { player: Player; priority?: boolean }) {
   return (
     <Link
       href={`/players/${player.id}`}
-      className="group card relative block overflow-hidden transition-transform motion-safe:hover:-translate-y-1 hover:border-team/50"
+      className="group card relative block overflow-hidden transition-transform hover:border-team/50 motion-safe:hover:-translate-y-1 motion-safe:hover:-rotate-1"
     >
       <div className="relative aspect-4/5 bg-surface-2">
         <MediaImage
@@ -34,14 +35,20 @@ export function PlayerCard({ player, priority }: { player: Player; priority?: bo
           <p data-user-content className="mt-1 font-display text-lg leading-tight font-extrabold">
             {player.name}
           </p>
-          {player.nickname ? (
-            <p data-user-content className="text-xs text-team-2">
-              ״{player.nickname}״
+          {player.nickname || player.hashtag ? (
+            <p className="flex flex-wrap items-center gap-x-2 text-xs">
+              {player.nickname ? <span data-user-content className="text-team-2">״{player.nickname}״</span> : null}
+              <PlayerTag player={player} />
             </p>
           ) : null}
         </div>
       </div>
-      {player.description ? (
+      {player.quote ? (
+        <p className="m-3 rounded-xl rounded-ss-none bg-surface-2 px-3 py-2 text-xs font-semibold">
+          <span aria-hidden>💬 </span>
+          <span data-user-content>{player.quote}</span>
+        </p>
+      ) : player.description ? (
         <p data-user-content className="line-clamp-2 p-3 text-xs text-muted">
           {player.description}
         </p>

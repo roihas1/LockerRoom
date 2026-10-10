@@ -69,11 +69,17 @@ export function PlayerForm({ player, demo }: { player?: Player; demo: boolean })
         <Field label={he.admin.playerForm.nickname} htmlFor="nickname">
           <Input id="nickname" name="nickname" defaultValue={player?.nickname ?? ""} disabled={disabled} data-user-content />
         </Field>
+        <Field label={he.admin.playerForm.hashtag} htmlFor="hashtag" hint={he.admin.playerForm.hashtagHint} error={fieldError(saveState, "hashtag")}>
+          <Input id="hashtag" name="hashtag" defaultValue={player?.hashtag ?? ""} disabled={disabled} data-user-content />
+        </Field>
         <Field label={he.admin.playerForm.teamRole} htmlFor="teamRole">
           <Input id="teamRole" name="teamRole" defaultValue={player?.teamRole ?? ""} disabled={disabled} data-user-content />
         </Field>
         <Field label={he.admin.playerForm.description} htmlFor="description">
           <Textarea id="description" name="description" defaultValue={player?.description ?? ""} disabled={disabled} data-user-content />
+        </Field>
+        <Field label={he.admin.playerForm.intro} htmlFor="intro" hint={he.admin.playerForm.introHint} error={fieldError(saveState, "intro")}>
+          <Textarea id="intro" name="intro" rows={2} defaultValue={player?.intro ?? ""} disabled={disabled} data-user-content />
         </Field>
         <Field label={he.admin.playerForm.strength} htmlFor="strength">
           <Input id="strength" name="strength" defaultValue={player?.strength ?? ""} disabled={disabled} data-user-content />

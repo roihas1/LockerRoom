@@ -1,5 +1,6 @@
 import type {
   AwardRow,
+  CoachRow,
   ExerciseRow,
   GameRow,
   MediaRow,
@@ -9,7 +10,7 @@ import type {
   SeasonRow,
   TeamRow,
 } from "@/types/database";
-import type { Award, Exercise, Game, Media, Player, Post, Season, StatLine, Team } from "@/types/domain";
+import type { Award, Coach, Exercise, Game, Media, Player, Post, Season, StatLine, Team } from "@/types/domain";
 
 export type MediaLookup = (id: string | null) => Media | null;
 
@@ -71,6 +72,26 @@ export function toPlayer(row: PlayerRow, media: MediaLookup): Player {
     strength: row.strength,
     weakness: row.weakness,
     quote: row.quote,
+    intro: row.intro,
+    hashtag: row.hashtag,
+    isActive: row.is_active,
+    sortOrder: row.sort_order,
+  };
+}
+
+export function toCoach(row: CoachRow, media: MediaLookup): Coach {
+  return {
+    id: row.id,
+    name: row.name,
+    role: row.role,
+    photo: media(row.photo_media_id),
+    nickname: row.nickname,
+    description: row.description,
+    strength: row.strength,
+    weakness: row.weakness,
+    quote: row.quote,
+    intro: row.intro,
+    hashtag: row.hashtag,
     isActive: row.is_active,
     sortOrder: row.sort_order,
   };

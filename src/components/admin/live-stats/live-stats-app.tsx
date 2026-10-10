@@ -1,12 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { finishLiveGameAction, startLiveGameAction } from "@/app/admin/games/live-actions";
 import { gameStatusLabels } from "@/config/labels";
 import { he } from "@/config/strings";
+import { BackLink } from "@/components/common/back-link";
 import { LiveStatsOpponent } from "@/components/admin/live-stats/live-stats-opponent";
 import { LiveStatsPlayerGrid } from "@/components/admin/live-stats/live-stats-player-grid";
 import { LiveStatsPlayerPanel } from "@/components/admin/live-stats/live-stats-player-panel";
@@ -109,9 +109,7 @@ export function LiveStatsApp({
 
   return (
     <div className="space-y-6 pb-24">
-      <Link href={`/admin/games/${game.id}?step=details`} className="text-sm text-muted hover:text-text">
-        {he.actions.back}
-      </Link>
+      <BackLink href={`/admin/games/${game.id}?step=details`} label={`${he.result.vs} ${game.opponent}`} userContent />
 
       <header className="space-y-1">
         <h1 className="font-display text-2xl font-bold">{he.admin.liveStats.title}</h1>

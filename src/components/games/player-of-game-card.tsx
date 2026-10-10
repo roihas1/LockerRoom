@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { MediaImage } from "@/components/common/media-image";
+import { PlayerTag } from "@/components/players/player-tag";
 import { positionLabels } from "@/config/labels";
 import { he } from "@/config/strings";
 import type { Player, StatLine } from "@/types/domain";
@@ -21,7 +22,12 @@ export function PlayerOfGameCard({ player, line, note }: { player: Player; line:
             {player.name}
           </span>
         </p>
-        {player.position ? <span className="text-xs text-muted">{positionLabels[player.position]}</span> : null}
+        {player.position || player.hashtag ? (
+          <p className="flex items-center gap-2 text-xs text-muted">
+            {player.position ? <span>{positionLabels[player.position]}</span> : null}
+            <PlayerTag player={player} />
+          </p>
+        ) : null}
         {line ? (
           <p className="num flex flex-wrap gap-x-3 text-sm font-bold">
             <span>

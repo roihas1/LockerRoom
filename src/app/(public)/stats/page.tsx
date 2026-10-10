@@ -7,12 +7,14 @@ import { StatTile } from "@/components/common/stat-tile";
 import { SeasonSelect } from "@/components/games/season-select";
 import { LeaderCard } from "@/components/stats/leader-board";
 import { PlayersStatsTable, sortKeys, type SortKey } from "@/components/stats/players-stats-table";
+import { ShameAwards } from "@/components/stats/shame-awards";
 import { TeamStatsStrip } from "@/components/stats/team-stats-strip";
 import { he } from "@/config/strings";
 import { getSeasonContext } from "@/lib/data/season";
 import { teamGameTotals, teamSeasonAverages } from "@/lib/stats/aggregate";
 import { record } from "@/lib/stats/games";
 import { computeLeaders, minGamesForLeaders } from "@/lib/stats/leaders";
+import { computeShameAwards } from "@/lib/stats/shame";
 import { cn } from "@/lib/utils/cn";
 import { formatShortDate } from "@/lib/utils/dates";
 import { formatAverage, formatInt, formatPercent } from "@/lib/utils/numbers";
@@ -75,7 +77,10 @@ export default async function StatsPage({ searchParams }: PageProps<"/stats">) {
       ) : view === "players" ? (
         <PlayersStatsTable aggregates={ctx.aggregates} playersById={ctx.playersById} sort={sort} hrefFor={(s) => href({ view: "players", sort: s })} />
       ) : view === "leaders" ? (
-        <Leaders ctx={ctx} />
+        <div className="space-y-10">
+          <Leaders ctx={ctx} />
+          <ShameAwards awards={computeShameAwards(ctx.aggregates, ctx.completed.length)} playersById={ctx.playersById} />
+        </div>
       ) : (
         <GamesTable ctx={ctx} />
       )}

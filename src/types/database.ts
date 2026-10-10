@@ -91,6 +91,8 @@ export type PlayerRow = {
   strength: string | null;
   weakness: string | null;
   quote: string | null;
+  intro: string | null;
+  hashtag: string | null;
   is_active: boolean;
   sort_order: number;
   created_at: string;
@@ -201,6 +203,24 @@ export type PostRow = {
 
 export type MediaPlayerRow = { media_id: string; player_id: number };
 
+export type CoachRow = {
+  id: number;
+  name: string;
+  role: string | null;
+  photo_media_id: string | null;
+  nickname: string | null;
+  description: string | null;
+  strength: string | null;
+  weakness: string | null;
+  quote: string | null;
+  intro: string | null;
+  hashtag: string | null;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -209,6 +229,7 @@ export type Database = {
       team: Table<TeamRow, "name" | "short_name">;
       seasons: Table<SeasonRow, "name" | "slug" | "start_date" | "end_date">;
       players: Table<PlayerRow, "name">;
+      coaches: Table<CoachRow, "name">;
       player_contacts: Table<PlayerContactRow, "player_id">;
       games: Table<GameRow, "season_id" | "opponent" | "tipoff_at">;
       player_game_stats: Table<PlayerGameStatRow, "game_id" | "player_id">;

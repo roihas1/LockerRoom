@@ -1,5 +1,6 @@
 import type {
   Award,
+  Coach,
   Exercise,
   ExerciseCategory,
   FeedItem,
@@ -38,6 +39,8 @@ export interface DataSource {
   getPlayers(opts?: { includeInactive?: boolean }): Promise<Player[]>;
   getPlayer(id: number): Promise<Player | null>;
   getPlayerMedia(playerId: number, limit: number): Promise<Media[]>;
+  getCoaches(opts?: { includeInactive?: boolean }): Promise<Coach[]>;
+  getCoach(id: number): Promise<Coach | null>;
   getRecentMedia(limit: number, kind?: MediaKind): Promise<Media[]>;
   getGameMedia(gameId: number): Promise<Media[]>;
   getExercises(category?: ExerciseCategory): Promise<Exercise[]>;

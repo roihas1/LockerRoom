@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PostForm } from "@/app/admin/locker-room/post-form";
 import { loadAdminPost } from "@/lib/admin/posts";
+import { BackLink } from "@/components/common/back-link";
 import { he } from "@/config/strings";
 import { getAdminData } from "@/lib/data";
 import { isDemoMode } from "@/lib/supabase/env";
@@ -35,9 +35,7 @@ export default async function EditPostPage({ params }: PageProps<"/admin/locker-
 
   return (
     <div className="space-y-4">
-      <Link href="/admin/locker-room" className="text-sm text-muted hover:text-text">
-        {he.actions.back}
-      </Link>
+      <BackLink href="/admin/locker-room" label={he.admin.posts} />
       <h1 className="font-display text-2xl font-bold" data-user-content>
         {post.title ?? he.admin.posts}
       </h1>

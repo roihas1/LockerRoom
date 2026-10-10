@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronRight } from "lucide-react";
+import { BackLink } from "@/components/common/back-link";
 import { EmptyState } from "@/components/common/empty-state";
 import { MediaImage } from "@/components/common/media-image";
 import { SectionHeader } from "@/components/common/section-header";
 import { StatTile } from "@/components/common/stat-tile";
 import { ActionGallery } from "@/components/media/action-gallery";
+import { PlayerTag } from "@/components/players/player-tag";
 import { Badge } from "@/components/ui/badge";
 import { positionLabels } from "@/config/labels";
 import { he } from "@/config/strings";
@@ -34,7 +35,7 @@ export async function generateMetadata({ params }: PageProps<"/players/[id]">): 
   const [player, team] = await Promise.all([id ? data.getPlayer(id) : null, data.getTeam()]);
   if (!player) return { title: he.empty.notFound.title };
   const title = `#${player.jerseyNumber ?? ""} ${player.name} · ${team.name}`;
-  const description = [player.position ? positionLabels[player.position] : null, player.nickname ? `״${player.nickname}״` : null, player.description]
+  const description = [player.position ? positionLabels[player.position] : null, player.nickname ? `״${player.nickname}״` : null, player.hashtag ? `#${player.hashtag}` : null, player.description]
     .filter(Boolean)
     .join(" · ");
   return { title: { absolute: title }, description, openGraph: { title, description, type: "profile" } };
@@ -64,10 +65,7 @@ export default async function PlayerPage({ params }: PageProps<"/players/[id]">)
 
   return (
     <div className="space-y-8">
-      <Link href="/players" className="inline-flex items-center gap-1 text-sm font-semibold text-muted hover:text-text">
-        <ChevronRight className="size-4" aria-hidden />
-        {he.roster.title}
-      </Link>
+      <BackLink href="/players" label={he.roster.title} />
 
       <header className="card court-bg relative grid overflow-hidden md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
         <div className="relative aspect-4/5 md:aspect-auto md:min-h-96">
@@ -89,15 +87,31 @@ export default async function PlayerPage({ params }: PageProps<"/players/[id]">)
             ) : null}
             {!player.isActive ? <Badge tone="warning">{he.roster.inactive}</Badge> : null}
           </div>
-          {player.nickname ? (
-            <p className="font-display text-xl font-bold text-team-2">
-              ״<span data-user-content>{player.nickname}</span>״
+          {player.nickname || player.hashtag ? (
+            <p className="flex flex-wrap items-baseline gap-x-3 font-display text-xl font-bold text-team-2">
+              {player.nickname ? (
+                <span>
+                  ״<span data-user-content>{player.nickname}</span>״
+                </span>
+              ) : null}
+              <PlayerTag player={player} className="text-base" />
             </p>
           ) : null}
           {player.description ? (
             <p data-user-content className="max-w-prose text-text/85">
               {player.description}
             </p>
+          ) : null}
+          {player.intro ? (
+            <figure className="max-w-prose rounded-2xl border border-team/40 bg-team/10 p-4">
+              <figcaption className="mb-1 text-xs font-bold text-team">
+                <span aria-hidden>🎤 </span>
+                {he.roster.intro}
+              </figcaption>
+              <blockquote data-user-content className="font-display text-lg leading-snug font-extrabold">
+                {player.intro}
+              </blockquote>
+            </figure>
           ) : null}
         </div>
       </header>

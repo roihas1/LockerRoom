@@ -1,5 +1,6 @@
 import {
   fixtureAwards,
+  fixtureCoaches,
   fixtureExercises,
   fixtureGameMedia,
   fixtureGames,
@@ -70,6 +71,12 @@ export function createFixtureSource({ includeDrafts = false } = {}): DataSource 
     },
     async getPlayer(id) {
       return fixturePlayers.find((p) => p.id === id) ?? null;
+    },
+    async getCoaches({ includeInactive = false } = {}) {
+      return fixtureCoaches.filter((c) => includeInactive || c.isActive).sort((a, b) => a.sortOrder - b.sortOrder);
+    },
+    async getCoach(id) {
+      return fixtureCoaches.find((c) => c.id === id) ?? null;
     },
     async getPlayerMedia(playerId, limit) {
       const ids = publishedGameIds();

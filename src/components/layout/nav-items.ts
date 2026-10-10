@@ -19,6 +19,10 @@ export const navItems: NavItem[] = [
 /** Mobile bottom bar shows these four plus a "more" sheet holding the rest. */
 export const bottomNavHrefs = ["/", "/games", "/stats", "/players"];
 
+/** Pages that live under a nav item without sharing its URL prefix. */
+const nestedUnder: Record<string, string[]> = { "/players": ["/coaches"] };
+
 export function isActive(pathname: string, href: string): boolean {
-  return href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
+  if (href === "/") return pathname === "/";
+  return [href, ...(nestedUnder[href] ?? [])].some((h) => pathname === h || pathname.startsWith(`${h}/`));
 }

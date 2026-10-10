@@ -7,7 +7,7 @@ export default function NotFound() {
   return (
     <main className="mx-auto flex min-h-dvh max-w-md items-center px-4">
       <EmptyState
-        emoji="🧱"
+        emoji="🏀💨"
         title={he.empty.notFound.title}
         text={he.empty.notFound.text}
         className="w-full"

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { MediaImage } from "@/components/common/media-image";
+import { PlayerTag } from "@/components/players/player-tag";
 import { he } from "@/config/strings";
 import { leaderMeta } from "@/lib/stats/categories";
 import type { LeaderBoard as Board } from "@/lib/stats/leaders";
@@ -25,7 +26,10 @@ export function LeaderCard({ board, playersById, compact = false }: { board: Boa
           <p data-user-content className="truncate font-display text-lg font-extrabold">
             {leader?.name}
           </p>
-          <p className="num text-xs text-muted">#{leader?.jerseyNumber}</p>
+          <p className="flex items-center gap-2 text-xs text-muted">
+            <span className="num">#{leader?.jerseyNumber}</span>
+            <PlayerTag player={leader} className="truncate" />
+          </p>
         </div>
         <p className="text-end">
           <bdi dir="ltr" className="num block text-3xl leading-none font-black text-team">

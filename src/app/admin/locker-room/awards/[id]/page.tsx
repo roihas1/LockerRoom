@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AwardForm } from "@/app/admin/locker-room/award-form";
+import { BackLink } from "@/components/common/back-link";
 import { he } from "@/config/strings";
 import { getAdminData } from "@/lib/data";
 import { isDemoMode } from "@/lib/supabase/env";
@@ -37,9 +37,7 @@ export default async function EditAwardPage({ params }: PageProps<"/admin/locker
 
   return (
     <div className="space-y-4">
-      <Link href="/admin/locker-room/awards" className="text-sm text-muted hover:text-text">
-        {he.actions.back}
-      </Link>
+      <BackLink href="/admin/locker-room/awards" label={he.admin.awards} />
       <h1 className="font-display text-2xl font-bold" data-user-content>
         {award.title}
       </h1>

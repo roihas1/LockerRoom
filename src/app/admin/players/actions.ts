@@ -31,6 +31,8 @@ export async function savePlayerAction(_prev: ActionResult | null, formData: For
     strength: parsed.data.strength ?? null,
     weakness: parsed.data.weakness ?? null,
     quote: parsed.data.quote ?? null,
+    intro: parsed.data.intro ?? null,
+    hashtag: parsed.data.hashtag ?? null,
     sort_order: parsed.data.sortOrder,
     is_active: parsed.data.isActive ?? true,
     ...(parsed.data.photoMediaId !== undefined ? { photo_media_id: parsed.data.photoMediaId } : {}),

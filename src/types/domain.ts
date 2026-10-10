@@ -66,6 +66,28 @@ export interface Player {
   strength: string | null;
   weakness: string | null;
   quote: string | null;
+  /** Read out like a pre-game announcer introduction. */
+  intro: string | null;
+  /** Stored without the leading `#`. */
+  hashtag: string | null;
+  isActive: boolean;
+  sortOrder: number;
+}
+
+export interface Coach {
+  id: number;
+  name: string;
+  /** e.g. "מאמן ראשי", "עוזר מאמן". */
+  role: string | null;
+  photo: Media | null;
+  nickname: string | null;
+  description: string | null;
+  strength: string | null;
+  weakness: string | null;
+  quote: string | null;
+  intro: string | null;
+  /** Stored without the leading `#`. */
+  hashtag: string | null;
   isActive: boolean;
   sortOrder: number;
 }

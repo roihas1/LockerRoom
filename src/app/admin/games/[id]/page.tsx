@@ -8,6 +8,7 @@ import { GameWizardNav, type GameWizardStep } from "@/components/admin/game-wiza
 import { StatsEntryForm } from "@/components/admin/stats-entry/stats-entry-form";
 import { buildInitialRows } from "@/components/admin/stats-entry/types";
 import { GameDetail } from "@/components/games/game-detail";
+import { BackLink } from "@/components/common/back-link";
 import { he } from "@/config/strings";
 import { getStatsEntryDefaults } from "@/lib/admin/lineup";
 import { getAdminData } from "@/lib/data";
@@ -53,9 +54,7 @@ export default async function AdminGamePage({ params, searchParams }: PageProps<
 
   return (
     <div className="space-y-6">
-      <Link href="/admin/games" className="text-sm text-muted hover:text-text">
-        {he.actions.back}
-      </Link>
+      <BackLink href="/admin/games" label={he.admin.games} />
       <header className="space-y-2">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <h1 className="font-display text-2xl font-bold" data-user-content>

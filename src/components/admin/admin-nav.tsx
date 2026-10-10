@@ -13,6 +13,7 @@ import {
   Trophy,
   UserRound,
   Users,
+  Whistle,
 } from "lucide-react";
 import { he } from "@/config/strings";
 import { cn } from "@/lib/utils/cn";
@@ -28,6 +29,7 @@ const contentLinks: NavLink[] = [
   { href: "/admin", label: he.admin.dashboard, icon: LayoutDashboard, exact: true },
   { href: "/admin/games", label: he.admin.games, icon: Trophy },
   { href: "/admin/players", label: he.admin.players, icon: Users },
+  { href: "/admin/coaches", label: he.admin.coaches, icon: Whistle },
   { href: "/admin/plays", label: he.admin.exercises, icon: ClipboardList },
   { href: "/admin/locker-room", label: he.admin.posts, icon: Newspaper },
 ];

@@ -1,5 +1,7 @@
 import { EmptyState } from "@/components/common/empty-state";
 import { SectionHeader } from "@/components/common/section-header";
+import { QuoteOfDay } from "@/components/fun/quote-of-day";
+import { WinConfetti } from "@/components/fun/win-confetti";
 import { GameCard } from "@/components/games/game-card";
 import { Hero } from "@/components/home/hero";
 import { LastGameCard } from "@/components/home/last-game-card";
@@ -13,18 +15,19 @@ import { he } from "@/config/strings";
 import { getData } from "@/lib/data";
 import { getSeasonContext } from "@/lib/data/season";
 import { teamSeasonAverages } from "@/lib/stats/aggregate";
-import { currentStreak, lastGame, nextGame, record } from "@/lib/stats/games";
+import { currentStreak, gameResult, lastGame, nextGame, record } from "@/lib/stats/games";
 import { computeLeaders } from "@/lib/stats/leaders";
 
 const HOME_PLAYS_LIMIT = 6;
 
 export default async function HomePage() {
   const data = getData();
-  const [ctx, team, feed, plays] = await Promise.all([
+  const [ctx, team, feed, plays, coaches] = await Promise.all([
     getSeasonContext(),
     data.getTeam(),
     data.getFeed({ limit: 3 }),
     data.getExercises(),
+    data.getCoaches(),
   ]);
   const rec = record(ctx.games);
   const next = nextGame(ctx.games);
@@ -37,6 +40,9 @@ export default async function HomePage() {
   return (
     <div className="space-y-10">
       <Hero team={team} season={ctx.season} record={rec} streak={currentStreak(ctx.games)} />
+      {last && gameResult(last) === "win" ? <WinConfetti id={`game-${last.id}`} /> : null}
+
+      <QuoteOfDay players={[...ctx.playersById.values()]} coaches={coaches} />
 
       <div className="grid gap-4 md:grid-cols-2">
         {next ? <NextGameCard game={next} team={team} /> : <EmptyState emoji="📅" title={he.empty.upcoming.title} text={he.empty.upcoming.text} />}

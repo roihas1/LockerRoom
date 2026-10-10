@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { AwardForm } from "@/app/admin/locker-room/award-form";
+import { BackLink } from "@/components/common/back-link";
 import { he } from "@/config/strings";
 import { getAdminData } from "@/lib/data";
 import { isDemoMode } from "@/lib/supabase/env";
@@ -15,9 +15,7 @@ export default async function NewAwardPage() {
 
   return (
     <div className="space-y-4">
-      <Link href="/admin/locker-room/awards" className="text-sm text-muted hover:text-text">
-        {he.actions.back}
-      </Link>
+      <BackLink href="/admin/locker-room/awards" label={he.admin.awards} />
       <h1 className="font-display text-2xl font-bold">{he.admin.newAward}</h1>
       <AwardForm seasons={seasons} players={players} games={games} demo={isDemoMode()} linkedToFeed={false} />
     </div>

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronRight } from "lucide-react";
+import { BackLink } from "@/components/common/back-link";
 import { MediaImage } from "@/components/common/media-image";
 import { SectionHeader } from "@/components/common/section-header";
 import { VideoPlayer } from "@/components/media/video-player";
@@ -26,10 +26,7 @@ export default async function ExercisePage({ params }: PageProps<"/plays/[id]">)
 
   return (
     <article className="mx-auto max-w-3xl space-y-6">
-      <Link href="/plays" className="inline-flex items-center gap-1 text-sm font-semibold text-muted hover:text-text">
-        <ChevronRight className="size-4" aria-hidden />
-        {he.training.title}
-      </Link>
+      <BackLink href="/plays" label={he.training.title} />
       <header className="space-y-3">
         <div className="flex flex-wrap items-center gap-2">
           <Link href={`/plays?category=${exercise.category}`}>

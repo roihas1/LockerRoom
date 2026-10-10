@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronRight } from "lucide-react";
+import { BackLink } from "@/components/common/back-link";
+import { WinConfetti } from "@/components/fun/win-confetti";
 import { GameDetail } from "@/components/games/game-detail";
 import { he } from "@/config/strings";
 import { getData } from "@/lib/data";
 import { gameShareText } from "@/lib/meta";
+import { gameResult } from "@/lib/stats/games";
 import { parseId } from "@/lib/utils/params";
 
 export async function generateMetadata({ params }: PageProps<"/games/[id]">): Promise<Metadata> {
@@ -31,11 +32,9 @@ export default async function GamePage({ params }: PageProps<"/games/[id]">) {
 
   return (
     <>
-      <Link href="/games" className="mb-4 inline-flex items-center gap-1 text-sm font-semibold text-muted hover:text-text">
-        <ChevronRight className="size-4" aria-hidden />
-        {he.nav.games}
-      </Link>
+      <BackLink href="/games" label={he.nav.games} className="mb-4" />
       <GameDetail detail={detail} team={team} />
+      {gameResult(detail.game) === "win" ? <WinConfetti id={`game-${detail.game.id}`} /> : null}
     </>
   );
 }

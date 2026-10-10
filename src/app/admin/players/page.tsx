@@ -27,6 +27,7 @@ export default async function AdminPlayersPage() {
                 <th className="px-3 py-2 text-start font-semibold">{he.roster.jersey}</th>
                 <th className="px-3 py-2 text-start font-semibold">{he.admin.playerForm.name}</th>
                 <th className="px-3 py-2 text-start font-semibold">{he.admin.playerForm.position}</th>
+                <th className="px-3 py-2 text-start font-semibold">{he.admin.playerForm.hashtag}</th>
                 <th className="px-3 py-2 text-start font-semibold">{he.admin.actionsColumn}</th>
               </tr>
             </thead>
@@ -43,6 +44,9 @@ export default async function AdminPlayersPage() {
                     ) : null}
                   </td>
                   <td className="px-3 py-2">{p.position ? positionLabels[p.position] : he.stats.noValue}</td>
+                  <td className="px-3 py-2" data-user-content>
+                    {p.hashtag ? `#${p.hashtag}` : he.stats.noValue}
+                  </td>
                   <td className="px-3 py-2">
                     <Link href={`/admin/players/${p.id}`} className="font-semibold text-team hover:underline">
                       {he.actions.edit}
