@@ -34,6 +34,13 @@ export const hebrewAllowlist: readonly string[] = [
   "Apple",
   "Outlook",
   "Waze",
+  "WhatsApp",
+  "QR",
+  "iPhone",
+  "iOS",
+  "Android",
+  "Safari",
+  "Chrome",
 ];
 
 const allow = new Set(hebrewAllowlist.map((t) => t.toLowerCase()));

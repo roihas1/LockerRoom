@@ -8,7 +8,9 @@ import { VideoPlayer } from "@/components/media/video-player";
 import { Badge } from "@/components/ui/badge";
 import { difficultyLabels, exerciseCategoryLabels } from "@/config/labels";
 import { he } from "@/config/strings";
+import { ShareButton } from "@/components/common/share-button";
 import { getData } from "@/lib/data";
+import { shareMessage } from "@/lib/meta";
 import { parseId } from "@/lib/utils/params";
 
 export async function generateMetadata({ params }: PageProps<"/plays/[id]">): Promise<Metadata> {
@@ -38,9 +40,12 @@ export default async function ExercisePage({ params }: PageProps<"/plays/[id]">)
             </Badge>
           ) : null}
         </div>
-        <h1 data-user-content className="font-display text-3xl font-black md:text-4xl">
-          {exercise.title}
-        </h1>
+        <div className="flex items-start justify-between gap-3">
+          <h1 data-user-content className="font-display text-3xl font-black md:text-4xl">
+            {exercise.title}
+          </h1>
+          <ShareButton path={`/plays/${exercise.id}`} text={shareMessage.play(exercise)} title={exercise.title} />
+        </div>
       </header>
 
       {exercise.video ? (

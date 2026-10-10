@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { blockDemoMutation } from "@/lib/auth/demo-guard";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { he } from "@/config/strings";
+import { notifyNewPlay } from "@/lib/push/notify";
 import { createSessionClient } from "@/lib/supabase/server";
 import { actionFail, actionFromZod, actionSuccess, type ActionResult } from "@/lib/utils/action-result";
 import { mapErrorToAction } from "@/lib/utils/errors";
@@ -23,7 +24,7 @@ function revalidateExercisePaths(id: number) {
 
 /** Publishing a play shares it to the locker room feed; unpublishing hides that post. */
 async function syncPlayFeedPost(supabase: Client, exerciseId: number, publish: boolean) {
-  const { data: existing } = await supabase.from("locker_room_posts").select("id").eq("exercise_id", exerciseId).maybeSingle();
+  const { data: existing } = await supabase.from("locker_room_posts").select("id, is_published").eq("exercise_id", exerciseId).maybeSingle();
   if (!publish) {
     if (existing) await supabase.from("locker_room_posts").update({ is_published: false }).eq("id", existing.id);
     return;
@@ -44,6 +45,7 @@ async function syncPlayFeedPost(supabase: Client, exerciseId: number, publish: b
   } else {
     await supabase.from("locker_room_posts").insert({ ...row, created_by: user?.id ?? null });
   }
+  if (!existing?.is_published) notifyNewPlay(exerciseId, exercise?.title ?? "");
 }
 
 export async function saveExerciseAction(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {

@@ -79,7 +79,7 @@ export default async function StatsPage({ searchParams }: PageProps<"/stats">) {
       ) : view === "leaders" ? (
         <div className="space-y-10">
           <Leaders ctx={ctx} />
-          <ShameAwards awards={computeShameAwards(ctx.aggregates, ctx.completed.length)} playersById={ctx.playersById} />
+          <ShameAwards awards={computeShameAwards(ctx.aggregates, ctx.completed.length, ctx.lines)} playersById={ctx.playersById} />
         </div>
       ) : (
         <GamesTable ctx={ctx} />

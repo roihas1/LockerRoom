@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { sumPlayedPoints } from "@/lib/live-stats/form-data";
 import { clientStateFromSnapshot } from "@/lib/live-stats/initial-state";
 import type { LiveGameSnapshot } from "@/lib/live-stats/types";
+import { haptic } from "@/lib/utils/haptics";
 import type { Game, Player } from "@/types/domain";
 
 export function LiveStatsApp({
@@ -107,6 +108,11 @@ export function LiveStatsApp({
 
   const scoringDisabled = demo || readOnly || !isLive;
 
+  const recordChange = (next: typeof state) => {
+    haptic();
+    setState(next);
+  };
+
   return (
     <div className="space-y-6 pb-24">
       <BackLink href={`/admin/games/${game.id}?step=details`} label={`${he.result.vs} ${game.opponent}`} userContent />
@@ -147,14 +153,22 @@ export function LiveStatsApp({
         <>
           <LiveStatsPlayerGrid players={players} state={state} selectedId={selectedPlayer?.id ?? null} onSelect={setSelectedId} />
 
-          <LiveStatsPlayerPanel player={selectedPlayer} state={state} disabled={scoringDisabled} onChange={(next) => setState(next)} />
+          <LiveStatsPlayerPanel player={selectedPlayer} state={state} disabled={scoringDisabled} onChange={recordChange} />
 
-          <LiveStatsOpponent state={state} disabled={scoringDisabled} onChange={(next) => setState(next)} />
+          <LiveStatsOpponent state={state} disabled={scoringDisabled} onChange={recordChange} />
 
           {sumWarning ? <p className="text-sm text-warning">{sumWarning}</p> : null}
 
           <div className="flex flex-wrap gap-2">
-            <Button type="button" variant="outline" disabled={!canUndo || scoringDisabled} onClick={undoLast}>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={!canUndo || scoringDisabled}
+              onClick={() => {
+                haptic([15, 30, 15]);
+                undoLast();
+              }}
+            >
               {he.admin.liveStats.undoLast}
             </Button>
             {isLive ? (

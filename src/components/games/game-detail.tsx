@@ -9,20 +9,38 @@ import { homeAwayLabels } from "@/config/labels";
 import { he } from "@/config/strings";
 import { isCalendarEligible } from "@/lib/calendar";
 import { formatLongDate, formatTime, formatWeekday } from "@/lib/utils/dates";
-import type { GameDetailData, Team } from "@/types/domain";
+import type { ReactNode } from "react";
+import type { GameDetailData, GameEvent, Team } from "@/types/domain";
 import { AddToCalendar } from "./add-to-calendar";
 import { BoxScoreTable } from "./box-score-table";
+import { LiveGameSubscriber } from "./live-game-subscriber";
+import { PlayByPlay } from "./play-by-play";
 import { WazeButton } from "./waze-button";
 import { PlayerOfGameCard } from "./player-of-game-card";
 import { TeamTotals } from "./team-totals";
 
-/** Full game page body. Shared by the public game page and the admin review step. */
-export function GameDetail({ detail, team }: { detail: GameDetailData; team: Team }) {
+/**
+ * Full game page body. Shared by the public game page and the admin review step.
+ * Pass `events` (public page) to turn a live game into a realtime scoreboard with play-by-play.
+ */
+export function GameDetail({
+  detail,
+  team,
+  events,
+  actions,
+}: {
+  detail: GameDetailData;
+  team: Team;
+  events?: GameEvent[];
+  actions?: ReactNode;
+}) {
   const { game, lines, players, media, playOfGame } = detail;
   const potg = players.find((p) => p.id === game.playerOfGameId) ?? null;
   const photos = media.filter((m) => m.kind === "image");
   const videos = media.filter((m) => m.kind === "video" && m.id !== playOfGame?.id);
   const isFinal = game.status === "final";
+  const isLive = game.status === "live" && events !== undefined;
+  const showStats = isFinal || isLive;
 
   return (
     <article className="space-y-8">
@@ -33,7 +51,7 @@ export function GameDetail({ detail, team }: { detail: GameDetailData; team: Tea
             {game.roundNumber ? " · " : null}
             {homeAwayLabels[game.homeAway]}
           </span>
-          <ResultBadge game={game} />
+          {isLive ? <LiveGameSubscriber gameId={game.id} /> : <ResultBadge game={game} />}
         </div>
         <ScoreBoard game={game} team={team} size="lg" />
         <dl className="mt-6 flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm text-muted">
@@ -57,13 +75,21 @@ export function GameDetail({ detail, team }: { detail: GameDetailData; team: Tea
             </div>
           ) : null}
         </dl>
-        {isCalendarEligible(game) ? (
+        {isCalendarEligible(game) || actions ? (
           <div className="mt-5 flex flex-wrap justify-center gap-2">
-            <AddToCalendar game={game} team={team} />
-            {game.location ? <WazeButton address={game.location} /> : null}
+            {isCalendarEligible(game) ? <AddToCalendar game={game} team={team} /> : null}
+            {isCalendarEligible(game) && game.location ? <WazeButton address={game.location} /> : null}
+            {actions}
           </div>
         ) : null}
       </header>
+
+      {isLive ? (
+        <section>
+          <SectionHeader title={he.live.playByPlay} icon={<span aria-hidden>🔴</span>} />
+          <PlayByPlay events={events} players={players} />
+        </section>
+      ) : null}
 
       {potg ? (
         <section aria-labelledby="potg">
@@ -74,7 +100,7 @@ export function GameDetail({ detail, team }: { detail: GameDetailData; team: Tea
         </section>
       ) : null}
 
-      {isFinal ? (
+      {showStats ? (
         <section>
           <SectionHeader title={he.games.boxScore} />
           {lines.length ? (
@@ -85,7 +111,7 @@ export function GameDetail({ detail, team }: { detail: GameDetailData; team: Tea
         </section>
       ) : null}
 
-      {isFinal && lines.length ? (
+      {showStats && lines.length ? (
         <section>
           <SectionHeader title={he.games.teamTotals} />
           <TeamTotals lines={lines} />

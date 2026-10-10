@@ -1,9 +1,10 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { connection } from "next/server";
-import type { Database, MediaRow } from "@/types/database";
+import type { Database, MediaRow, PostRow } from "@/types/database";
 import type { FeedItem, Media } from "@/types/domain";
-import { toAward, toCoach, toExercise, toGame, toMedia, toPlayer, toPost, toSeason, toStatLine, toTeam } from "./mappers";
+import { toAward, toCoach, toExercise, toGame, toGameEvent, toMedia, toPlayer, toPost, toSeason, toStatLine, toTeam } from "./mappers";
+import { toReactionCounts } from "@/lib/reactions";
 import type { DataSource } from "./types";
 
 type Client = SupabaseClient<Database>;
@@ -53,7 +54,7 @@ export function createSupabaseSource(client: Client, { includeDrafts = false } =
     return must(await client.from("seasons").select("*").order("start_date", { ascending: false })).map(toSeason);
   }
 
-  return {
+  const source: Omit<DataSource, "getAwards"> = {
     mode: "supabase",
 
     async getTeam() {
@@ -113,6 +114,19 @@ export function createSupabaseSource(client: Client, { includeDrafts = false } =
     async getGameLines(gameId) {
       await connection();
       return must(await client.from("player_game_stats").select("*").eq("game_id", gameId)).map(toStatLine);
+    },
+
+    async getGameEvents(gameId, limit = 60) {
+      await connection();
+      // Play-by-play is decorative; a missing table or failed read must not take the game page down.
+      const { data, error } = await client
+        .from("game_events")
+        .select("*")
+        .eq("game_id", gameId)
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: false })
+        .limit(limit);
+      return error ? [] : (data ?? []).map(toGameEvent);
     },
 
     async getSeasonStatLines(seasonId) {
@@ -224,26 +238,46 @@ export function createSupabaseSource(client: Client, { includeDrafts = false } =
       const pageRest = restRows.slice(0, limit);
       const rows = [...pinnedRows, ...pageRest];
       if (rows.length === 0) return { items: [], nextCursor: null };
+      const items = await hydrateFeed(rows);
+      const last = pageRest.at(-1);
+      return { items, nextCursor: restRows.length > limit && last ? last.published_at : null };
+    },
 
+    async getFeedItem(id) {
+      await connection();
+      const row = maybe(await published(client.from("locker_room_posts").select("*")).eq("id", id).maybeSingle());
+      if (!row) return null;
+      return (await hydrateFeed([row]))[0] ?? null;
+    },
+  };
+
+  async function hydrateFeed(rows: PostRow[]): Promise<FeedItem[]> {
       const postIds = rows.map((r) => r.id);
       const awardIds = rows.map((r) => r.award_id).filter((i): i is number => i !== null);
       const gameIds = rows.map((r) => r.game_id).filter((i): i is number => i !== null);
       const exerciseIds = rows.map((r) => r.exercise_id).filter((i): i is number => i !== null);
-      const [mediaRes, awardsRes, gamesRes, exercisesRes] = await Promise.all([
+      const [mediaRes, awardsRes, gamesRes, exercisesRes, reactionsRes] = await Promise.all([
         client.from("media").select("*").in("post_id", postIds).order("sort_order"),
         awardIds.length ? client.from("awards").select("*").in("id", awardIds) : Promise.resolve({ data: [], error: null }),
         gameIds.length ? client.from("games").select("*").in("id", gameIds) : Promise.resolve({ data: [], error: null }),
         exerciseIds.length
           ? published(client.from("exercises").select("*")).in("id", exerciseIds)
           : Promise.resolve({ data: [], error: null }),
+        client.rpc("reaction_counts", { p_post_ids: postIds }),
       ]);
       const exerciseRows = must(exercisesRes);
+      const reactions = new Map<number, Record<string, number>>();
+      // Reactions are decorative; a failure here should not take the feed down.
+      for (const r of reactionsRes.error ? [] : (reactionsRes.data ?? [])) {
+        reactions.set(r.post_id, { ...reactions.get(r.post_id), [r.emoji]: r.total });
+      }
       const media = await mediaWithTags(must(mediaRes));
       const awardRows = must(awardsRes);
       const playerIds = [
         ...rows.map((r) => r.quote_player_id),
+        ...rows.map((r) => r.milestone_player_id),
         ...awardRows.map((a) => a.player_id),
-      ].filter((i): i is number => i !== null);
+      ].filter((i): i is number => typeof i === "number");
       const playerRows = playerIds.length ? must(await client.from("players").select("*").in("id", playerIds)) : [];
       const lookup = await mediaLookup([
         ...playerRows.map((p) => p.photo_media_id),
@@ -255,7 +289,7 @@ export function createSupabaseSource(client: Client, { includeDrafts = false } =
       const awards = new Map(awardRows.map((a) => [a.id, toAward(a, lookup)]));
       const games = new Map(must(gamesRes).map((g) => [g.id, toGame(g)]));
 
-      const items: FeedItem[] = rows.map((r) => {
+      return rows.map((r) => {
         const award = r.award_id ? (awards.get(r.award_id) ?? null) : null;
         return {
           ...toPost(
@@ -265,14 +299,16 @@ export function createSupabaseSource(client: Client, { includeDrafts = false } =
           award,
           awardPlayer: award ? (players.get(award.playerId) ?? null) : null,
           quotePlayer: r.quote_player_id ? (players.get(r.quote_player_id) ?? null) : null,
+          milestonePlayer: r.milestone_player_id ? (players.get(r.milestone_player_id) ?? null) : null,
           game: r.game_id ? (games.get(r.game_id) ?? null) : null,
           play: r.exercise_id ? (plays.get(r.exercise_id) ?? null) : null,
+          reactions: toReactionCounts(reactions.get(r.id)),
         };
       });
-      const last = pageRest.at(-1);
-      return { items, nextCursor: restRows.length > limit && last ? last.published_at : null };
-    },
+  }
 
+  return {
+    ...source,
     async getAwards(seasonId) {
       await connection();
       let q = published(client.from("awards").select("*"));

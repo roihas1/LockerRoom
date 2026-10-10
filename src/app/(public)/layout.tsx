@@ -1,5 +1,7 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { ViewTransition, type ReactNode } from "react";
+import { InstallBanner } from "@/components/app/install-prompt";
+import { EasterEggs } from "@/components/fun/easter-eggs";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { SiteHeader } from "@/components/layout/site-header";
 import { he } from "@/config/strings";
@@ -17,20 +19,30 @@ export default async function PublicLayout({ children }: { children: ReactNode }
       </a>
       <SiteHeader team={team} />
       <main id="main" className="mx-auto w-full max-w-6xl px-4 pt-5 pb-6 md:pt-8 md:pb-16">
-        {children}
+        <ViewTransition>{children}</ViewTransition>
       </main>
       <footer className="mx-auto hidden max-w-6xl items-center justify-between px-4 pb-10 text-xs text-muted md:flex">
         <span data-user-content>{team.name}</span>
-        <Link href="/login" className="hover:text-text">
-          {he.nav.adminLogin}
-        </Link>
+        <div className="flex items-center gap-4">
+          <Link href="/join" className="hover:text-text">
+            {he.app.join.footerLink}
+          </Link>
+          <Link href="/login" className="hover:text-text">
+            {he.nav.adminLogin}
+          </Link>
+        </div>
       </footer>
-      <div className="pb-24 text-center text-xs text-muted md:hidden">
+      <div className="flex justify-center gap-2 pb-24 text-center text-xs text-muted md:hidden">
+        <Link href="/join" className="inline-block p-2 hover:text-text">
+          {he.app.join.footerLink}
+        </Link>
         <Link href="/login" className="inline-block p-2 hover:text-text">
           {he.nav.adminLogin}
         </Link>
       </div>
+      <InstallBanner />
       <BottomNav />
+      <EasterEggs />
     </>
   );
 }

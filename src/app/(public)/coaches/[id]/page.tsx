@@ -1,3 +1,4 @@
+import { ViewTransition } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { BackLink } from "@/components/common/back-link";
@@ -38,7 +39,11 @@ export default async function CoachPage({ params }: PageProps<"/coaches/[id]">) 
 
       <header className="card court-bg relative grid overflow-hidden md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
         <div className="relative aspect-4/5 md:aspect-auto md:min-h-96">
-          <MediaImage media={coach.photo} fallback="/placeholders/player.svg" alt={he.media.playerPhoto(coach.name)} sizes="(min-width: 768px) 40vw, 100vw" priority />
+          <ViewTransition name={`coach-photo-${coach.id}`} share="morph" default="none">
+            <div className="absolute inset-0">
+              <MediaImage media={coach.photo} fallback="/placeholders/player.svg" alt={he.media.playerPhoto(coach.name)} sizes="(min-width: 768px) 40vw, 100vw" priority />
+            </div>
+          </ViewTransition>
           <div className="absolute inset-0 bg-linear-to-t from-bg via-transparent to-transparent md:bg-linear-to-l" />
         </div>
         <div className="relative -mt-24 space-y-4 p-5 md:mt-0 md:self-center md:p-8">

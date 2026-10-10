@@ -6,6 +6,7 @@ import type {
   FeedItem,
   Game,
   GameDetailData,
+  GameEvent,
   Media,
   MediaKind,
   Player,
@@ -34,6 +35,8 @@ export interface DataSource {
   getGame(id: number): Promise<Game | null>;
   getGameDetail(id: number): Promise<GameDetailData | null>;
   getGameLines(gameId: number): Promise<StatLine[]>;
+  /** Play-by-play of a game, newest first. */
+  getGameEvents(gameId: number, limit?: number): Promise<GameEvent[]>;
   /** Stat rows of final, published games in a season. */
   getSeasonStatLines(seasonId: number): Promise<StatLine[]>;
   getPlayers(opts?: { includeInactive?: boolean }): Promise<Player[]>;
@@ -46,5 +49,6 @@ export interface DataSource {
   getExercises(category?: ExerciseCategory): Promise<Exercise[]>;
   getExercise(id: number): Promise<Exercise | null>;
   getFeed(opts: { type?: PostType; before?: string; limit: number }): Promise<FeedPage>;
+  getFeedItem(id: number): Promise<FeedItem | null>;
   getAwards(seasonId?: number): Promise<Award[]>;
 }

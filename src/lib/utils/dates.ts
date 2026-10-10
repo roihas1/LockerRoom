@@ -88,3 +88,8 @@ export function fromIsraelInputs(date: string, time: string): string {
 export function todayInIsrael(): string {
   return israelParts(new Date()).date;
 }
+
+/** Calendar date (YYYY-MM-DD) of a moment in Israel time. */
+export function dateInIsrael(at: Date | string | number): string {
+  return israelParts(new Date(at)).date;
+}

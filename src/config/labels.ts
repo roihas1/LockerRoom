@@ -63,6 +63,7 @@ export const postTypeLabels: Record<PostType, string> = {
   highlight: "היילייט",
   award: "פרס",
   play: "מהלך חדש",
+  milestone: "שיאים ואבני דרך",
 };
 
 export const awardCategoryLabels: Record<AwardCategory, string> = {

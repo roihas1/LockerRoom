@@ -14,7 +14,9 @@ type ExerciseCategory =
   | "zone_offense"
   | "late_game";
 type Difficulty = "easy" | "medium" | "hard";
-type PostType = "announcement" | "photo" | "video" | "funny_moment" | "quote" | "highlight" | "award" | "play";
+type PostType = "announcement" | "photo" | "video" | "funny_moment" | "quote" | "highlight" | "award" | "play" | "milestone";
+type GameEventKind = "points" | "rebound" | "assist" | "steal" | "turnover" | "opponent_points";
+type PushTopic = "games" | "live" | "plays" | "feed";
 type AwardCategory = "official" | "fun";
 type MediaKind = "image" | "video";
 type AppRole = "user" | "admin";
@@ -124,6 +126,7 @@ export type GameRow = {
   potg_note: string | null;
   play_of_game_media_id: string | null;
   reminder_sent_for: string | null;
+  final_push_sent_at: string | null;
   is_published: boolean;
   created_at: string;
   updated_at: string;
@@ -193,6 +196,8 @@ export type PostRow = {
   game_id: number | null;
   award_id: number | null;
   exercise_id: number | null;
+  milestone_key: string | null;
+  milestone_player_id: number | null;
   is_pinned: boolean;
   is_published: boolean;
   published_at: string;
@@ -202,6 +207,27 @@ export type PostRow = {
 };
 
 export type MediaPlayerRow = { media_id: string; player_id: number };
+
+export type GameEventRow = {
+  id: number;
+  game_id: number;
+  player_id: number | null;
+  kind: GameEventKind;
+  value: number;
+  created_at: string;
+};
+
+export type PushSubscriptionRow = {
+  id: number;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+  topics: PushTopic[];
+  user_agent: string | null;
+  created_at: string;
+  updated_at: string;
+  last_success_at: string | null;
+};
 
 export type CoachRow = {
   id: number;
@@ -237,11 +263,15 @@ export type Database = {
       awards: Table<AwardRow, "season_id" | "title" | "player_id">;
       locker_room_posts: Table<PostRow, "type">;
       media_players: Table<MediaPlayerRow, "media_id" | "player_id">;
+      game_events: Table<GameEventRow, "game_id" | "kind" | "value">;
+      push_subscriptions: Table<PushSubscriptionRow, "endpoint" | "p256dh" | "auth">;
     };
     Views: Record<never, never>;
     Functions: {
       is_admin: { Args: Record<string, never>; Returns: boolean };
       admin_set_role: { Args: { target_email: string; new_role: AppRole }; Returns: undefined };
+      reaction_counts: { Args: { p_post_ids: number[] }; Returns: { post_id: number; emoji: string; total: number }[] };
+      toggle_reaction: { Args: { p_post_id: number; p_device_id: string; p_emoji: string }; Returns: Record<string, number> };
     };
     Enums: {
       game_status: GameStatus;

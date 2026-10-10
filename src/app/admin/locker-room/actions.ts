@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { blockDemoMutation } from "@/lib/auth/demo-guard";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { he } from "@/config/strings";
+import { notifyFeedPost } from "@/lib/push/notify";
 import { createSessionClient } from "@/lib/supabase/server";
 import { actionFail, actionFromZod, actionSuccess, type ActionResult } from "@/lib/utils/action-result";
 import { mapErrorToAction } from "@/lib/utils/errors";
@@ -29,7 +30,7 @@ async function syncAwardFeedPost(
   awardId: number,
   opts: { title: string; body: string | null; isPublished: boolean; userId: string | undefined },
 ) {
-  const { data: existing } = await supabase.from("locker_room_posts").select("id").eq("award_id", awardId).maybeSingle();
+  const { data: existing } = await supabase.from("locker_room_posts").select("id, is_published").eq("award_id", awardId).maybeSingle();
   const row = {
     type: "award" as const,
     title: opts.title,
@@ -39,11 +40,14 @@ async function syncAwardFeedPost(
     published_at: new Date().toISOString(),
     created_by: opts.userId ?? null,
   };
+  let postId = existing?.id ?? null;
   if (existing) {
     await supabase.from("locker_room_posts").update(row).eq("id", existing.id);
   } else {
-    await supabase.from("locker_room_posts").insert(row);
+    const { data } = await supabase.from("locker_room_posts").insert(row).select("id").single();
+    postId = data?.id ?? null;
   }
+  if (opts.isPublished && !existing?.is_published && postId) notifyFeedPost(postId, opts.title, { kind: "award" });
 }
 
 export async function savePostAction(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
@@ -95,12 +99,14 @@ export async function publishPostAction(_prev: ActionResult | null, formData: Fo
   if (!postId) return actionFail(he.errors.notFound, "not_found");
 
   const supabase = await createSessionClient();
+  const { data: before } = await supabase.from("locker_room_posts").select("is_published, title, body").eq("id", postId).maybeSingle();
   const { error } = await supabase
     .from("locker_room_posts")
     .update({ is_published: publish, published_at: new Date().toISOString() })
     .eq("id", postId);
   if (error) return mapErrorToAction(error);
 
+  if (publish && before && !before.is_published) notifyFeedPost(postId, before.title ?? before.body?.slice(0, 120) ?? null);
   revalidatePostPaths(postId);
   return actionSuccess(publish ? he.admin.published : he.admin.draft);
 }

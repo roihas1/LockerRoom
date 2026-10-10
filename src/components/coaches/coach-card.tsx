@@ -1,3 +1,4 @@
+import { ViewTransition } from "react";
 import Link from "next/link";
 import { MediaImage } from "@/components/common/media-image";
 import { PlayerTag } from "@/components/players/player-tag";
@@ -12,13 +13,17 @@ export function CoachCard({ coach }: { coach: Coach }) {
       className="group card relative flex overflow-hidden transition-transform hover:border-team/50 motion-safe:hover:-translate-y-1 motion-safe:hover:rotate-1"
     >
       <div className="relative w-28 shrink-0 bg-surface-2 sm:w-36">
-        <MediaImage
-          media={coach.photo}
-          fallback="/placeholders/player.svg"
-          alt={he.media.playerPhoto(coach.name)}
-          sizes="144px"
-          className="transition-transform duration-500 motion-safe:group-hover:scale-105"
-        />
+        <ViewTransition name={`coach-photo-${coach.id}`} share="morph" default="none">
+          <div className="absolute inset-0">
+            <MediaImage
+              media={coach.photo}
+              fallback="/placeholders/player.svg"
+              alt={he.media.playerPhoto(coach.name)}
+              sizes="144px"
+              className="transition-transform duration-500 motion-safe:group-hover:scale-105"
+            />
+          </div>
+        </ViewTransition>
       </div>
       <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 p-4">
         <span className="text-xs font-bold text-team">

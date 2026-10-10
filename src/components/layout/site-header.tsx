@@ -7,10 +7,12 @@ import { DesktopNav } from "./desktop-nav";
 
 export function SiteHeader({ team }: { team: Team }) {
   return (
-    <header className="sticky top-0 z-40 border-b border-border/70 bg-bg/85 backdrop-blur-lg">
+    <header data-easter-header className="sticky top-0 z-40 border-b border-border/70 bg-bg/85 backdrop-blur-lg">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4 md:h-16">
         <Link href="/" className="flex min-w-0 items-center gap-2.5">
-          <TeamLogo team={team} className="size-9" priority />
+          <span data-easter-logo className="shrink-0 touch-manipulation select-none [-webkit-touch-callout:none]">
+            <TeamLogo team={team} className="size-9" priority />
+          </span>
           <span className="min-w-0 leading-tight">
             <span data-user-content className="block truncate font-display text-base font-extrabold">
               {team.name}

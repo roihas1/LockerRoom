@@ -10,7 +10,8 @@ import {
   fixtureStatLines,
   fixtureTeam,
 } from "@/fixtures";
-import type { FeedItem, Media } from "@/types/domain";
+import type { FeedItem, Media, Post } from "@/types/domain";
+import { emptyReactions } from "@/lib/reactions";
 import type { DataSource } from "./types";
 
 const allMedia = (): Media[] => [...fixtureGameMedia, ...fixturePosts.flatMap((p) => p.media)];
@@ -19,6 +20,19 @@ const allMedia = (): Media[] => [...fixtureGameMedia, ...fixturePosts.flatMap((p
 export function createFixtureSource({ includeDrafts = false } = {}): DataSource {
   const visible = <T extends { isPublished: boolean }>(items: T[]) => (includeDrafts ? items : items.filter((i) => i.isPublished));
   const publishedGameIds = () => new Set(visible(fixtureGames).map((g) => g.id));
+  const toFeedItem = (p: Post): FeedItem => {
+    const award = fixtureAwards.find((a) => a.id === p.awardId) ?? null;
+    return {
+      ...p,
+      award,
+      awardPlayer: award ? (fixturePlayers.find((pl) => pl.id === award.playerId) ?? null) : null,
+      quotePlayer: fixturePlayers.find((pl) => pl.id === p.quotePlayerId) ?? null,
+      milestonePlayer: fixturePlayers.find((pl) => pl.id === p.milestonePlayerId) ?? null,
+      game: fixtureGames.find((g) => g.id === p.gameId) ?? null,
+      play: visible(fixtureExercises).find((e) => e.id === p.exerciseId) ?? null,
+      reactions: emptyReactions(),
+    };
+  };
 
   return {
     mode: "demo",
@@ -57,6 +71,9 @@ export function createFixtureSource({ includeDrafts = false } = {}): DataSource 
     },
     async getGameLines(gameId) {
       return fixtureStatLines.filter((l) => l.gameId === gameId);
+    },
+    async getGameEvents() {
+      return [];
     },
     async getSeasonStatLines(seasonId) {
       const ids = new Set(
@@ -110,19 +127,12 @@ export function createFixtureSource({ includeDrafts = false } = {}): DataSource 
       const posts = matching.filter((p) => !p.isPinned && (!before || p.publishedAt < before));
       const pageRest = posts.slice(0, limit);
       const page = [...pinned, ...pageRest];
-      const items: FeedItem[] = page.map((p) => {
-        const award = fixtureAwards.find((a) => a.id === p.awardId) ?? null;
-        return {
-          ...p,
-          award,
-          awardPlayer: award ? (fixturePlayers.find((pl) => pl.id === award.playerId) ?? null) : null,
-          quotePlayer: fixturePlayers.find((pl) => pl.id === p.quotePlayerId) ?? null,
-          game: fixtureGames.find((g) => g.id === p.gameId) ?? null,
-          play: visible(fixtureExercises).find((e) => e.id === p.exerciseId) ?? null,
-        };
-      });
       const last = pageRest.at(-1);
-      return { items, nextCursor: posts.length > limit && last ? last.publishedAt : null };
+      return { items: page.map(toFeedItem), nextCursor: posts.length > limit && last ? last.publishedAt : null };
+    },
+    async getFeedItem(id) {
+      const post = visible(fixturePosts).find((p) => p.id === id);
+      return post ? toFeedItem(post) : null;
     },
     async getAwards(seasonId) {
       return visible(fixtureAwards)

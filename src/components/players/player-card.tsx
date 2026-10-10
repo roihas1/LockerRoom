@@ -1,3 +1,4 @@
+import { ViewTransition } from "react";
 import Link from "next/link";
 import { MediaImage } from "@/components/common/media-image";
 import { positionLabels } from "@/config/labels";
@@ -13,14 +14,18 @@ export function PlayerCard({ player, priority }: { player: Player; priority?: bo
       className="group card relative block overflow-hidden transition-transform hover:border-team/50 motion-safe:hover:-translate-y-1 motion-safe:hover:-rotate-1"
     >
       <div className="relative aspect-4/5 bg-surface-2">
-        <MediaImage
-          media={player.photo}
-          fallback="/placeholders/player.svg"
-          alt={he.media.playerPhoto(player.name)}
-          sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
-          priority={priority}
-          className="transition-transform duration-500 motion-safe:group-hover:scale-105"
-        />
+        <ViewTransition name={`player-photo-${player.id}`} share="morph" default="none">
+          <div className="absolute inset-0">
+            <MediaImage
+              media={player.photo}
+              fallback="/placeholders/player.svg"
+              alt={he.media.playerPhoto(player.name)}
+              sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
+              priority={priority}
+              className="transition-transform duration-500 motion-safe:group-hover:scale-105"
+            />
+          </div>
+        </ViewTransition>
         <div className="absolute inset-0 bg-linear-to-t from-black via-black/10 to-transparent" />
         {player.jerseyNumber !== null ? (
           <span className="num pointer-events-none absolute end-3 top-1 text-6xl font-black text-white/15">{player.jerseyNumber}</span>

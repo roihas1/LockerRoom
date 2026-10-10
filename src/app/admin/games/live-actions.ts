@@ -2,6 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { he } from "@/config/strings";
+import { handleGameFinalized } from "@/lib/admin/game-final";
+import { createRoastDraft } from "@/lib/admin/roast-post";
+import { applyEventDiff } from "@/lib/live-stats/apply-events";
+import { diffSnapshots } from "@/lib/live-stats/diff";
+import { notifyGameLive } from "@/lib/push/notify";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { isDemoMode } from "@/lib/supabase/env";
 import { createSessionClient } from "@/lib/supabase/server";
@@ -35,7 +40,10 @@ export async function saveLiveStatsSnapshot(_prev: ActionResult | null, formData
 
   const { gameId, playedPlayerIds, lines, teamScore, opponentScore } = parsed.data;
   const supabase = await createSessionClient();
-  const { data: game, error: loadError } = await supabase.from("games").select("season_id").eq("id", gameId).single();
+  const [{ data: game, error: loadError }, { data: previousRows }] = await Promise.all([
+    supabase.from("games").select("season_id, opponent_score").eq("id", gameId).single(),
+    supabase.from("player_game_stats").select("player_id, points, rebounds, assists, turnovers, steals").eq("game_id", gameId),
+  ]);
   if (loadError || !game) return mapErrorToAction(loadError ?? { message: "missing" });
 
   const rows = lines.map((l) => ({
@@ -67,6 +75,16 @@ export async function saveLiveStatsSnapshot(_prev: ActionResult | null, formData
   const { error: gameError } = await supabase.from("games").update(gameUpdate).eq("id", gameId);
   if (gameError) return mapErrorToAction(gameError);
 
+  const previous = (previousRows ?? []).map((r) => ({
+    playerId: r.player_id,
+    points: r.points,
+    rebounds: r.rebounds,
+    assists: r.assists,
+    turnovers: r.turnovers ?? 0,
+    steals: r.steals ?? 0,
+  }));
+  await applyEventDiff(supabase, gameId, diffSnapshots(previous, lines, game.opponent_score, opponentScore));
+
   await revalidateGamePaths(gameId, game.season_id);
   return actionSuccess(he.admin.liveStats.saved);
 }
@@ -83,7 +101,11 @@ export async function startLiveGameAction(gameId: number, playerIds: number[]): 
   }
 
   const supabase = await createSessionClient();
-  const { data: game, error: loadError } = await supabase.from("games").select("season_id").eq("id", gameId).single();
+  const { data: game, error: loadError } = await supabase
+    .from("games")
+    .select("season_id, status, opponent, is_published")
+    .eq("id", gameId)
+    .single();
   if (loadError || !game) return mapErrorToAction(loadError ?? { message: "missing" });
 
   const rows = uniqueIds.map((playerId) => ({
@@ -102,6 +124,7 @@ export async function startLiveGameAction(gameId: number, playerIds: number[]): 
   const { error: statusError } = await supabase.from("games").update({ status: "live" }).eq("id", gameId);
   if (statusError) return mapErrorToAction(statusError);
 
+  if (game.status !== "live") notifyGameLive({ id: gameId, opponent: game.opponent, is_published: game.is_published });
   await revalidateGamePaths(gameId, game.season_id);
   return actionSuccess(he.admin.liveStats.started);
 }
@@ -141,6 +164,10 @@ export async function finishLiveGameAction(gameId: number): Promise<ActionResult
     return actionFail(he.admin.liveStats.finishTied, "validation");
   }
 
+  await createRoastDraft(supabase, gameId);
+  await handleGameFinalized(supabase, gameId);
   await revalidateGamePaths(gameId, game.season_id);
+  revalidatePath("/admin/locker-room");
+  revalidatePath("/locker-room");
   return actionSuccess(he.admin.liveStats.finished, `/admin/games/${gameId}?step=highlights`);
 }

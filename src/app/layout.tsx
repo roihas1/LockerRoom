@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Heebo, Rubik } from "next/font/google";
 import { Direction } from "radix-ui";
 import type { CSSProperties, ReactNode } from "react";
+import { ServiceWorkerRegistrar } from "@/components/app/service-worker-registrar";
 import { Toaster } from "@/components/ui/toaster";
 import { getSiteUrl, isIndexingAllowed } from "@/config/site";
 import { he } from "@/config/strings";
@@ -21,7 +22,8 @@ export async function generateMetadata(): Promise<Metadata> {
     applicationName: team.name,
     robots: indexing ? { index: true, follow: true } : { index: false, follow: false, nocache: true },
     openGraph: { type: "website", locale: "he_IL", siteName: team.name },
-    icons: { icon: "/placeholders/logo.svg" },
+    appleWebApp: { capable: true, title: team.shortName, statusBarStyle: "black-translucent" },
+    formatDetection: { telephone: false },
   };
 }
 
@@ -41,6 +43,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         <Direction.Provider dir="rtl">
           {children}
           <Toaster />
+          <ServiceWorkerRegistrar />
         </Direction.Provider>
       </body>
     </html>

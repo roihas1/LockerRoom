@@ -11,7 +11,7 @@ import type { ActionResult } from "@/lib/utils/action-result";
 import type { Award, Game, Media, Player, Post, PostType } from "@/types/domain";
 import { deletePostAction, publishPostAction, savePostAction } from "./actions";
 
-const postTypes = (Object.keys(postTypeLabels) as PostType[]).filter((t) => t !== "play");
+const postTypes = (Object.keys(postTypeLabels) as PostType[]).filter((t) => t !== "play" && t !== "milestone");
 
 function fieldError(state: ActionResult | null, key: string) {
   if (!state || state.ok) return undefined;

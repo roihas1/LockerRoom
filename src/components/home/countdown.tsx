@@ -10,6 +10,7 @@ function parts(target: number, now: number) {
     days: Math.floor(diff / 86_400_000),
     hours: Math.floor((diff % 86_400_000) / 3_600_000),
     minutes: Math.floor((diff % 3_600_000) / 60_000),
+    seconds: Math.floor((diff % 60_000) / 1000),
   };
 }
 
@@ -20,7 +21,7 @@ export function Countdown({ to }: { to: string }) {
   useEffect(() => {
     const tick = () => setNow(Date.now());
     tick();
-    const id = setInterval(tick, 30_000);
+    const id = setInterval(tick, 1000);
     return () => clearInterval(id);
   }, []);
 
@@ -33,12 +34,13 @@ export function Countdown({ to }: { to: string }) {
     { v: p.days, l: he.home.countdown.days },
     { v: p.hours, l: he.home.countdown.hours },
     { v: p.minutes, l: he.home.countdown.minutes },
+    { v: p.seconds, l: he.home.countdown.seconds },
   ];
   return (
-    <div dir="ltr" className="flex justify-center gap-2" role="timer" aria-live="off">
+    <div dir="ltr" className="flex justify-center gap-1.5 sm:gap-2" role="timer" aria-live="off">
       {cells.map((c) => (
-        <div key={c.l} className="min-w-16 rounded-xl border border-border bg-black/30 px-3 py-2 text-center">
-          <span className="num block text-2xl font-black text-team">{String(c.v).padStart(2, "0")}</span>
+        <div key={c.l} className="min-w-14 rounded-xl border border-border bg-black/30 px-2 py-2 text-center sm:min-w-16 sm:px-3">
+          <span className="num block text-2xl font-black text-team tabular-nums">{String(c.v).padStart(2, "0")}</span>
           <span className="text-[11px] text-muted">{c.l}</span>
         </div>
       ))}

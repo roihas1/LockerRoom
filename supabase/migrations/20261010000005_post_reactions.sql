@@ -1,0 +1,76 @@
+-- Anonymous emoji reactions on locker-room posts: one of each kind per device.
+-- The table is never exposed directly; reads and writes go through security definer functions
+-- so device ids stay private and writes can be validated and rate limited.
+
+create table public.post_reactions (
+  post_id bigint not null references public.locker_room_posts (id) on delete cascade,
+  device_id uuid not null,
+  emoji text not null check (emoji in ('laugh', 'fire', 'brick', 'goat')),
+  created_at timestamptz not null default now(),
+  primary key (post_id, device_id, emoji)
+);
+
+create index post_reactions_device_recent on public.post_reactions (device_id, created_at);
+
+alter table public.post_reactions enable row level security;
+revoke all on public.post_reactions from anon, authenticated;
+
+create or replace function public.reaction_counts(p_post_ids bigint[])
+returns table (post_id bigint, emoji text, total integer)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select r.post_id, r.emoji, count(*)::integer
+  from public.post_reactions r
+  join public.locker_room_posts p on p.id = r.post_id and p.is_published
+  where r.post_id = any (p_post_ids)
+  group by r.post_id, r.emoji;
+$$;
+
+create or replace function public.toggle_reaction(p_post_id bigint, p_device_id uuid, p_emoji text)
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  recent integer;
+  counts jsonb;
+begin
+  if p_emoji not in ('laugh', 'fire', 'brick', 'goat') then
+    raise exception 'invalid reaction' using errcode = '22023';
+  end if;
+  if not exists (select 1 from public.locker_room_posts where id = p_post_id and is_published) then
+    raise exception 'post not found' using errcode = 'P0002';
+  end if;
+
+  delete from public.post_reactions
+  where post_id = p_post_id and device_id = p_device_id and emoji = p_emoji;
+
+  if not found then
+    select count(*) into recent
+    from public.post_reactions
+    where device_id = p_device_id and created_at > now() - interval '1 hour';
+    if recent >= 60 then
+      raise exception 'rate limited' using errcode = '54000';
+    end if;
+    insert into public.post_reactions (post_id, device_id, emoji) values (p_post_id, p_device_id, p_emoji);
+  end if;
+
+  select coalesce(jsonb_object_agg(emoji, total), '{}'::jsonb) into counts
+  from (
+    select emoji, count(*)::integer as total
+    from public.post_reactions
+    where post_id = p_post_id
+    group by emoji
+  ) s;
+  return counts;
+end;
+$$;
+
+revoke all on function public.reaction_counts(bigint[]) from public;
+revoke all on function public.toggle_reaction(bigint, uuid, text) from public;
+grant execute on function public.reaction_counts(bigint[]) to anon, authenticated;
+grant execute on function public.toggle_reaction(bigint, uuid, text) to anon, authenticated;

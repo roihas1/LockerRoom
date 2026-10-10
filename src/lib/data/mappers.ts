@@ -2,6 +2,7 @@ import type {
   AwardRow,
   CoachRow,
   ExerciseRow,
+  GameEventRow,
   GameRow,
   MediaRow,
   PlayerGameStatRow,
@@ -10,7 +11,7 @@ import type {
   SeasonRow,
   TeamRow,
 } from "@/types/database";
-import type { Award, Coach, Exercise, Game, Media, Player, Post, Season, StatLine, Team } from "@/types/domain";
+import type { Award, Coach, Exercise, Game, GameEvent, Media, Player, Post, Season, StatLine, Team } from "@/types/domain";
 
 export type MediaLookup = (id: string | null) => Media | null;
 
@@ -137,6 +138,17 @@ export function toStatLine(row: PlayerGameStatRow): StatLine {
   };
 }
 
+export function toGameEvent(row: GameEventRow): GameEvent {
+  return {
+    id: row.id,
+    gameId: row.game_id,
+    playerId: row.player_id,
+    kind: row.kind,
+    value: row.value,
+    createdAt: row.created_at,
+  };
+}
+
 export function toExercise(row: ExerciseRow, media: MediaLookup): Exercise {
   return {
     id: row.id,
@@ -181,6 +193,7 @@ export function toPost(row: PostRow, media: Media[]): Post {
     gameId: row.game_id,
     awardId: row.award_id,
     exerciseId: row.exercise_id,
+    milestonePlayerId: row.milestone_player_id ?? null,
     isPinned: row.is_pinned,
     isPublished: row.is_published,
     publishedAt: row.published_at,

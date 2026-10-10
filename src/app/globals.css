@@ -49,6 +49,26 @@
     from { transform: scaleX(0.5); opacity: 0.25; }
     to { transform: scaleX(1); opacity: 0.6; }
   }
+
+  --animate-story-progress: story-progress 5.5s linear forwards;
+  --animate-fade-up: fade-up 0.45s ease-out both;
+  --animate-shake: shake 0.5s ease-in-out;
+
+  @keyframes story-progress {
+    from { width: 0%; }
+    to { width: 100%; }
+  }
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(0.75rem); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-6px) rotate(-1deg); }
+    40% { transform: translateX(6px) rotate(1deg); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(4px); }
+  }
 }
 
 @layer base {
@@ -66,6 +86,42 @@
     outline: 2px solid var(--team-primary);
     outline-offset: 2px;
   }
+  /* Easter egg: session-only "on fire" theme. Overrides the team colors set inline on <html>. */
+  html.fire-mode body {
+    --team-primary: #ff5a1f;
+    --team-secondary: #ffc23d;
+  }
+  html.fire-mode body::after {
+    content: "";
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: 30;
+    height: 35vh;
+    pointer-events: none;
+    background: radial-gradient(ellipse 70% 100% at 50% 100%, rgb(255 90 31 / 0.3), transparent 70%);
+    animation: flicker 1.4s ease-in-out infinite alternate;
+  }
+  @keyframes swish {
+    0% { transform: translateY(0) scale(1); }
+    55% { transform: translateY(-5.5rem) scale(0.7); }
+    100% { transform: translateY(-3.5rem) scale(0.65); opacity: 0; }
+  }
+  @keyframes rim {
+    0% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-5.5rem) scale(0.7); }
+    70% { transform: translateY(-6.5rem) translateX(1.5rem) scale(0.7); }
+    100% { transform: translateY(0) translateX(2.5rem) scale(0.9); opacity: 0; }
+  }
+  @keyframes air {
+    0% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-7rem) translateX(-2rem) scale(0.7); }
+    100% { transform: translateY(-2rem) translateX(-4rem) scale(0.6); opacity: 0; }
+  }
+  @keyframes flicker {
+    from { opacity: 0.55; transform: scaleY(0.92); }
+    to { opacity: 1; transform: scaleY(1.05); }
+  }
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
@@ -74,6 +130,19 @@
       transition-duration: 0.01ms !important;
       scroll-behavior: auto !important;
     }
+    ::view-transition-group(*),
+    ::view-transition-old(*),
+    ::view-transition-new(*) {
+      animation: none !important;
+    }
+  }
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 180ms;
+  }
+  ::view-transition-group(.morph) {
+    animation-duration: 380ms;
+    animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 }
 

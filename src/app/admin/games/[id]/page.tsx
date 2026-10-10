@@ -11,6 +11,8 @@ import { GameDetail } from "@/components/games/game-detail";
 import { BackLink } from "@/components/common/back-link";
 import { he } from "@/config/strings";
 import { getStatsEntryDefaults } from "@/lib/admin/lineup";
+import { findRoastPost } from "@/lib/admin/roast-post";
+import { createSessionClient } from "@/lib/supabase/server";
 import { getAdminData } from "@/lib/data";
 import { isDemoMode } from "@/lib/supabase/env";
 import { firstParam, parseId } from "@/lib/utils/params";
@@ -51,6 +53,7 @@ export default async function AdminGamePage({ params, searchParams }: PageProps<
 
   const detail = step === "review" || step === "highlights" ? await data.getGameDetail(id) : null;
   const demo = isDemoMode();
+  const roast = step === "review" && game.status === "final" && !demo ? await findRoastPost(await createSessionClient(), id) : null;
 
   return (
     <div className="space-y-6">
@@ -79,7 +82,7 @@ export default async function AdminGamePage({ params, searchParams }: PageProps<
 
       {step === "review" ? (
         <>
-          <GameReviewPanel gameId={id} isPublished={game.isPublished} demo={demo} />
+          <GameReviewPanel gameId={id} isPublished={game.isPublished} isFinal={game.status === "final"} roast={roast} demo={demo} />
           {detail ? (
             <div className="rounded-2xl border border-border p-2">
               <p className="mb-4 px-2 text-sm text-muted">{he.actions.preview}</p>

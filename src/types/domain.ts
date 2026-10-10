@@ -10,7 +10,8 @@ export type ExerciseCategory =
   | "zone_offense"
   | "late_game";
 export type Difficulty = "easy" | "medium" | "hard";
-export type PostType = "announcement" | "photo" | "video" | "funny_moment" | "quote" | "highlight" | "award" | "play";
+export type PostType = "announcement" | "photo" | "video" | "funny_moment" | "quote" | "highlight" | "award" | "play" | "milestone";
+export type GameEventKind = "points" | "rebound" | "assist" | "steal" | "turnover" | "opponent_points";
 export type AwardCategory = "official" | "fun";
 export type MediaKind = "image" | "video";
 export type AppRole = "user" | "admin";
@@ -167,16 +168,32 @@ export interface Post {
   gameId: number | null;
   awardId: number | null;
   exerciseId: number | null;
+  milestonePlayerId: number | null;
   isPinned: boolean;
   isPublished: boolean;
   publishedAt: string;
   media: Media[];
 }
 
+/** One play-by-play entry of a live game. `playerId` is null for opponent points. */
+export interface GameEvent {
+  id: number;
+  gameId: number;
+  playerId: number | null;
+  kind: GameEventKind;
+  value: number;
+  createdAt: string;
+}
+
+export type ReactionKind = "laugh" | "fire" | "brick" | "goat" | "heart" | "clap" | "shock" | "cry" | "skull";
+export type ReactionCounts = Record<ReactionKind, number>;
+
 export interface FeedItem extends Post {
+  reactions: ReactionCounts;
   award: Award | null;
   quotePlayer: Player | null;
   awardPlayer: Player | null;
+  milestonePlayer: Player | null;
   game: Game | null;
   play: Exercise | null;
 }

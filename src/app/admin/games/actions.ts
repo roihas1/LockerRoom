@@ -1,8 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { handleGameFinalized } from "@/lib/admin/game-final";
+import { createRoastDraft, type RoastDraftStatus } from "@/lib/admin/roast-post";
 import { blockDemoMutation } from "@/lib/auth/demo-guard";
 import { requireAdmin } from "@/lib/auth/require-admin";
+import { notifyGameLive } from "@/lib/push/notify";
 import { he } from "@/config/strings";
 import { createSessionClient } from "@/lib/supabase/server";
 import { actionFail, actionFromZod, actionSuccess, type ActionResult } from "@/lib/utils/action-result";
@@ -49,6 +52,7 @@ export async function saveGameDetailsAction(_prev: ActionResult | null, formData
   if (result.error) return mapErrorToAction(result.error);
 
   const id = result.data.id;
+  if (row.status === "final") await handleGameFinalized(supabase, id);
   await revalidateGamePaths(id, result.data.season_id);
   return actionSuccess(he.admin.gameSaved, `/admin/games/${id}?step=stats`);
 }
@@ -63,7 +67,7 @@ export async function saveGameStats(_prev: ActionResult | null, formData: FormDa
 
   const { gameId, playedIds, lines } = parsed.data;
   const supabase = await createSessionClient();
-  const { data: game, error: loadError } = await supabase.from("games").select("season_id").eq("id", gameId).single();
+  const { data: game, error: loadError } = await supabase.from("games").select("season_id, status").eq("id", gameId).single();
   if (loadError || !game) return mapErrorToAction(loadError ?? { message: "missing" });
 
   const rows = lines.map((l) => ({
@@ -96,9 +100,40 @@ export async function saveGameStats(_prev: ActionResult | null, formData: FormDa
   const { error: deleteError } = await deleteQuery;
   if (deleteError) return mapErrorToAction(deleteError);
 
+  if (game.status === "final") {
+    await createRoastDraft(supabase, gameId);
+    await handleGameFinalized(supabase, gameId);
+    revalidatePath("/admin/locker-room");
+    revalidatePath("/locker-room");
+  }
   await revalidateGamePaths(gameId, game.season_id);
   revalidatePath("/stats");
   return actionSuccess(he.admin.statsEntry.saved);
+}
+
+const roastMessages: Record<RoastDraftStatus, string> = {
+  created: he.fun.roast.draftCreated,
+  updated: he.fun.roast.updated,
+  exists: he.fun.roast.draftExists,
+  published: he.fun.roast.draftPublished,
+  empty: he.fun.roast.nothing,
+  failed: he.errors.generic,
+};
+
+export async function regenerateRoastAction(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  await requireAdmin();
+  const demoBlock = blockDemoMutation();
+  if (demoBlock) return demoBlock;
+
+  const gameId = Number(formData.get("gameId"));
+  if (!gameId) return actionFail(he.errors.notFound, "not_found");
+
+  const supabase = await createSessionClient();
+  const status = await createRoastDraft(supabase, gameId, { regenerate: true });
+  revalidatePath("/admin/locker-room");
+  revalidatePath(`/admin/games/${gameId}`);
+  if (status === "failed") return actionFail(roastMessages.failed, "unknown");
+  return actionSuccess(roastMessages[status]);
 }
 
 export async function saveGameHighlightsAction(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
@@ -142,12 +177,23 @@ export async function publishGameAction(_prev: ActionResult | null, formData: Fo
   if (!gameId) return actionFail(he.errors.notFound, "not_found");
 
   const supabase = await createSessionClient();
-  const { data: game, error: loadError } = await supabase.from("games").select("season_id").eq("id", gameId).single();
+  const { data: game, error: loadError } = await supabase
+    .from("games")
+    .select("season_id, status, opponent, is_published")
+    .eq("id", gameId)
+    .single();
   if (loadError || !game) return mapErrorToAction(loadError ?? { message: "missing" });
 
   const { error } = await supabase.from("games").update({ is_published: publish }).eq("id", gameId);
   if (error) return mapErrorToAction(error);
 
+  if (publish && !game.is_published && game.status === "live") {
+    notifyGameLive({ id: gameId, opponent: game.opponent, is_published: true });
+  }
+  if (publish) {
+    await handleGameFinalized(supabase, gameId);
+    revalidatePath("/locker-room");
+  }
   await revalidateGamePaths(gameId, game.season_id);
   return actionSuccess(publish ? he.admin.published : he.admin.draft);
 }
