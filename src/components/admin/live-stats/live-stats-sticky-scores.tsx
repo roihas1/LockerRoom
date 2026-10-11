@@ -20,7 +20,7 @@ export function LiveStatsStickyScores({
   onOpponentScore: (next: number) => void;
 }) {
   return (
-    <div className="sticky top-0 z-20 -mx-4 border-b border-border bg-surface/95 px-4 pt-[calc(0.75rem+env(safe-area-inset-top))] pb-3 backdrop-blur-sm sm:-mx-0 sm:rounded-2xl sm:border sm:px-4">
+    <div className="sticky top-0 z-20 -mx-4 border-b border-border bg-surface/95 px-4 pt-[calc(0.75rem+var(--safe-top))] pb-3 backdrop-blur-sm sm:-mx-0 sm:rounded-2xl sm:border sm:px-4">
       <div className="flex items-center justify-center gap-4">
         <div className="flex flex-col items-center">
           <p className="text-xs text-muted">{he.stats.pointsLong}</p>

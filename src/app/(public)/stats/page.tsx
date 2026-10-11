@@ -50,7 +50,7 @@ export default async function StatsPage({ searchParams }: PageProps<"/stats">) {
       <PageHeader title={he.statsPage.title} subtitle={ctx.season ? he.home.season(ctx.season.name) : undefined} />
       <SeasonSelect seasons={ctx.seasons} current={ctx.season} basePath="/stats" extraParams={{ view }} />
 
-      <nav aria-label={he.statsPage.title} className="sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-30 -mx-4 mt-3 mb-6 border-b border-border bg-bg/90 px-4 backdrop-blur md:top-[calc(4rem+env(safe-area-inset-top))]">
+      <nav aria-label={he.statsPage.title} className="sticky top-[calc(3.5rem+var(--safe-top))] z-30 -mx-4 mt-3 mb-6 border-b border-border bg-bg/90 px-4 backdrop-blur md:top-[calc(4rem+var(--safe-top))]">
         <ul className="flex gap-1 overflow-x-auto scrollbar-none">
           {views.map((v) => (
             <li key={v}>

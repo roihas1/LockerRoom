@@ -18,10 +18,10 @@ export function Hero({
   return (
     <section className="relative isolate -mx-4 overflow-hidden md:mx-0 md:rounded-3xl md:border md:border-border">
       <div className="absolute inset-0 -z-10">
-        <MediaImage media={team.cover} fallback="/placeholders/cover.svg" alt={he.media.teamCover} sizes="(min-width: 1152px) 1152px, 100vw" priority />
+        <MediaImage media={team.cover} fallback="/placeholders/cover.svg" alt={he.media.teamCover} sizes="(min-width: 1152px) 1152px, 100vw" className="object-[50%_20%]" priority />
         <div className="absolute inset-0 bg-linear-to-t from-bg via-bg/75 to-bg/20" />
       </div>
-      <div className="flex min-h-56 flex-col justify-end gap-3 px-5 pt-10 pb-5 md:min-h-64 md:px-8 md:pb-6">
+      <div className="flex min-h-40 flex-col justify-end gap-3 px-5 pt-6 pb-4 md:min-h-52 md:px-8 md:pb-6">
         <div className="flex items-center gap-3">
           <AppMark className="size-12 border-2 border-team-2/60 md:size-16" priority />
           <div>
