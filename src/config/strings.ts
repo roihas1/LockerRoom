@@ -259,6 +259,7 @@ export const he = {
 
   standingsPage: {
     title: "טבלת הליגה",
+    loading: "טוען טבלה מהאיגוד…",
     pos: "מיקום",
     team: "קבוצה",
     wins: "ניצ'",

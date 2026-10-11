@@ -5,12 +5,13 @@ import { StatTile } from "@/components/common/stat-tile";
 import { SectionHeader } from "@/components/common/section-header";
 import { opponentLogo } from "@/config/opponents";
 import { he } from "@/config/strings";
+import { OpponentStandingLine } from "@/components/scouting/opponent-standing-line";
 import type { ScoutingBundle } from "@/lib/league/scouting";
 import { formatAverage } from "@/lib/utils/numbers";
 import { formatShortDate } from "@/lib/utils/dates";
 export function OpponentScoutingView({ bundle }: { bundle: ScoutingBundle }) {
   const logo = opponentLogo(bundle.opponent);
-  const st = bundle.standing;
+  const hasAverages = bundle.avgScored != null && bundle.avgAllowed != null;
 
   return (
     <div className="space-y-8">
@@ -23,17 +24,9 @@ export function OpponentScoutingView({ bundle }: { bundle: ScoutingBundle }) {
           <h1 className="font-display text-2xl font-black" data-user-content>
             {bundle.opponent}
           </h1>
-          {st ? (
-            <p className="text-muted">
-              {he.scoutingPage.record}: {he.home.standings.placeLabel}{" "}
-              <span className="num font-bold text-team">{st.pos || "–"}</span> ·{" "}
-              <bdi dir="ltr" className="num">
-                {st.w}-{st.l}
-              </bdi>
-            </p>
-          ) : null}
+          <OpponentStandingLine opponent={bundle.opponent} initial={bundle.standing} />
         </div>
-        {st ? (
+        {hasAverages ? (
           <div className="flex gap-2">
             <StatTile value={formatAverage(bundle.avgScored ?? 0)} label={he.scoutingPage.avgScored} size="sm" />
             <StatTile value={formatAverage(bundle.avgAllowed ?? 0)} label={he.scoutingPage.avgAllowed} size="sm" />

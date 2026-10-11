@@ -8,7 +8,7 @@ import { GameCard } from "@/components/games/game-card";
 import { Hero } from "@/components/home/hero";
 import { LastGameCard } from "@/components/home/last-game-card";
 import { NextGameCard } from "@/components/home/next-game-card";
-import { StandingsCard } from "@/components/home/standings-card";
+import { HomeStandings } from "@/components/home/home-standings";
 import { FeedItem } from "@/components/locker-room/feed-item";
 import { PlayGrid } from "@/components/home/play-grid";
 import { LeaderCard } from "@/components/stats/leader-board";
@@ -18,7 +18,6 @@ import { he } from "@/config/strings";
 import { getData } from "@/lib/data";
 import { getSeasonContext } from "@/lib/data/season";
 import { homeMode, type HomeMode } from "@/lib/home/mode";
-import { getLeagueTable } from "@/lib/league/table";
 import { teamSeasonAverages } from "@/lib/stats/aggregate";
 import { currentStreak, gameResult, lastGame, nextGame, record } from "@/lib/stats/games";
 import { computeLeaders } from "@/lib/stats/leaders";
@@ -138,13 +137,3 @@ export default async function HomePage() {
   );
 }
 
-/** Streams in separately so a slow IBBA response never holds up the rest of the home page. */
-async function HomeStandings() {
-  const table = await getLeagueTable();
-  if (!table) return null;
-  return (
-    <div className="md:max-w-md">
-      <StandingsCard table={table} />
-    </div>
-  );
-}
