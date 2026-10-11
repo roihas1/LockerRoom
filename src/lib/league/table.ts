@@ -1,6 +1,5 @@
 import { siteConfig } from "@/config/site";
-
-const apiBase = "https://ibasketball.co.il/wp-json/sportspress/v2";
+import { fetchIbbaJson, IBBA_API } from "@/lib/league/ibba-fetch";
 
 export interface StandingRow {
   teamId: number;
@@ -91,14 +90,13 @@ export function standingsAroundUs(rows: StandingRow[]): { rows: RankedRow[]; us:
 /** Returns null when IBBA is unreachable so the page can render a fallback instead of failing. */
 export async function getLeagueTable(): Promise<LeagueTable | null> {
   const { tableId, teamId } = siteConfig.league;
+  const url = `${IBBA_API}/tables/${tableId}`;
   try {
-    const res = await fetch(`${apiBase}/tables/${tableId}`, {
-      next: { revalidate: 1800 },
-      signal: AbortSignal.timeout(8000),
-    });
-    if (!res.ok) return null;
-    return parseLeagueTable((await res.json()) as RawTable, teamId);
-  } catch {
+    const raw = await fetchIbbaJson<RawTable>(url, { timeoutMs: 30_000, next: { revalidate: 1800 } });
+    const table = parseLeagueTable(raw, teamId);
+    return table.rows.length ? table : null;
+  } catch (err) {
+    console.error("[standings] getLeagueTable failed:", err instanceof Error ? err.message : err);
     return null;
   }
 }

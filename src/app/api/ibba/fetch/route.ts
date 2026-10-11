@@ -19,7 +19,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, reason: "invalid" }, { status: 400 });
   }
   try {
-    const data = await fetchIbbaJson(parsed.data.url, parsed.data.timeoutMs ?? 120_000);
+    const data = await fetchIbbaJson(parsed.data.url, { timeoutMs: parsed.data.timeoutMs ?? 120_000 });
     return NextResponse.json({ ok: true, data });
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);

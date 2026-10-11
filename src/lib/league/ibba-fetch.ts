@@ -19,10 +19,18 @@ export function isAllowedIbbaUrl(url: string): boolean {
   }
 }
 
-export async function fetchIbbaJson<T>(url: string, timeoutMs = 120_000): Promise<T> {
+type FetchIbbaOptions = {
+  timeoutMs?: number;
+  /** Next.js Data Cache (e.g. standings revalidate every 30 min). */
+  next?: { revalidate?: number | false; tags?: string[] };
+};
+
+export async function fetchIbbaJson<T>(url: string, options: FetchIbbaOptions = {}): Promise<T> {
+  const timeoutMs = options.timeoutMs ?? 120_000;
   const res = await fetch(url, {
     headers: ibbaRequestHeaders,
     signal: AbortSignal.timeout(timeoutMs),
+    ...(options.next ? { next: options.next } : {}),
   });
   if (!res.ok) throw new Error(`IBBA ${res.status}: ${url}`);
   return (await res.json()) as T;
