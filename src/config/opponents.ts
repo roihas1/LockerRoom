@@ -13,12 +13,12 @@ const opponentLogos: Record<string, string> = {
 };
 
 /** Ignores quote style (" vs ״) and spacing so admin-typed names still match. */
-function normalize(name: string): string {
+export function normalizeOpponentName(name: string): string {
   return name.replace(/["'״׳]/g, "").replace(/\s+/g, " ").trim();
 }
 
-const byNormalizedName = new Map(Object.entries(opponentLogos).map(([name, src]) => [normalize(name), src]));
+const byNormalizedName = new Map(Object.entries(opponentLogos).map(([name, src]) => [normalizeOpponentName(name), src]));
 
 export function opponentLogo(name: string): string | null {
-  return byNormalizedName.get(normalize(name)) ?? null;
+  return byNormalizedName.get(normalizeOpponentName(name)) ?? null;
 }

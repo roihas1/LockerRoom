@@ -127,6 +127,9 @@ export type GameRow = {
   play_of_game_media_id: string | null;
   reminder_sent_for: string | null;
   final_push_sent_at: string | null;
+  ibba_event_id: number | null;
+  ibba_snapshot: Json | null;
+  ibba_checked_at: string | null;
   is_published: boolean;
   created_at: string;
   updated_at: string;
@@ -257,6 +260,49 @@ export type CoachRow = {
   updated_at: string;
 };
 
+export type IbbaSyncRunRow = {
+  id: number;
+  mode: string;
+  ran_at: string;
+  changes: Json;
+  error: string | null;
+};
+
+export type IbbaTeamRow = { id: number; name: string; updated_at: string };
+
+export type IbbaLeagueGameRow = {
+  event_id: number;
+  played_at: string;
+  home_team_id: number;
+  away_team_id: number;
+  home_points: number;
+  away_points: number;
+  played: boolean;
+  updated_at: string;
+};
+
+export type IbbaPlayerRow = {
+  player_id: number;
+  team_id: number;
+  name: string;
+  number: string | null;
+  position: string | null;
+  games: number;
+  ppg: number;
+  rpg: number;
+  apg: number;
+  threes_made: number;
+  ft_pct: number | null;
+  updated_at: string;
+};
+
+export type OpponentScoutingRow = {
+  opponent_name: string;
+  notes: string | null;
+  key_players: Json;
+  updated_at: string;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -276,6 +322,11 @@ export type Database = {
       game_events: Table<GameEventRow, "game_id" | "kind" | "value">;
       push_subscriptions: Table<PushSubscriptionRow, "endpoint" | "p256dh" | "auth">;
       push_broadcasts: Table<PushBroadcastRow, "title">;
+      ibba_sync_runs: Table<IbbaSyncRunRow, "mode">;
+      ibba_teams: Table<IbbaTeamRow, "id" | "name">;
+      ibba_league_games: Table<IbbaLeagueGameRow, "event_id" | "played_at" | "home_team_id" | "away_team_id">;
+      ibba_players: Table<IbbaPlayerRow, "player_id" | "team_id" | "name">;
+      opponent_scouting: Table<OpponentScoutingRow, "opponent_name">;
     };
     Views: Record<never, never>;
     Functions: {

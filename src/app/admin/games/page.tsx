@@ -3,14 +3,18 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { gameStatusLabels } from "@/config/labels";
 import { he } from "@/config/strings";
+import { IbbaSyncPanel } from "@/components/admin/ibba-sync-panel";
+import { getLatestIbbaSyncRun } from "@/lib/admin/ibba-sync";
 import { getAdminData } from "@/lib/data";
 import { formatShortDate, formatTime } from "@/lib/utils/dates";
 
 export default async function AdminGamesPage() {
-  const data = await getAdminData();
-  const seasons = await data.getSeasons();
+  const data = getAdminData();
+  const lastIbbaRun = getLatestIbbaSyncRun();
+  const [adminData, ibbaRun] = await Promise.all([data, lastIbbaRun]);
+  const seasons = await adminData.getSeasons();
   const activeSeason = seasons.find((s) => s.isActive) ?? seasons[0] ?? null;
-  const games = activeSeason ? await data.getGames(activeSeason.id) : [];
+  const games = activeSeason ? await adminData.getGames(activeSeason.id) : [];
 
   return (
     <div className="space-y-6">
@@ -27,6 +31,8 @@ export default async function AdminGamesPage() {
           <Link href="/admin/games/new">{he.admin.newGame}</Link>
         </Button>
       </header>
+
+      <IbbaSyncPanel lastRun={ibbaRun} />
 
       {games.length === 0 ? (
         <p className="text-muted">{he.admin.noItems}</p>

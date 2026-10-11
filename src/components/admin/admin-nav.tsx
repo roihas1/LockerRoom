@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   type LucideIcon,
   Newspaper,
+  ScanSearch,
   Settings,
   ShieldCheck,
   Trophy,
@@ -29,6 +30,7 @@ interface NavLink {
 const contentLinks: NavLink[] = [
   { href: "/admin", label: he.admin.dashboard, icon: LayoutDashboard, exact: true },
   { href: "/admin/games", label: he.admin.games, icon: Trophy },
+  { href: "/admin/scouting", label: he.admin.scoutingNotes, icon: ScanSearch },
   { href: "/admin/players", label: he.admin.players, icon: Users },
   { href: "/admin/coaches", label: he.admin.coaches, icon: Whistle },
   { href: "/admin/plays", label: he.admin.exercises, icon: ClipboardList },

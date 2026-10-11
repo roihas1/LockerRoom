@@ -32,11 +32,15 @@ export function NextGameCard({ game, team }: { game: Game; team: Team }) {
         </div>
         <Countdown to={game.tipoffAt} />
       </Link>
-      {game.location ? (
-        <div className="flex justify-center px-5 pb-5">
-          <WazeButton address={game.location} />
-        </div>
-      ) : null}
+      <div className="flex flex-wrap justify-center gap-2 px-5 pb-5">
+        <Link
+          href={`/scouting?opponent=${encodeURIComponent(game.opponent)}`}
+          className="rounded-xl border border-border px-3 py-2 text-sm font-semibold text-team hover:bg-team/10"
+        >
+          {he.scoutingPage.viewScouting}
+        </Link>
+        {game.location ? <WazeButton address={game.location} /> : null}
+      </div>
     </div>
   );
 }

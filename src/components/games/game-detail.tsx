@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { CalendarDays, Clock, MapPin } from "lucide-react";
 import { EmptyState } from "@/components/common/empty-state";
 import { ResultBadge } from "@/components/common/result-badge";
@@ -75,13 +76,17 @@ export function GameDetail({
             </div>
           ) : null}
         </dl>
-        {isCalendarEligible(game) || actions ? (
-          <div className="mt-5 flex flex-wrap justify-center gap-2">
-            {isCalendarEligible(game) ? <AddToCalendar game={game} team={team} /> : null}
-            {isCalendarEligible(game) && game.location ? <WazeButton address={game.location} /> : null}
-            {actions}
-          </div>
-        ) : null}
+        <div className="mt-5 flex flex-wrap justify-center gap-2">
+          <Link
+            href={`/scouting?opponent=${encodeURIComponent(game.opponent)}`}
+            className="rounded-xl border border-border px-3 py-2 text-sm font-semibold text-team hover:bg-team/10"
+          >
+            {he.scoutingPage.viewScouting}
+          </Link>
+          {isCalendarEligible(game) ? <AddToCalendar game={game} team={team} /> : null}
+          {isCalendarEligible(game) && game.location ? <WazeButton address={game.location} /> : null}
+          {actions}
+        </div>
       </header>
 
       {isLive ? (

@@ -15,5 +15,9 @@ test-results
 supabase/.temp
 .seed-*
 .mcp-*
+scripts/.ibba-*
+scripts/_mcp-args.json
+scripts/_deploy-args.tmp.json
+supabase/functions/ibba-sync/index.bundle.mjs
 .seed-mcp-chunks/
 .vercel

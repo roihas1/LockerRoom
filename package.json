@@ -16,7 +16,11 @@
     "seed:generate": "node --import tsx scripts/generate-seed.ts",
     "verify:rls": "node --import tsx scripts/verify-rls.ts",
     "verify:media": "node --import tsx scripts/verify-media.ts",
-    "db:types": "supabase gen types typescript --linked --schema public > src/types/database.ts"
+    "db:types": "supabase gen types typescript --linked --schema public > src/types/database.ts",
+    "bundle:ibba": "esbuild supabase/functions/ibba-sync/index.ts --bundle --platform=neutral --format=esm --outfile=supabase/functions/ibba-sync/index.bundle.mjs",
+    "deploy:ibba": "npm run bundle:ibba && node scripts/deploy-ibba.mjs",
+    "ibba:sync": "node scripts/run-ibba-sync.mjs schedule",
+    "ibba:sync:scouting": "node scripts/run-ibba-sync.mjs scouting"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1148.0",

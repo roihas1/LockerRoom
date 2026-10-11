@@ -7,6 +7,8 @@ const mediaPath = mediaHost ? mediaHost.pathname.replace(/\/$/, "") : "";
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  // The dev server only trusts `localhost`; these let 127.0.0.1 and phones on the home network use live reload.
+  allowedDevOrigins: ["127.0.0.1", "192.168.*.*"],
   async headers() {
     return [
       {
