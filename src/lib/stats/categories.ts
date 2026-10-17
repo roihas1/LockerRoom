@@ -9,4 +9,6 @@ export const leaderMeta: Record<LeaderCategory, { emoji: string; label: string; 
   threes: { emoji: "🔥", label: he.stats.threesLong, unit: he.stats.total, format: (v) => formatInt(v) },
   steals: { emoji: "🛡", label: he.stats.stealsLong, unit: he.stats.steals, format: formatAverage },
   blocks: { emoji: "🚫", label: he.stats.blocksLong, unit: he.stats.blocks, format: formatAverage },
+  pir: { emoji: "📈", label: he.stats.pirLong, unit: he.stats.pir, format: formatAverage },
+  potg: { emoji: "⭐", label: he.stats.potgLong, unit: he.stats.total, format: (v) => formatInt(v) },
 };

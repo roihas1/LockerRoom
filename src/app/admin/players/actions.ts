@@ -3,11 +3,20 @@
 import { revalidatePath } from "next/cache";
 import { blockDemoMutation } from "@/lib/auth/demo-guard";
 import { requireAdmin } from "@/lib/auth/require-admin";
+import { revalidatePublic } from "@/lib/cache/revalidate-public";
 import { he } from "@/config/strings";
 import { createSessionClient } from "@/lib/supabase/server";
 import { actionFail, actionFromZod, actionSuccess, type ActionResult } from "@/lib/utils/action-result";
 import { mapErrorToAction } from "@/lib/utils/errors";
 import { parsePlayerForm } from "@/lib/validation/player";
+
+function bustPublicPlayerPaths(playerId: number) {
+  revalidatePublic();
+  revalidatePath("/admin/players");
+  revalidatePath(`/admin/players/${playerId}`);
+  revalidatePath("/players");
+  revalidatePath(`/players/${playerId}`);
+}
 
 export async function savePlayerAction(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
   await requireAdmin();
@@ -45,9 +54,7 @@ export async function savePlayerAction(_prev: ActionResult | null, formData: For
   if (result.error) return mapErrorToAction(result.error);
 
   const id = result.data.id;
-  revalidatePath("/admin/players");
-  revalidatePath(`/admin/players/${id}`);
-  revalidatePath("/players");
+  bustPublicPlayerPaths(id);
   return actionSuccess(he.admin.saved, `/admin/players/${id}`);
 }
 
@@ -64,8 +71,6 @@ export async function setPlayerActiveAction(_prev: ActionResult | null, formData
   const { error } = await supabase.from("players").update({ is_active: active }).eq("id", playerId);
   if (error) return mapErrorToAction(error);
 
-  revalidatePath("/admin/players");
-  revalidatePath(`/admin/players/${playerId}`);
-  revalidatePath("/players");
+  bustPublicPlayerPaths(playerId);
   return actionSuccess(he.admin.saved);
 }

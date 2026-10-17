@@ -5,6 +5,7 @@ import { handleGameFinalized } from "@/lib/admin/game-final";
 import { createRoastDraft, type RoastDraftStatus } from "@/lib/admin/roast-post";
 import { blockDemoMutation } from "@/lib/auth/demo-guard";
 import { requireAdmin } from "@/lib/auth/require-admin";
+import { revalidatePublic } from "@/lib/cache/revalidate-public";
 import { notifyGameLive } from "@/lib/push/notify";
 import { he } from "@/config/strings";
 import { createSessionClient } from "@/lib/supabase/server";
@@ -14,6 +15,7 @@ import { parseGameDetailsForm, parseGameHighlightsForm } from "@/lib/validation/
 import { parseSaveGameStatsForm } from "@/lib/validation/stats";
 
 async function revalidateGamePaths(gameId: number, seasonId: number) {
+  revalidatePublic();
   revalidatePath("/admin/games");
   revalidatePath(`/admin/games/${gameId}`);
   revalidatePath("/games");
@@ -212,6 +214,7 @@ export async function deleteGameAction(_prev: ActionResult | null, formData: For
   const { error } = await supabase.from("games").delete().eq("id", gameId);
   if (error) return mapErrorToAction(error);
 
+  revalidatePublic();
   revalidatePath("/admin/games");
   revalidatePath("/games");
   revalidatePath("/");

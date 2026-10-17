@@ -14,6 +14,7 @@ import { getStatsEntryDefaults } from "@/lib/admin/lineup";
 import { findRoastPost } from "@/lib/admin/roast-post";
 import { createSessionClient } from "@/lib/supabase/server";
 import { getAdminData } from "@/lib/data";
+import { comparePirLines, pickPotgPlayerId, suggestPotgNote } from "@/lib/stats/pir";
 import { isDemoMode } from "@/lib/supabase/env";
 import { firstParam, parseId } from "@/lib/utils/params";
 
@@ -44,12 +45,18 @@ export default async function AdminGamePage({ params, searchParams }: PageProps<
       ? buildInitialRows(players, statsDefaults.playedIds, statsDefaults.linesByPlayer).map((r) => ({ ...r }))
       : [];
   const playedIds = new Set(lines.map((l) => l.playerId));
+  const linesByPlayer = new Map(lines.map((l) => [l.playerId, l]));
   const potgCandidates =
     playedIds.size > 0
       ? players
           .filter((p) => playedIds.has(p.id))
-          .sort((a, b) => (lines.find((l) => l.playerId === b.id)?.points ?? 0) - (lines.find((l) => l.playerId === a.id)?.points ?? 0))
+          .sort((a, b) => comparePirLines(linesByPlayer.get(a.id)!, linesByPlayer.get(b.id)!))
       : players.filter((p) => p.isActive);
+  const suggestedPotgId = game.playerOfGameId ?? pickPotgPlayerId(lines);
+  const suggestedLine = suggestedPotgId != null ? (linesByPlayer.get(suggestedPotgId) ?? null) : null;
+  const suggestedPlayer = suggestedPotgId != null ? (players.find((p) => p.id === suggestedPotgId) ?? null) : null;
+  const suggestedPotgNote =
+    game.potgNote ?? (suggestedLine && suggestedPlayer ? suggestPotgNote(suggestedLine, suggestedPlayer.nickname || suggestedPlayer.name) : "");
 
   const detail = step === "review" || step === "highlights" ? await data.getGameDetail(id) : null;
   const demo = isDemoMode();
@@ -77,7 +84,14 @@ export default async function AdminGamePage({ params, searchParams }: PageProps<
       ) : null}
 
       {step === "highlights" ? (
-        <GameHighlightsForm game={game} potgCandidates={potgCandidates} gallery={detail?.media ?? []} demo={demo} />
+        <GameHighlightsForm
+          game={game}
+          potgCandidates={potgCandidates}
+          suggestedPotgId={suggestedPotgId}
+          suggestedPotgNote={suggestedPotgNote}
+          gallery={detail?.media ?? []}
+          demo={demo}
+        />
       ) : null}
 
       {step === "review" ? (

@@ -58,6 +58,6 @@ export function parsePostForm(formData: FormData) {
     quotePlayerId: formData.get("quotePlayerId"),
     gameId: formData.get("gameId"),
     awardId: formData.get("awardId"),
-    isPinned: formData.get("isPinned"),
+    isPinned: formData.get("isPinned") ?? "false",
   });
 }

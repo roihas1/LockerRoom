@@ -20,7 +20,7 @@ import { getSeasonContext } from "@/lib/data/season";
 import { homeMode, type HomeMode } from "@/lib/home/mode";
 import { teamSeasonAverages } from "@/lib/stats/aggregate";
 import { currentStreak, gameResult, lastGame, nextGame, record } from "@/lib/stats/games";
-import { computeLeaders } from "@/lib/stats/leaders";
+import { computeLeaders, countPotgByPlayer } from "@/lib/stats/leaders";
 
 const HOME_PLAYS_LIMIT = 6;
 
@@ -47,7 +47,11 @@ export default async function HomePage() {
   const last = lastGame(ctx.games);
   const lastLines = last ? ctx.lines.filter((l) => l.gameId === last.id) : [];
   const potg = last?.playerOfGameId ? (ctx.playersById.get(last.playerOfGameId) ?? null) : null;
-  const leaders = computeLeaders(ctx.aggregates, ctx.completed.length, { limit: 1, categories: ["points", "assists", "rebounds", "threes", "blocks"] });
+  const leaders = computeLeaders(ctx.aggregates, ctx.completed.length, {
+    limit: 1,
+    categories: ["points", "assists", "rebounds", "pir", "potg", "threes", "blocks"],
+    potgCounts: countPotgByPlayer(ctx.games),
+  });
   const recent = [...ctx.completed].reverse().slice(0, siteConfig.recentGamesCount);
 
   const nextCard = next ? <NextGameCard game={next} team={team} /> : <EmptyState emoji="📅" title={he.empty.upcoming.title} text={he.empty.upcoming.text} />;

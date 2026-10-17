@@ -5,6 +5,7 @@ import { he } from "@/config/strings";
 import { uploadLimits, MB } from "@/config/uploads";
 import { blockDemoMutation } from "@/lib/auth/demo-guard";
 import { requireAdmin } from "@/lib/auth/require-admin";
+import { revalidatePublic } from "@/lib/cache/revalidate-public";
 import { toMedia } from "@/lib/data/mappers";
 import { createSessionClient } from "@/lib/supabase/server";
 import { actionFail, type ActionResult } from "@/lib/utils/action-result";
@@ -99,6 +100,7 @@ export async function registerMediaAction(input: RegisterMediaInput): Promise<Re
     .single();
   if (error || !row) return fail(mapErrorToAction(error ?? { message: "missing" }));
 
+  if (data.gameId || data.postId) revalidatePublic();
   if (data.gameId) revalidatePath(`/games/${data.gameId}`);
   if (data.postId) revalidatePath("/locker-room");
   return { ok: true, media: toMedia(row) };
@@ -123,6 +125,7 @@ export async function deleteMediaAction(mediaId: string): Promise<ActionResult> 
   if (error) return mapErrorToAction(error);
   await supabase.storage.from(MEDIA_BUCKET).remove([row.storage_key]);
 
+  revalidatePublic();
   if (row.game_id) revalidatePath(`/games/${row.game_id}`);
   if (row.post_id) revalidatePath("/locker-room");
   revalidatePath("/");

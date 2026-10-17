@@ -13,7 +13,7 @@ import { he } from "@/config/strings";
 import { getSeasonContext } from "@/lib/data/season";
 import { teamGameTotals, teamSeasonAverages } from "@/lib/stats/aggregate";
 import { record } from "@/lib/stats/games";
-import { computeLeaders, minGamesForLeaders } from "@/lib/stats/leaders";
+import { computeLeaders, countPotgByPlayer, minGamesForLeaders } from "@/lib/stats/leaders";
 import { computeShameAwards } from "@/lib/stats/shame";
 import { cn } from "@/lib/utils/cn";
 import { formatShortDate } from "@/lib/utils/dates";
@@ -104,11 +104,11 @@ function Overview({ ctx }: { ctx: Ctx }) {
       <section>
         <SectionHeader title={he.statsPage.teamAverages} />
         <TeamStatsStrip averages={avg} wins={rec.wins} />
-        <div className="mt-2 grid grid-cols-3 gap-2">
-          {avg.spg !== null ? <StatTile value={formatAverage(avg.spg)} label={he.stats.stealsLong} sublabel="SPG" size="sm" /> : null}
-          {avg.bpg !== null ? <StatTile value={formatAverage(avg.bpg)} label={he.stats.blocksLong} sublabel="BPG" size="sm" /> : null}
-          {avg.ftPct !== null ? <StatTile value={formatPercent(avg.ftPct)} label={he.stats.ftPct} sublabel="FT%" size="sm" /> : null}
-        </div>
+        {avg.ftPct !== null ? (
+          <div className="mt-2 grid grid-cols-3 gap-2">
+            <StatTile value={formatPercent(avg.ftPct)} label={he.stats.ftPct} sublabel="FT%" size="sm" />
+          </div>
+        ) : null}
       </section>
       <Leaders ctx={ctx} limit={3} />
     </div>
@@ -116,7 +116,10 @@ function Overview({ ctx }: { ctx: Ctx }) {
 }
 
 function Leaders({ ctx, limit = 5 }: { ctx: Ctx; limit?: number }) {
-  const boards = computeLeaders(ctx.aggregates, ctx.completed.length, { limit });
+  const boards = computeLeaders(ctx.aggregates, ctx.completed.length, {
+    limit,
+    potgCounts: countPotgByPlayer(ctx.games),
+  });
   return (
     <section>
       <SectionHeader title={he.statsPage.leaders} />

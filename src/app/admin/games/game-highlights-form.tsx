@@ -13,11 +13,15 @@ import type { Game, Media, Player } from "@/types/domain";
 export function GameHighlightsForm({
   game,
   potgCandidates,
+  suggestedPotgId,
+  suggestedPotgNote,
   gallery,
   demo,
 }: {
   game: Game;
   potgCandidates: Player[];
+  suggestedPotgId: number | null;
+  suggestedPotgNote: string;
   gallery: Media[];
   demo: boolean;
 }) {
@@ -46,7 +50,7 @@ export function GameHighlightsForm({
         </p>
       ) : null}
       <Field label={he.admin.gameForm.potg} htmlFor="playerOfGameId">
-        <Select id="playerOfGameId" name="playerOfGameId" defaultValue={game.playerOfGameId ?? ""} disabled={disabled}>
+        <Select id="playerOfGameId" name="playerOfGameId" defaultValue={suggestedPotgId ?? ""} disabled={disabled}>
           <option value="">{he.admin.gameForm.none}</option>
           {potgCandidates.map((p) => (
             <option key={p.id} value={p.id} data-user-content>
@@ -57,7 +61,7 @@ export function GameHighlightsForm({
         </Select>
       </Field>
       <Field label={he.admin.gameForm.potgNote} htmlFor="potgNote">
-        <Textarea id="potgNote" name="potgNote" defaultValue={game.potgNote ?? ""} disabled={disabled} data-user-content />
+        <Textarea id="potgNote" name="potgNote" defaultValue={suggestedPotgNote} disabled={disabled} data-user-content />
       </Field>
       <Field label={he.admin.gameForm.recap} htmlFor="recap">
         <Textarea id="recap" name="recap" defaultValue={game.recap ?? ""} disabled={disabled} className="min-h-40" data-user-content />

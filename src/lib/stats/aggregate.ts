@@ -1,4 +1,5 @@
 import type { Game, StatLine } from "@/types/domain";
+import { computePir } from "./pir";
 
 type OptionalKey = "steals" | "blocks" | "turnovers" | "fouls";
 
@@ -23,9 +24,11 @@ export interface PlayerAggregate {
   points: number;
   rebounds: number;
   assists: number;
+  pir: number;
   ppg: number | null;
   rpg: number | null;
   apg: number | null;
+  pirPerGame: number | null;
   steals: OptionalTotal;
   blocks: OptionalTotal;
   turnovers: OptionalTotal;
@@ -73,15 +76,18 @@ export function aggregateLines(playerId: number, lines: StatLine[]): PlayerAggre
   const points = lines.reduce((s, l) => s + l.points, 0);
   const rebounds = lines.reduce((s, l) => s + l.rebounds, 0);
   const assists = lines.reduce((s, l) => s + l.assists, 0);
+  const pir = lines.reduce((s, l) => s + computePir(l), 0);
   return {
     playerId,
     gp,
     points,
     rebounds,
     assists,
+    pir,
     ppg: safeDivide(points, gp),
     rpg: safeDivide(rebounds, gp),
     apg: safeDivide(assists, gp),
+    pirPerGame: safeDivide(pir, gp),
     steals: optionalTotal(lines, "steals"),
     blocks: optionalTotal(lines, "blocks"),
     turnovers: optionalTotal(lines, "turnovers"),
@@ -114,6 +120,7 @@ export interface TeamGameTotals {
   points: number;
   rebounds: number;
   assists: number;
+  pir: number;
   steals: number | null;
   blocks: number | null;
   turnovers: number | null;
@@ -134,6 +141,7 @@ export function teamGameTotals(lines: StatLine[]): TeamGameTotals {
     points: lines.reduce((s, l) => s + l.points, 0),
     rebounds: lines.reduce((s, l) => s + l.rebounds, 0),
     assists: lines.reduce((s, l) => s + l.assists, 0),
+    pir: lines.reduce((s, l) => s + computePir(l), 0),
     steals: sumOptional(lines, "steals"),
     blocks: sumOptional(lines, "blocks"),
     turnovers: sumOptional(lines, "turnovers"),

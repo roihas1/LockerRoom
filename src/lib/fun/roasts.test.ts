@@ -59,10 +59,29 @@ describe("generateRoasts", () => {
     expect(a).toEqual(b);
   });
 
-  it("calls out ghosts and close wins", () => {
-    const ghost = line(2, { points: 0, rebounds: 0, assists: 0, steals: 0, blocks: 0, fgAttempted: 0, fgMade: 0, ftAttempted: 0, ftMade: 0, threeAttempted: 0, threeMade: 0 });
-    const roasts = generateRoasts([ghost], players, { teamScore: 51, opponentScore: 50 });
-    expect(roasts.map((r) => r.playerId)).toEqual([null, 2]);
+  it("calls out close wins without roasting quiet lines", () => {
+    const quiet = line(2, {
+      points: 0,
+      rebounds: 0,
+      assists: 0,
+      steals: 0,
+      blocks: 0,
+      fgAttempted: 0,
+      fgMade: 0,
+      ftAttempted: 0,
+      ftMade: 0,
+      threeAttempted: 0,
+      threeMade: 0,
+    });
+    const roasts = generateRoasts([quiet], players, { teamScore: 51, opponentScore: 50 });
+    expect(roasts.map((r) => r.playerId)).toEqual([null]);
+  });
+
+  it("roasts close losses and airballs", () => {
+    const airball = line(1, { threeMade: 0, threeAttempted: 5, fgMade: 2, fgAttempted: 4, points: 4 });
+    const roasts = generateRoasts([airball], players, { teamScore: 50, opponentScore: 52 });
+    expect(roasts[0]!.playerId).toBeNull();
+    expect(roasts.some((r) => r.playerId === 1 && r.text.includes("0 מתוך 5"))).toBe(true);
   });
 });
 

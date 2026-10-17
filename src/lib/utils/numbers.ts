@@ -2,10 +2,12 @@ import { he } from "@/config/strings";
 import { MB } from "@/config/uploads";
 
 const oneDecimal = new Intl.NumberFormat("he-IL", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+/** Averages: drop trailing .0 (63 not 63.0) but keep one decimal when needed (12.5). */
+const averageFmt = new Intl.NumberFormat("he-IL", { minimumFractionDigits: 0, maximumFractionDigits: 1 });
 const integer = new Intl.NumberFormat("he-IL", { maximumFractionDigits: 0 });
 
 export function formatAverage(value: number | null): string {
-  return value === null ? he.stats.noValue : oneDecimal.format(value);
+  return value === null ? he.stats.noValue : averageFmt.format(value);
 }
 
 export function formatPercent(value: number | null): string {

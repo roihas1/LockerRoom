@@ -17,6 +17,7 @@ function teamRoast(game: GameScore): Roast | null {
   if (game.teamScore == null || game.opponentScore == null) return null;
   const margin = game.teamScore - game.opponentScore;
   if (margin <= -20) return { playerId: null, text: he.fun.roast.bigLoss(-margin), severity: 90 };
+  if (margin < 0 && margin >= -3) return { playerId: null, text: he.fun.roast.closeLoss(-margin), severity: 70 };
   if (margin >= 25) return { playerId: null, text: he.fun.roast.blowout(margin), severity: 40 };
   if (margin > 0 && margin <= 2) return { playerId: null, text: he.fun.roast.closeWin(margin), severity: 60 };
   return null;
@@ -35,14 +36,14 @@ function playerRoasts(line: StatLine, name: string): Roast[] {
   const pf = line.fouls ?? 0;
 
   if (fga >= 5 && fgm === 0) add(he.fun.roast.zeroFg(name, fga), 80 + fga);
-  if (tpa >= 5 && tpm / tpa <= 0.2) add(he.fun.roast.threes(name, tpm, tpa), 60 + tpa - tpm);
+  if (tpa >= 4 && tpm === 0) add(he.fun.roast.airball(name, tpa), 65 + tpa);
+  else if (tpa >= 5 && tpm / tpa <= 0.2) add(he.fun.roast.threes(name, tpm, tpa), 60 + tpa - tpm);
   if (to >= 4) add(he.fun.roast.turnovers(name, to), 55 + to * 3);
   if (pf >= 5) add(he.fun.roast.fouls(name, pf), 50 + pf);
-  if (fta >= 4 && ftm / fta <= 0.4) add(he.fun.roast.freeThrows(name, ftm, fta), 45 + fta - ftm);
+  if (fta >= 3 && ftm === 0) add(he.fun.roast.brickFts(name, fta), 48 + fta);
+  else if (fta >= 4 && ftm / fta <= 0.4) add(he.fun.roast.freeThrows(name, ftm, fta), 45 + fta - ftm);
   if (line.points >= 15 && fga >= 15 && fgm / fga < 0.35) add(he.fun.roast.volume(name, line.points, fga), 40 + fga - fgm);
-  if (line.points === 0 && line.rebounds === 0 && line.assists === 0 && (line.steals ?? 0) === 0 && (line.blocks ?? 0) === 0 && fga + fta === 0) {
-    add(he.fun.roast.ghost(name), 30);
-  }
+  if (line.rebounds === 0 && fga >= 8) add(he.fun.roast.noBoards(name, fga), 35 + fga);
   return out;
 }
 

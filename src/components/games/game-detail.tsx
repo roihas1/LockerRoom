@@ -91,9 +91,10 @@ export function GameDetail({
         </div>
       </header>
 
-      {showPlayByPlay && events ? (
+      {/* Live: play-by-play stays near the top. Final: pushed below so POTG / box score lead. */}
+      {showPlayByPlay && isLive && events ? (
         <section>
-          <SectionHeader title={he.live.playByPlay} icon={isLive ? <span aria-hidden>🔴</span> : undefined} />
+          <SectionHeader title={he.live.playByPlay} icon={<span aria-hidden>🔴</span>} />
           <PlayByPlay events={events} players={players} />
         </section>
       ) : null}
@@ -161,6 +162,13 @@ export function GameDetail({
         <section>
           <SectionHeader title={he.games.videos} icon={<span aria-hidden>🎥</span>} />
           <ActionGallery media={videos} columns={2} />
+        </section>
+      ) : null}
+
+      {showPlayByPlay && isFinal && events ? (
+        <section>
+          <SectionHeader title={he.live.playByPlay} />
+          <PlayByPlay events={events} players={players} />
         </section>
       ) : null}
     </article>

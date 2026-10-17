@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { blockDemoMutation } from "@/lib/auth/demo-guard";
 import { requireAdmin } from "@/lib/auth/require-admin";
+import { revalidatePublic } from "@/lib/cache/revalidate-public";
 import { he } from "@/config/strings";
 import { createSessionClient } from "@/lib/supabase/server";
 import { actionFromZod, actionSuccess, type ActionResult } from "@/lib/utils/action-result";
@@ -42,6 +43,7 @@ export async function saveCoachAction(_prev: ActionResult | null, formData: Form
   if (result.error) return mapErrorToAction(result.error);
 
   const id = result.data.id;
+  revalidatePublic();
   revalidatePath("/admin/coaches");
   revalidatePath(`/admin/coaches/${id}`);
   revalidatePath("/players");

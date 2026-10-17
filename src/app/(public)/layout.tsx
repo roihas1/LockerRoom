@@ -8,6 +8,9 @@ import { SiteHeader } from "@/components/layout/site-header";
 import { he } from "@/config/strings";
 import { getData } from "@/lib/data";
 
+/** Public shell: ISR-style revalidation; data also tagged `public` for on-demand bust. */
+export const revalidate = 60;
+
 export default async function PublicLayout({ children }: { children: ReactNode }) {
   const team = await getData().getTeam();
   return (

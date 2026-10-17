@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { blockDemoMutation } from "@/lib/auth/demo-guard";
 import { requireAdmin } from "@/lib/auth/require-admin";
+import { revalidatePublic } from "@/lib/cache/revalidate-public";
 import { he } from "@/config/strings";
 import { createSessionClient } from "@/lib/supabase/server";
 import { actionFail, actionFromZod, actionSuccess, type ActionResult } from "@/lib/utils/action-result";
@@ -10,6 +11,7 @@ import { mapErrorToAction } from "@/lib/utils/errors";
 import { parseSeasonForm, parseTeamSettingsForm } from "@/lib/validation/settings";
 
 function revalidateSettings() {
+  revalidatePublic();
   revalidatePath("/admin/settings");
   revalidatePath("/");
 }

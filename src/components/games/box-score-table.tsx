@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Fragment } from "react";
 import { he } from "@/config/strings";
 import { teamGameTotals } from "@/lib/stats/aggregate";
+import { comparePirLines, computePir } from "@/lib/stats/pir";
 import { cn } from "@/lib/utils/cn";
 import { formatInt, formatSplit } from "@/lib/utils/numbers";
 import type { Player, StatLine } from "@/types/domain";
@@ -25,6 +26,7 @@ const columns: Col[] = [
   { key: "stl", label: he.stats.steals, abbr: "STL", value: (l) => formatInt(l.steals), has: anyRecorded("steals"), total: (t) => formatInt(t.steals) },
   { key: "blk", label: he.stats.blocks, abbr: "BLK", value: (l) => formatInt(l.blocks), has: anyRecorded("blocks"), total: (t) => formatInt(t.blocks) },
   { key: "to", label: he.stats.turnovers, abbr: "TO", value: (l) => formatInt(l.turnovers), has: anyRecorded("turnovers"), total: (t) => formatInt(t.turnovers) },
+  { key: "pir", label: he.stats.pir, abbr: "PIR", value: (l) => formatInt(computePir(l)), has: always, total: (t) => formatInt(t.pir) },
   { key: "pf", label: he.stats.fouls, abbr: "PF", value: (l) => formatInt(l.fouls), has: anyRecorded("fouls"), total: (t) => formatInt(t.fouls) },
   {
     key: "fg",
@@ -57,7 +59,7 @@ export function BoxScoreTable({ lines, players, potgId }: { lines: StatLine[]; p
   const byId = new Map(players.map((p) => [p.id, p]));
   const visible = columns.filter((c) => c.has(lines));
   const totals = teamGameTotals(lines);
-  const sorted = [...lines].sort((a, b) => b.points - a.points);
+  const sorted = [...lines].sort(comparePirLines);
 
   return (
     <div className="card overflow-hidden">

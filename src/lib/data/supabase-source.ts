@@ -1,6 +1,5 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { connection } from "next/server";
 import type { Database, MediaRow, PostRow } from "@/types/database";
 import type { FeedItem, Media } from "@/types/domain";
 import { toAward, toCoach, toExercise, toGame, toGameEvent, toMedia, toPlayer, toPost, toSeason, toStatLine, toTeam } from "./mappers";
@@ -50,7 +49,6 @@ export function createSupabaseSource(client: Client, { includeDrafts = false } =
   }
 
   async function seasonsAll() {
-    await connection();
     return must(await client.from("seasons").select("*").order("start_date", { ascending: false })).map(toSeason);
   }
 
@@ -58,7 +56,6 @@ export function createSupabaseSource(client: Client, { includeDrafts = false } =
     mode: "supabase",
 
     async getTeam() {
-      await connection();
       const row = must(await client.from("team").select("*").eq("id", 1).single());
       return toTeam(row, await mediaLookup([row.logo_media_id, row.cover_media_id]));
     },
@@ -76,19 +73,16 @@ export function createSupabaseSource(client: Client, { includeDrafts = false } =
     },
 
     async getGames(seasonId) {
-      await connection();
       const rows = must(await published(client.from("games").select("*").eq("season_id", seasonId)).order("tipoff_at"));
       return rows.map(toGame);
     },
 
     async getGame(id) {
-      await connection();
       const row = maybe(await published(client.from("games").select("*").eq("id", id)).maybeSingle());
       return row ? toGame(row) : null;
     },
 
     async getGameDetail(id) {
-      await connection();
       const row = maybe(await published(client.from("games").select("*").eq("id", id)).maybeSingle());
       if (!row) return null;
       const game = toGame(row);
@@ -112,12 +106,10 @@ export function createSupabaseSource(client: Client, { includeDrafts = false } =
     },
 
     async getGameLines(gameId) {
-      await connection();
       return must(await client.from("player_game_stats").select("*").eq("game_id", gameId)).map(toStatLine);
     },
 
     async getGameEvents(gameId, limit) {
-      await connection();
       // Play-by-play is decorative; a missing table or failed read must not take the game page down.
       let query = client
         .from("game_events")
@@ -131,7 +123,6 @@ export function createSupabaseSource(client: Client, { includeDrafts = false } =
     },
 
     async getSeasonStatLines(seasonId) {
-      await connection();
       const games = must(await published(client.from("games").select("id").eq("season_id", seasonId).eq("status", "final")));
       if (games.length === 0) return [];
       const rows = must(
@@ -147,7 +138,6 @@ export function createSupabaseSource(client: Client, { includeDrafts = false } =
     },
 
     async getPlayers({ includeInactive = false } = {}) {
-      await connection();
       let q = client.from("players").select("*");
       if (!includeInactive) q = q.eq("is_active", true);
       const rows = must(await q.order("sort_order").order("jersey_number"));
@@ -156,14 +146,12 @@ export function createSupabaseSource(client: Client, { includeDrafts = false } =
     },
 
     async getPlayer(id) {
-      await connection();
       const row = maybe(await client.from("players").select("*").eq("id", id).maybeSingle());
       if (!row) return null;
       return toPlayer(row, await mediaLookup([row.photo_media_id]));
     },
 
     async getCoaches({ includeInactive = false } = {}) {
-      await connection();
       let q = client.from("coaches").select("*");
       if (!includeInactive) q = q.eq("is_active", true);
       const rows = must(await q.order("sort_order").order("id"));
@@ -172,14 +160,12 @@ export function createSupabaseSource(client: Client, { includeDrafts = false } =
     },
 
     async getCoach(id) {
-      await connection();
       const row = maybe(await client.from("coaches").select("*").eq("id", id).maybeSingle());
       if (!row) return null;
       return toCoach(row, await mediaLookup([row.photo_media_id]));
     },
 
     async getPlayerMedia(playerId, limit) {
-      await connection();
       const tags = must(await client.from("media_players").select("media_id").eq("player_id", playerId));
       if (tags.length === 0) return [];
       const rows = must(
@@ -197,7 +183,6 @@ export function createSupabaseSource(client: Client, { includeDrafts = false } =
     },
 
     async getRecentMedia(limit, kind) {
-      await connection();
       let q = client.from("media").select("*").not("game_id", "is", null);
       if (kind) q = q.eq("kind", kind);
       const rows = must(await q.order("created_at", { ascending: false }).limit(limit));
@@ -205,12 +190,10 @@ export function createSupabaseSource(client: Client, { includeDrafts = false } =
     },
 
     async getGameMedia(gameId) {
-      await connection();
       return mediaWithTags(must(await client.from("media").select("*").eq("game_id", gameId).order("sort_order")));
     },
 
     async getExercises(category) {
-      await connection();
       let q = published(client.from("exercises").select("*"));
       if (category) q = q.eq("category", category);
       const rows = must(await q.order("sort_order").order("id"));
@@ -219,14 +202,12 @@ export function createSupabaseSource(client: Client, { includeDrafts = false } =
     },
 
     async getExercise(id) {
-      await connection();
       const row = maybe(await published(client.from("exercises").select("*").eq("id", id)).maybeSingle());
       if (!row) return null;
       return toExercise(row, await mediaLookup([row.video_media_id, row.thumbnail_media_id, row.image_media_id]));
     },
 
     async getFeed({ type, before, limit }) {
-      await connection();
       const base = () => {
         let q = published(client.from("locker_room_posts").select("*"));
         if (type) q = q.eq("type", type);
@@ -245,7 +226,6 @@ export function createSupabaseSource(client: Client, { includeDrafts = false } =
     },
 
     async getFeedItem(id) {
-      await connection();
       const row = maybe(await published(client.from("locker_room_posts").select("*")).eq("id", id).maybeSingle());
       if (!row) return null;
       return (await hydrateFeed([row]))[0] ?? null;
@@ -311,7 +291,6 @@ export function createSupabaseSource(client: Client, { includeDrafts = false } =
   return {
     ...source,
     async getAwards(seasonId) {
-      await connection();
       let q = published(client.from("awards").select("*"));
       if (seasonId) q = q.eq("season_id", seasonId);
       const rows = must(await q.order("awarded_on", { ascending: false }));

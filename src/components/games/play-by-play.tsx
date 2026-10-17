@@ -1,9 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { StatTile } from "@/components/common/stat-tile";
 import { he } from "@/config/strings";
+import { opponentScoringFromEvents, scoringFromEvents, type ScoringFromEvents } from "@/lib/stats/scoring-from-events";
 import { formatTime } from "@/lib/utils/dates";
 import { cn } from "@/lib/utils/cn";
+import { formatInt } from "@/lib/utils/numbers";
 import type { GameEvent, Player } from "@/types/domain";
 
 /** First paint stays short; older events expand on demand (newest first). */
@@ -38,11 +41,22 @@ export function PlayByPlay({ events, players }: { events: GameEvent[]; players: 
   const byId = new Map(players.map((p) => [p.id, p]));
   if (events.length === 0) return <p className="card p-5 text-sm text-muted">{he.live.noEvents}</p>;
 
+  const us = scoringFromEvents(events);
+  const them = opponentScoringFromEvents(events);
+  const hasUs = us.ft + us.two + us.three > 0;
+  const hasThem = them.ft + them.two + them.three > 0;
   const shown = events.slice(0, visible);
   const hasMore = visible < events.length;
 
   return (
     <div className="space-y-3">
+      {hasUs || hasThem ? (
+        <div className="space-y-3">
+          <p className="text-xs text-muted">{he.live.scoringFromEvents}</p>
+          {hasUs ? <ScoringRow title={he.live.scoringUs} scoring={us} /> : null}
+          {hasThem ? <ScoringRow title={he.live.scoringOpponent} scoring={them} /> : null}
+        </div>
+      ) : null}
       <ol className="card divide-y divide-border overflow-hidden" aria-live="polite">
         {shown.map((event) => {
           const player = event.playerId ? byId.get(event.playerId) : null;
@@ -75,6 +89,19 @@ export function PlayByPlay({ events, players }: { events: GameEvent[]; players: 
       ) : events.length > PAGE_SIZE ? (
         <p className="text-center text-xs text-muted">{he.live.showingOf(events.length, events.length)}</p>
       ) : null}
+    </div>
+  );
+}
+
+function ScoringRow({ title, scoring }: { title: string; scoring: ScoringFromEvents }) {
+  return (
+    <div>
+      <p className="mb-1.5 text-xs font-semibold">{title}</p>
+      <div className="grid grid-cols-3 gap-2">
+        <StatTile value={formatInt(scoring.ft)} label={he.stats.ft} sublabel="FT" size="sm" />
+        <StatTile value={formatInt(scoring.two)} label={he.live.twos} sublabel={he.live.twosAbbr} size="sm" />
+        <StatTile value={formatInt(scoring.three)} label={he.stats.three} sublabel="3PT" size="sm" />
+      </div>
     </div>
   );
 }

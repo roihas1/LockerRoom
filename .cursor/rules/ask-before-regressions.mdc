@@ -1,0 +1,28 @@
+---
+description: Ask before migrations or code changes that risk a regression
+alwaysApply: true
+---
+
+# Ask before regressive changes
+
+If a planned migration or code change would **break, remove, weaken, or reverse** existing behavior, data, APIs, or UX — **stop and ask the user first**. Do not apply it until they confirm.
+
+## Treat as a regression risk (ask first)
+
+- Dropping/renaming columns, tables, constraints, or RLS policies
+- Changing column types, defaults, or checks in a backward-incompatible way
+- Deleting or rewriting public routes, server actions, or push/notify triggers
+- Narrowing validation, auth, or publish gates in a way that breaks current flows
+- Replacing a working code path with a different one that changes observable results
+- Any “cleanup” that removes features, fields, or notifications fans/admins already use
+
+## Safe without asking
+
+- Additive migrations (new nullable columns, new tables) that do not change old rows’ meaning
+- New code paths that leave existing behavior intact
+- Bug fixes that restore intended behavior without changing the contract
+- Tests, docs, and refactors that preserve external behavior
+
+## How to ask
+
+Briefly state: what would change, what might break, and the safer alternative (if any). Wait for an explicit go-ahead before editing.

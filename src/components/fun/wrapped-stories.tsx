@@ -112,13 +112,18 @@ export function WrappedStories({
         </div>
       </div>
 
-      <div key={index} aria-live="polite" className="relative z-10 flex flex-1 flex-col justify-center gap-4 p-6 text-center motion-safe:animate-fade-up">
+      <div
+        key={index}
+        aria-live="polite"
+        className="pointer-events-none relative z-10 flex flex-1 flex-col justify-center gap-4 p-6 text-center motion-safe:animate-fade-up"
+      >
         <p className="sr-only">{he.fun.wrapped.slide(index + 1, slides.length)}</p>
         <SlideBody slide={slide} photo={photo} hashtag={hashtag} />
       </div>
 
-      <button type="button" onClick={() => go(-1)} disabled={index === 0} className="absolute inset-y-0 start-0 z-0 w-1/3" aria-label={he.fun.wrapped.prev} />
-      <button type="button" onClick={() => go(1)} disabled={index === last} className="absolute inset-y-0 end-0 z-0 w-2/3" aria-label={he.fun.wrapped.next} />
+      {/* Visual left/right story taps (match ArrowLeft=next / ArrowRight=prev) */}
+      <button type="button" onClick={() => go(1)} disabled={index === last} className="absolute inset-y-0 left-0 z-[15] w-2/3" aria-label={he.fun.wrapped.next} /* rtl-ignore */ />
+      <button type="button" onClick={() => go(-1)} disabled={index === 0} className="absolute inset-y-0 right-0 z-[15] w-1/3" aria-label={he.fun.wrapped.prev} /* rtl-ignore */ />
     </div>
   );
 }

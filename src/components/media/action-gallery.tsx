@@ -88,19 +88,19 @@ export function ActionGallery({ media, className, columns = 3 }: { media: Media[
         {current ? (
           <DialogContent
             title={current.caption ?? he.media.imageOf((index ?? 0) + 1, media.length)}
-            description={he.media.imageOf((index ?? 0) + 1, media.length)}
-            className="max-w-4xl"
+            description={current.caption ? he.media.imageOf((index ?? 0) + 1, media.length) : undefined}
+            className="max-w-[min(96vw,1100px)] p-3 sm:p-4"
           >
             <div className="relative">
               {current.kind === "video" ? (
                 <VideoPlayer key={current.id} media={current} />
               ) : (
-                <div className="relative aspect-4/3 w-full overflow-hidden rounded-xl bg-black">
+                <div className="relative h-[min(80dvh,calc(100dvh-8rem))] w-full overflow-hidden rounded-xl bg-black">
                   <Image
                     src={getMediaUrl(current) ?? getPosterUrl(current)}
                     alt={current.caption ?? ""}
                     fill
-                    sizes="(min-width: 1024px) 896px, 100vw"
+                    sizes="(min-width: 1024px) 1100px, 96vw"
                     quality={85}
                     unoptimized={isSvg(getPosterUrl(current))}
                     className="object-contain"

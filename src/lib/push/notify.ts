@@ -3,6 +3,12 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { after } from "next/server";
 import { he } from "@/config/strings";
 import type { Database } from "@/types/database";
+import {
+  detectLiveMoment,
+  LIVE_EXTRA_PUSH_MAX,
+  type LiveMomentKind,
+  type LiveMomentScores,
+} from "./live-moments";
 import { sendPush } from "./send";
 import type { PushMessage, PushTopic } from "./topics";
 
@@ -42,6 +48,88 @@ export function notifyGameLive(game: { id: number; opponent: string; is_publishe
     url: `/games/${game.id}`,
     tag: `live-${game.id}`,
   });
+}
+
+function liveMomentMessage(kind: LiveMomentKind, gameId: number, teamScore: number, opponentScore: number): PushMessage {
+  const score = `${teamScore}:${opponentScore}`;
+  if (kind === "comeback") {
+    return {
+      title: he.push.liveComebackTitle,
+      body: he.push.liveComebackBody(score),
+      url: `/games/${gameId}`,
+      tag: `live-comeback-${gameId}`,
+    };
+  }
+  return {
+    title: he.push.liveLeadTitle,
+    body: he.push.liveLeadBody,
+    url: `/games/${gameId}`,
+    tag: `live-lead-${gameId}`,
+  };
+}
+
+/**
+ * Mid-game live moment push (comeback / lead invite). Claim columns + extra-push count make each
+ * moment fire at most once and keep the per-game budget at LIVE_EXTRA_PUSH_MAX.
+ */
+export async function notifyLiveMomentOnce(
+  client: Client,
+  gameId: number,
+  input: {
+    isPublished: boolean;
+    liveMaxDeficit: number;
+    liveExtraPushCount: number;
+    comebackSentAt: string | null;
+    leadSentAt: string | null;
+    scores: LiveMomentScores;
+  },
+): Promise<void> {
+  try {
+    if (!input.isPublished) return;
+    const decision = detectLiveMoment(
+      {
+        liveMaxDeficit: input.liveMaxDeficit,
+        liveExtraPushCount: input.liveExtraPushCount,
+        comebackSent: input.comebackSentAt != null,
+        leadSent: input.leadSentAt != null,
+      },
+      input.scores,
+    );
+    if (!decision.moment) return;
+
+    const now = new Date().toISOString();
+    const claim =
+      decision.moment === "comeback"
+        ? {
+            live_comeback_push_sent_at: now,
+            live_extra_push_count: input.liveExtraPushCount + 1,
+          }
+        : {
+            live_lead_push_sent_at: now,
+            live_extra_push_count: input.liveExtraPushCount + 1,
+          };
+
+    let query = client
+      .from("games")
+      .update(claim)
+      .eq("id", gameId)
+      .eq("is_published", true)
+      .lt("live_extra_push_count", LIVE_EXTRA_PUSH_MAX)
+      .eq("live_extra_push_count", input.liveExtraPushCount);
+
+    if (decision.moment === "comeback") query = query.is("live_comeback_push_sent_at", null);
+    else query = query.is("live_lead_push_sent_at", null);
+
+    const { data: claimed } = await query.select("id").maybeSingle();
+    if (!claimed) return;
+
+    queuePush(
+      "live",
+      liveMomentMessage(decision.moment, gameId, input.scores.nextTeam, input.scores.nextOpponent),
+    );
+  } catch (err) {
+    console.error("notifyLiveMomentOnce failed", err);
+  }
 }
 
 /**

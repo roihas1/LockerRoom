@@ -127,6 +127,10 @@ export type GameRow = {
   play_of_game_media_id: string | null;
   reminder_sent_for: string | null;
   final_push_sent_at: string | null;
+  live_max_deficit: number;
+  live_extra_push_count: number;
+  live_comeback_push_sent_at: string | null;
+  live_lead_push_sent_at: string | null;
   ibba_event_id: number | null;
   ibba_snapshot: Json | null;
   ibba_checked_at: string | null;

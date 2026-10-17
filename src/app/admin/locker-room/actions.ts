@@ -1,8 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { createSeasonPirAwardDraft } from "@/lib/admin/pir-award";
 import { blockDemoMutation } from "@/lib/auth/demo-guard";
 import { requireAdmin } from "@/lib/auth/require-admin";
+import { revalidatePublic } from "@/lib/cache/revalidate-public";
 import { he } from "@/config/strings";
 import { notifyFeedPost } from "@/lib/push/notify";
 import { createSessionClient } from "@/lib/supabase/server";
@@ -12,6 +14,7 @@ import { parseAwardForm } from "@/lib/validation/award";
 import { parsePostForm } from "@/lib/validation/post";
 
 function revalidatePostPaths(id: number) {
+  revalidatePublic();
   revalidatePath("/admin/locker-room");
   revalidatePath(`/admin/locker-room/${id}`);
   revalidatePath("/locker-room");
@@ -19,6 +22,7 @@ function revalidatePostPaths(id: number) {
 }
 
 function revalidateAwardPaths(id: number) {
+  revalidatePublic();
   revalidatePath("/admin/locker-room/awards");
   revalidatePath(`/admin/locker-room/awards/${id}`);
   revalidatePath("/locker-room");
@@ -123,6 +127,7 @@ export async function deletePostAction(_prev: ActionResult | null, formData: For
   const { error } = await supabase.from("locker_room_posts").delete().eq("id", postId);
   if (error) return mapErrorToAction(error);
 
+  revalidatePublic();
   revalidatePath("/admin/locker-room");
   revalidatePath("/locker-room");
   return actionSuccess(he.admin.deleted, "/admin/locker-room");
@@ -220,7 +225,34 @@ export async function deleteAwardAction(_prev: ActionResult | null, formData: Fo
   const { error } = await supabase.from("awards").delete().eq("id", awardId);
   if (error) return mapErrorToAction(error);
 
+  revalidatePublic();
   revalidatePath("/admin/locker-room/awards");
   revalidatePath("/locker-room");
   return actionSuccess(he.admin.deleted, "/admin/locker-room/awards");
+}
+
+export async function createSeasonPirAwardAction(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  await requireAdmin();
+  const demoBlock = blockDemoMutation();
+  if (demoBlock) return demoBlock;
+
+  const seasonId = Number(formData.get("seasonId"));
+  if (!seasonId) return actionFail(he.errors.notFound, "not_found");
+
+  const supabase = await createSessionClient();
+  const result = await createSeasonPirAwardDraft(supabase, seasonId);
+
+  if (result.status === "failed") return actionFail(he.fun.pirAward.failed, "failed");
+  if (result.status === "empty") return actionFail(he.fun.pirAward.empty, "empty");
+  if (result.status === "published") {
+    return actionSuccess(he.fun.pirAward.published, result.awardId ? `/admin/locker-room/awards/${result.awardId}` : undefined);
+  }
+  if (result.status === "exists") {
+    return actionSuccess(he.fun.pirAward.draftExists, result.awardId ? `/admin/locker-room/awards/${result.awardId}` : undefined);
+  }
+
+  revalidatePublic();
+  revalidatePath("/admin/locker-room/awards");
+  if (result.awardId) revalidatePath(`/admin/locker-room/awards/${result.awardId}`);
+  return actionSuccess(he.fun.pirAward.draftCreated, `/admin/locker-room/awards/${result.awardId}`);
 }

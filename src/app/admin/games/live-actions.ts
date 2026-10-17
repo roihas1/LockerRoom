@@ -4,10 +4,12 @@ import { revalidatePath } from "next/cache";
 import { he } from "@/config/strings";
 import { handleGameFinalized } from "@/lib/admin/game-final";
 import { createRoastDraft } from "@/lib/admin/roast-post";
+import { requireAdmin } from "@/lib/auth/require-admin";
+import { revalidatePublic } from "@/lib/cache/revalidate-public";
 import { applyEventDiff } from "@/lib/live-stats/apply-events";
 import { diffSnapshots } from "@/lib/live-stats/diff";
-import { notifyGameLive } from "@/lib/push/notify";
-import { requireAdmin } from "@/lib/auth/require-admin";
+import { nextLiveMaxDeficit } from "@/lib/push/live-moments";
+import { notifyGameLive, notifyLiveMomentOnce } from "@/lib/push/notify";
 import { isDemoMode } from "@/lib/supabase/env";
 import { createSessionClient } from "@/lib/supabase/server";
 import { actionFail, actionFromZod, actionSuccess, type ActionResult } from "@/lib/utils/action-result";
@@ -15,6 +17,7 @@ import { mapErrorToAction } from "@/lib/utils/errors";
 import { parseLiveStatsPayload } from "@/lib/validation/live-stats";
 
 async function revalidateGamePaths(gameId: number, seasonId: number) {
+  revalidatePublic();
   revalidatePath("/admin/games");
   revalidatePath(`/admin/games/${gameId}`);
   revalidatePath(`/admin/games/${gameId}/live`);
@@ -41,7 +44,13 @@ export async function saveLiveStatsSnapshot(_prev: ActionResult | null, formData
   const { gameId, playedPlayerIds, lines, teamScore, opponentScore } = parsed.data;
   const supabase = await createSessionClient();
   const [{ data: game, error: loadError }, { data: previousRows }] = await Promise.all([
-    supabase.from("games").select("season_id, opponent_score").eq("id", gameId).single(),
+    supabase
+      .from("games")
+      .select(
+        "season_id, team_score, opponent_score, is_published, live_max_deficit, live_extra_push_count, live_comeback_push_sent_at, live_lead_push_sent_at",
+      )
+      .eq("id", gameId)
+      .single(),
     supabase.from("player_game_stats").select("player_id, points, rebounds, assists, turnovers, steals, blocks").eq("game_id", gameId),
   ]);
   if (loadError || !game) return mapErrorToAction(loadError ?? { message: "missing" });
@@ -69,12 +78,42 @@ export async function saveLiveStatsSnapshot(_prev: ActionResult | null, formData
   const { error: deleteError } = await deleteQuery;
   if (deleteError) return mapErrorToAction(deleteError);
 
-  const gameUpdate: { status: "live"; team_score?: number; opponent_score?: number } = { status: "live" };
+  const scoresProvided = teamScore !== undefined && opponentScore !== undefined;
+  const momentScores = scoresProvided
+    ? {
+        prevTeam: game.team_score,
+        prevOpponent: game.opponent_score,
+        nextTeam: teamScore,
+        nextOpponent: opponentScore,
+      }
+    : null;
+  const nextMaxDeficit = momentScores
+    ? nextLiveMaxDeficit(game.live_max_deficit, momentScores)
+    : game.live_max_deficit;
+
+  const gameUpdate: {
+    status: "live";
+    team_score?: number;
+    opponent_score?: number;
+    live_max_deficit?: number;
+  } = { status: "live" };
   if (teamScore !== undefined) gameUpdate.team_score = teamScore;
   if (opponentScore !== undefined) gameUpdate.opponent_score = opponentScore;
+  if (nextMaxDeficit !== game.live_max_deficit) gameUpdate.live_max_deficit = nextMaxDeficit;
 
   const { error: gameError } = await supabase.from("games").update(gameUpdate).eq("id", gameId);
   if (gameError) return mapErrorToAction(gameError);
+
+  if (momentScores) {
+    await notifyLiveMomentOnce(supabase, gameId, {
+      isPublished: game.is_published,
+      liveMaxDeficit: game.live_max_deficit,
+      liveExtraPushCount: game.live_extra_push_count,
+      comebackSentAt: game.live_comeback_push_sent_at,
+      leadSentAt: game.live_lead_push_sent_at,
+      scores: momentScores,
+    });
+  }
 
   const previous = (previousRows ?? []).map((r) => ({
     playerId: r.player_id,

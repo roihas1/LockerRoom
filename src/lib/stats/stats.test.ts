@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { Game, StatLine } from "@/types/domain";
 import { aggregateLines, countedLines, safeDivide, seasonHighs, teamGameTotals, teamSeasonAverages } from "./aggregate";
 import { currentStreak, gameResult, lastGame, nextGame, record } from "./games";
-import { computeLeaders, minGamesForLeaders } from "./leaders";
+import { computeLeaders, countPotgByPlayer, minGamesForLeaders } from "./leaders";
 
 const line = (over: Partial<StatLine>): StatLine => ({
   gameId: 1,
@@ -158,6 +158,26 @@ describe("leaders", () => {
     const points = boards.find((x) => x.category === "points")!;
     expect(points.entries.map((e) => e.playerId)).toEqual([1, 3]);
     expect(boards.find((x) => x.category === "steals")).toBeUndefined();
+  });
+
+  it("ranks PIR averages and POTG counts", () => {
+    const a = aggregateLines(1, [
+      line({ points: 10, rebounds: 5, assists: 2, turnovers: 1 }),
+      line({ gameId: 2, points: 8, rebounds: 4, assists: 1, turnovers: 0 }),
+    ]);
+    const b = aggregateLines(2, [
+      line({ playerId: 2, points: 6, rebounds: 2, assists: 1, turnovers: 3 }),
+      line({ playerId: 2, gameId: 2, points: 4, rebounds: 1, assists: 0, turnovers: 2 }),
+    ]);
+    const potgCounts = countPotgByPlayer([
+      game({ id: 1, playerOfGameId: 1 }),
+      game({ id: 2, playerOfGameId: 1 }),
+      game({ id: 3, playerOfGameId: 2, isPractice: true }),
+    ]);
+    const boards = computeLeaders([a, b], 2, { categories: ["pir", "potg"], potgCounts });
+    expect(boards.find((x) => x.category === "pir")!.entries[0]!.playerId).toBe(1);
+    expect(boards.find((x) => x.category === "potg")!.entries.map((e) => e.playerId)).toEqual([1]);
+    expect(boards.find((x) => x.category === "potg")!.entries[0]!.value).toBe(2);
   });
 });
 

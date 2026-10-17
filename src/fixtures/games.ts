@@ -1,3 +1,4 @@
+import { pickPotgPlayerId } from "@/lib/stats/pir";
 import type { Game, HomeAway, Media, StatLine } from "@/types/domain";
 import { placeholderMedia } from "./media";
 import { fixturePlayers } from "./players";
@@ -208,8 +209,7 @@ function buildLines(seed: GameSeed): StatLine[] {
 }
 
 function potgFor(lines: StatLine[]): number | null {
-  const score = (l: StatLine) => l.points + l.rebounds * 1.2 + l.assists * 1.5 + (l.blocks ?? 0) * 2 + (l.steals ?? 0) * 2;
-  return [...lines].sort((a, b) => score(b) - score(a))[0]?.playerId ?? null;
+  return pickPotgPlayerId(lines);
 }
 
 export const fixtureStatLines: StatLine[] = gameSeeds.filter((s) => !s.scheduled).flatMap(buildLines);

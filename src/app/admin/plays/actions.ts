@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { blockDemoMutation } from "@/lib/auth/demo-guard";
 import { requireAdmin } from "@/lib/auth/require-admin";
+import { revalidatePublic } from "@/lib/cache/revalidate-public";
 import { he } from "@/config/strings";
 import { notifyNewPlay } from "@/lib/push/notify";
 import { createSessionClient } from "@/lib/supabase/server";
@@ -13,6 +14,7 @@ import { parseExerciseForm } from "@/lib/validation/exercise";
 type Client = Awaited<ReturnType<typeof createSessionClient>>;
 
 function revalidateExercisePaths(id: number) {
+  revalidatePublic();
   revalidatePath("/admin/plays");
   revalidatePath(`/admin/plays/${id}`);
   revalidatePath("/plays");
@@ -121,6 +123,7 @@ export async function deleteExerciseAction(_prev: ActionResult | null, formData:
   const { error } = await supabase.from("exercises").delete().eq("id", exerciseId);
   if (error) return mapErrorToAction(error);
 
+  revalidatePublic();
   revalidatePath("/admin/plays");
   revalidatePath("/plays");
   revalidatePath("/locker-room");

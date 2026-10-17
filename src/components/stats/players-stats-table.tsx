@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils/cn";
 import { formatAverage, formatInt, formatPercent } from "@/lib/utils/numbers";
 import type { Player } from "@/types/domain";
 
-export const sortKeys = ["gp", "ppg", "rpg", "apg", "spg", "bpg", "topg", "fg", "three", "ft"] as const;
+export const sortKeys = ["gp", "ppg", "rpg", "apg", "spg", "bpg", "topg", "fg", "three", "ft", "pir"] as const;
 export type SortKey = (typeof sortKeys)[number];
 
 interface Col {
@@ -30,6 +30,7 @@ const cols: Col[] = [
   { key: "fg", label: he.stats.fg, abbr: "FG%", value: (a) => a.fg.pct, format: formatPercent, has: (all) => all.some((a) => a.fg.attempted > 0) },
   { key: "three", label: he.stats.three, abbr: "3PT%", value: (a) => a.three.pct, format: formatPercent, has: (all) => all.some((a) => a.three.attempted > 0) },
   { key: "ft", label: he.stats.ft, abbr: "FT%", value: (a) => a.ft.pct, format: formatPercent, has: (all) => all.some((a) => a.ft.attempted > 0) },
+  { key: "pir", label: he.stats.pir, abbr: "PIR", value: (a) => a.pirPerGame, format: formatAverage, has: yes },
 ];
 
 export function PlayersStatsTable({
