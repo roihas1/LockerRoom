@@ -37,6 +37,8 @@ export interface DataSource {
   getGameLines(gameId: number): Promise<StatLine[]>;
   /** Play-by-play of a game, newest first. Pass `limit` to cap the trail (e.g. live preview). */
   getGameEvents(gameId: number, limit?: number): Promise<GameEvent[]>;
+  /** A player's `points` events across the given games (for FT / 2PT / 3PT made counts). */
+  getPlayerPointsEvents(playerId: number, gameIds: number[]): Promise<GameEvent[]>;
   /** Stat rows of final, published games in a season. */
   getSeasonStatLines(seasonId: number): Promise<StatLine[]>;
   getPlayers(opts?: { includeInactive?: boolean }): Promise<Player[]>;

@@ -23,6 +23,15 @@ export function createCachedPublicSource(source: DataSource): DataSource {
     ["public", "game-events"],
     opts,
   );
+  const getPlayerPointsEvents = unstable_cache(
+    (playerId: number, gameIdsKey: string) =>
+      source.getPlayerPointsEvents(
+        playerId,
+        gameIdsKey ? gameIdsKey.split(",").map(Number) : [],
+      ),
+    ["public", "player-points-events"],
+    opts,
+  );
   const getSeasonStatLines = unstable_cache(
     (seasonId: number) => source.getSeasonStatLines(seasonId),
     ["public", "season-lines"],
@@ -85,6 +94,8 @@ export function createCachedPublicSource(source: DataSource): DataSource {
     getGameDetail,
     getGameLines,
     getGameEvents: (gameId, limit) => getGameEvents(gameId, limit),
+    getPlayerPointsEvents: (playerId, gameIds) =>
+      getPlayerPointsEvents(playerId, [...gameIds].sort((a, b) => a - b).join(",")),
     getSeasonStatLines,
     getPlayers: (optsArg) => getPlayers(optsArg?.includeInactive ?? false),
     getPlayer,

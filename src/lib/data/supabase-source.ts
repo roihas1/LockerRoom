@@ -122,6 +122,17 @@ export function createSupabaseSource(client: Client, { includeDrafts = false } =
       return error ? [] : (data ?? []).map(toGameEvent);
     },
 
+    async getPlayerPointsEvents(playerId, gameIds) {
+      if (gameIds.length === 0) return [];
+      const { data, error } = await client
+        .from("game_events")
+        .select("*")
+        .eq("player_id", playerId)
+        .eq("kind", "points")
+        .in("game_id", gameIds);
+      return error ? [] : (data ?? []).map(toGameEvent);
+    },
+
     async getSeasonStatLines(seasonId) {
       const games = must(await published(client.from("games").select("id").eq("season_id", seasonId).eq("status", "final")));
       if (games.length === 0) return [];

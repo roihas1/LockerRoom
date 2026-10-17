@@ -9,17 +9,21 @@ export interface ScoringFromEvents {
   three: number;
 }
 
+export const emptyScoring = (): ScoringFromEvents => ({ ft: 0, two: 0, three: 0 });
+
+function bumpScoring(cur: ScoringFromEvents, value: number): void {
+  if (value === 1) cur.ft++;
+  else if (value === 2) cur.two++;
+  else if (value === 3) cur.three++;
+}
+
 function tallyScoring(events: Pick<GameEvent, "kind" | "value">[], kind: "points" | "opponent_points"): ScoringFromEvents {
-  let ft = 0;
-  let two = 0;
-  let three = 0;
+  const out = emptyScoring();
   for (const e of events) {
     if (e.kind !== kind) continue;
-    if (e.value === 1) ft++;
-    else if (e.value === 2) two++;
-    else if (e.value === 3) three++;
+    bumpScoring(out, e.value);
   }
-  return { ft, two, three };
+  return out;
 }
 
 /**
@@ -33,4 +37,54 @@ export function scoringFromEvents(events: Pick<GameEvent, "kind" | "value">[]): 
 /** Same breakdown for `opponent_points` events. */
 export function opponentScoringFromEvents(events: Pick<GameEvent, "kind" | "value">[]): ScoringFromEvents {
   return tallyScoring(events, "opponent_points");
+}
+
+/**
+ * Per-player made FT / 2PT / 3PT from `points` events (requires `playerId`).
+ * Players with no scoring buckets are omitted from the map.
+ */
+export function playerScoringFromEvents(
+  events: Pick<GameEvent, "kind" | "value" | "playerId">[],
+): Map<number, ScoringFromEvents> {
+  const map = new Map<number, ScoringFromEvents>();
+  for (const e of events) {
+    if (e.kind !== "points" || e.playerId == null) continue;
+    if (e.value !== 1 && e.value !== 2 && e.value !== 3) continue;
+    const cur = map.get(e.playerId) ?? emptyScoring();
+    bumpScoring(cur, e.value);
+    map.set(e.playerId, cur);
+  }
+  return map;
+}
+
+/**
+ * Per-game made FT / 2PT / 3PT for one player's `points` events.
+ * Games with no scoring buckets are omitted from the map.
+ */
+export function scoringByGameFromEvents(
+  events: Pick<GameEvent, "kind" | "value" | "gameId">[],
+): Map<number, ScoringFromEvents> {
+  const map = new Map<number, ScoringFromEvents>();
+  for (const e of events) {
+    if (e.kind !== "points") continue;
+    if (e.value !== 1 && e.value !== 2 && e.value !== 3) continue;
+    const cur = map.get(e.gameId) ?? emptyScoring();
+    bumpScoring(cur, e.value);
+    map.set(e.gameId, cur);
+  }
+  return map;
+}
+
+export function scoringTotal(scoring: Iterable<ScoringFromEvents>): ScoringFromEvents {
+  const out = emptyScoring();
+  for (const s of scoring) {
+    out.ft += s.ft;
+    out.two += s.two;
+    out.three += s.three;
+  }
+  return out;
+}
+
+export function hasScoring(s: ScoringFromEvents): boolean {
+  return s.ft + s.two + s.three > 0;
 }

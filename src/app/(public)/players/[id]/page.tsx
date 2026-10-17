@@ -11,6 +11,7 @@ import { StatTile } from "@/components/common/stat-tile";
 import { ActionGallery } from "@/components/media/action-gallery";
 import { PlayerTag } from "@/components/players/player-tag";
 import { SwipeNav } from "@/components/players/swipe-nav";
+import { PlayerGameLogTable } from "@/components/stats/player-game-log-table";
 import { Badge } from "@/components/ui/badge";
 import { positionLabels } from "@/config/labels";
 import { he } from "@/config/strings";
@@ -18,10 +19,8 @@ import { getData } from "@/lib/data";
 import { getSeasonContext } from "@/lib/data/season";
 import { shareMessage } from "@/lib/meta";
 import { aggregateLines, seasonHighs, type HighKey } from "@/lib/stats/aggregate";
-import { gameResult } from "@/lib/stats/games";
-import { cn } from "@/lib/utils/cn";
-import { formatShortDate } from "@/lib/utils/dates";
-import { formatAverage, formatInt, formatPercent, formatSplit } from "@/lib/utils/numbers";
+import { hasScoring, scoringByGameFromEvents, scoringTotal } from "@/lib/stats/scoring-from-events";
+import { formatAverage, formatInt, formatPercent } from "@/lib/utils/numbers";
 import { parseId } from "@/lib/utils/params";
 
 const highLabels: Record<HighKey, string> = {
@@ -60,6 +59,13 @@ export default async function PlayerPage({ params }: PageProps<"/players/[id]">)
     .map((l) => ({ line: l, game: gamesById.get(l.gameId)! }))
     .filter((x) => x.game)
     .sort((a, b) => b.game.tipoffAt.localeCompare(a.game.tipoffAt));
+  const pointEvents = await data.getPlayerPointsEvents(
+    id,
+    log.map((r) => r.game.id),
+  );
+  const scoringByGame = scoringByGameFromEvents(pointEvents);
+  const seasonScoring = scoringTotal(scoringByGame.values());
+  const showEventScoring = hasScoring(seasonScoring);
 
   const funFacts = [
     { label: he.roster.strength, value: player.strength },
@@ -197,6 +203,16 @@ export default async function PlayerPage({ params }: PageProps<"/players/[id]">)
               <StatTile value={formatInt(agg.rebounds)} label={he.stats.reboundsLong} size="sm" />
               <StatTile value={formatInt(agg.assists)} label={he.stats.assistsLong} size="sm" />
             </div>
+            {showEventScoring ? (
+              <div className="mt-3 space-y-1.5">
+                <p className="text-xs text-muted">{he.live.scoringFromEvents}</p>
+                <div className="grid grid-cols-3 gap-2">
+                  <StatTile value={formatInt(seasonScoring.ft)} label={he.stats.ft} sublabel="FT" size="sm" />
+                  <StatTile value={formatInt(seasonScoring.two)} label={he.live.twos} sublabel={he.live.twosAbbr} size="sm" />
+                  <StatTile value={formatInt(seasonScoring.three)} label={he.stats.three} sublabel="3PT" size="sm" />
+                </div>
+              </div>
+            ) : null}
           </section>
         ) : null}
 
@@ -229,60 +245,14 @@ export default async function PlayerPage({ params }: PageProps<"/players/[id]">)
         {log.length ? (
           <section>
             <SectionHeader title={he.roster.gameLog} />
-            <div className="card overflow-x-auto scrollbar-none">
-              <table className="w-full min-w-max text-sm">
-                <caption className="sr-only">{he.roster.gameLog}</caption>
-                <thead>
-                  <tr className="border-b border-border bg-surface-2 text-xs text-muted">
-                    <th scope="col" className="px-3 py-2.5 text-start font-semibold">
-                      {he.admin.gameForm.opponent}
-                    </th>
-                    <th scope="col" className="px-2.5 py-2.5 font-semibold">
-                      {he.stats.points}
-                    </th>
-                    <th scope="col" className="px-2.5 py-2.5 font-semibold">
-                      {he.stats.rebounds}
-                    </th>
-                    <th scope="col" className="px-2.5 py-2.5 font-semibold">
-                      {he.stats.assists}
-                    </th>
-                    <th scope="col" className="px-2.5 py-2.5 font-semibold">
-                      {he.stats.fg}
-                    </th>
-                    <th scope="col" className="px-2.5 py-2.5 font-semibold">
-                      {he.stats.three}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {log.map(({ line, game }) => {
-                    const r = gameResult(game);
-                    return (
-                      <tr key={game.id} className="border-b border-border/60 last:border-0">
-                        <th scope="row" className="px-3 py-2.5 text-start font-semibold">
-                          <Link href={`/games/${game.id}`} className="flex items-center gap-2 hover:text-team">
-                            <span className={cn("num text-xs font-bold", r === "win" ? "text-win" : "text-loss")}>
-                              {r === "win" ? he.result.winShort : he.result.lossShort}
-                            </span>
-                            <span data-user-content>{game.opponent}</span>
-                            <span className="num text-xs text-muted">{formatShortDate(game.tipoffAt)}</span>
-                          </Link>
-                        </th>
-                        <td className="num px-2.5 py-2.5 text-center font-bold">{line.points}</td>
-                        <td className="num px-2.5 py-2.5 text-center">{line.rebounds}</td>
-                        <td className="num px-2.5 py-2.5 text-center">{line.assists}</td>
-                        <td className="num px-2.5 py-2.5 text-center">
-                          <bdi dir="ltr">{formatSplit(line.fgMade, line.fgAttempted)}</bdi>
-                        </td>
-                        <td className="num px-2.5 py-2.5 text-center">
-                          <bdi dir="ltr">{formatSplit(line.threeMade, line.threeAttempted)}</bdi>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+            <PlayerGameLogTable
+              log={log}
+              scoringByGame={
+                showEventScoring
+                  ? Object.fromEntries([...scoringByGame.entries()].map(([gameId, s]) => [String(gameId), s]))
+                  : undefined
+              }
+            />
           </section>
         ) : null}
 

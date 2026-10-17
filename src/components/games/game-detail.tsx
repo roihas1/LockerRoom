@@ -112,7 +112,7 @@ export function GameDetail({
         <section>
           <SectionHeader title={he.games.boxScore} />
           {lines.length ? (
-            <BoxScoreTable lines={lines} players={players} potgId={game.playerOfGameId} />
+            <BoxScoreTable lines={lines} players={players} potgId={game.playerOfGameId} events={events} />
           ) : (
             <EmptyState emoji="📋" title={he.empty.boxScore.title} text={he.empty.boxScore.text} />
           )}

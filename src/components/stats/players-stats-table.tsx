@@ -2,15 +2,16 @@ import Link from "next/link";
 import { ArrowDown } from "lucide-react";
 import { he } from "@/config/strings";
 import type { PlayerAggregate } from "@/lib/stats/aggregate";
+import { compareDesc } from "@/lib/stats/sort-value";
 import { cn } from "@/lib/utils/cn";
 import { formatAverage, formatInt, formatPercent } from "@/lib/utils/numbers";
 import type { Player } from "@/types/domain";
 
-export const sortKeys = ["gp", "ppg", "rpg", "apg", "spg", "bpg", "topg", "fg", "three", "ft", "pir"] as const;
+export const sortKeys = ["player", "gp", "ppg", "rpg", "apg", "spg", "bpg", "topg", "fg", "three", "ft", "pir"] as const;
 export type SortKey = (typeof sortKeys)[number];
 
 interface Col {
-  key: SortKey;
+  key: Exclude<SortKey, "player">;
   label: string;
   abbr: string;
   value: (a: PlayerAggregate) => number | null;
@@ -45,8 +46,16 @@ export function PlayersStatsTable({
   hrefFor: (sort: SortKey) => string;
 }) {
   const visible = cols.filter((c) => c.has(aggregates));
-  const sortCol = visible.find((c) => c.key === sort) ?? visible[1]!;
-  const rows = [...aggregates].sort((a, b) => (sortCol.value(b) ?? -1) - (sortCol.value(a) ?? -1));
+  const sortCol = sort === "player" ? null : (visible.find((c) => c.key === sort) ?? visible.find((c) => c.key === "pir")!);
+  const activeKey: SortKey = sort === "player" ? "player" : (sortCol?.key ?? "pir");
+  const rows = [...aggregates].sort((a, b) => {
+    if (activeKey === "player") {
+      const an = playersById.get(a.playerId)?.name ?? "";
+      const bn = playersById.get(b.playerId)?.name ?? "";
+      return an.localeCompare(bn, "he") || a.playerId - b.playerId;
+    }
+    return compareDesc(sortCol!.value(a), sortCol!.value(b)) || a.playerId - b.playerId;
+  });
 
   return (
     <div className="card overflow-hidden">
@@ -55,11 +64,21 @@ export function PlayersStatsTable({
           <caption className="sr-only">{he.statsPage.players}</caption>
           <thead>
             <tr className="border-b border-border bg-surface-2 text-xs text-muted">
-              <th scope="col" className="sticky start-0 z-10 bg-surface-2 px-3 py-2.5 text-start font-semibold">
-                {he.games.player}
+              <th scope="col" aria-sort={activeKey === "player" ? "ascending" : "none"} className="sticky start-0 z-10 bg-surface-2 p-0 text-start font-semibold">
+                <Link
+                  href={hrefFor("player")}
+                  scroll={false}
+                  className={cn("flex flex-col items-start px-3 py-2.5 hover:text-text", activeKey === "player" && "text-team")}
+                  aria-label={`${he.statsPage.sortBy} ${he.games.player}`}
+                >
+                  <span className="flex items-center gap-0.5">
+                    {he.games.player}
+                    {activeKey === "player" ? <ArrowDown className="size-3" aria-hidden /> : null}
+                  </span>
+                </Link>
               </th>
               {visible.map((c) => {
-                const active = c.key === sortCol.key;
+                const active = c.key === activeKey;
                 return (
                   <th key={c.key} scope="col" aria-sort={active ? "descending" : "none"} className="p-0 text-center font-semibold">
                     <Link
@@ -93,7 +112,7 @@ export function PlayersStatsTable({
                     </Link>
                   </th>
                   {visible.map((c) => (
-                    <td key={c.key} className={cn("num px-2.5 py-2.5 text-center", c.key === sortCol.key && "font-bold text-team")}>
+                    <td key={c.key} className={cn("num px-2.5 py-2.5 text-center", c.key === activeKey && "font-bold text-team")}>
                       <bdi dir="ltr">{c.format(c.value(a))}</bdi>
                     </td>
                   ))}

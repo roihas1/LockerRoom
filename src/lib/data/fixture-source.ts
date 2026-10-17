@@ -75,6 +75,9 @@ export function createFixtureSource({ includeDrafts = false } = {}): DataSource 
     async getGameEvents() {
       return [];
     },
+    async getPlayerPointsEvents() {
+      return [];
+    },
     async getSeasonStatLines(seasonId) {
       const ids = new Set(
         visible(fixtureGames)
