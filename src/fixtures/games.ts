@@ -263,6 +263,7 @@ export const fixtureGames: Game[] = gameSeeds.map((s) => {
       potgNote: null,
       playOfGameMediaId: null,
       isPublished: true,
+      isPractice: false,
     };
   }
   const lines = fixtureStatLines.filter((l) => l.gameId === s.id);
@@ -284,5 +285,6 @@ export const fixtureGames: Game[] = gameSeeds.map((s) => {
     potgNote: s.potgNote ?? null,
     playOfGameMediaId: video?.id ?? null,
     isPublished: true,
+    isPractice: false,
   };
 });

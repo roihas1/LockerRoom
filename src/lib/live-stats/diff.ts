@@ -1,6 +1,6 @@
 import type { LivePlayerTotals, LiveStatField } from "./types";
 
-export type GameEventKind = "points" | "rebound" | "assist" | "steal" | "turnover" | "opponent_points";
+export type GameEventKind = "points" | "rebound" | "assist" | "steal" | "block" | "turnover" | "opponent_points";
 
 export interface EventInsert {
   playerId: number | null;
@@ -27,6 +27,7 @@ export const fieldToKind: Record<LiveStatField, GameEventKind> = {
   rebounds: "rebound",
   assists: "assist",
   steals: "steal",
+  blocks: "block",
   turnovers: "turnover",
 };
 

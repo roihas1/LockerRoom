@@ -18,6 +18,7 @@ const game: Game = {
   potgNote: null,
   playOfGameMediaId: null,
   isPublished: false,
+  isPractice: false,
 };
 
 const line: StatLine = {
@@ -39,7 +40,7 @@ const line: StatLine = {
 };
 
 describe("buildLiveGameSnapshot", () => {
-  it("maps core live stats and null steals/turnovers to zero", () => {
+  it("maps core live stats and null optional stats to zero", () => {
     const snapshot = buildLiveGameSnapshot(game, [line]);
     expect(snapshot.gameId).toBe(9);
     expect(snapshot.teamScore).toBe(44);
@@ -48,6 +49,7 @@ describe("buildLiveGameSnapshot", () => {
       points: 12,
       rebounds: 5,
       assists: 2,
+      blocks: 0,
       turnovers: 0,
       steals: 1,
     });

@@ -22,7 +22,7 @@ import { TeamTotals } from "./team-totals";
 
 /**
  * Full game page body. Shared by the public game page and the admin review step.
- * Pass `events` (public page) to turn a live game into a realtime scoreboard with play-by-play.
+ * Pass `events` (public page) for live/final play-by-play; live games also get realtime refresh.
  */
 export function GameDetail({
   detail,
@@ -42,6 +42,8 @@ export function GameDetail({
   const isFinal = game.status === "final";
   const isLive = game.status === "live" && events !== undefined;
   const showStats = isFinal || isLive;
+  // Live always shows (empty CTA while waiting); final only when live stats left a trail.
+  const showPlayByPlay = isLive || (isFinal && !!events?.length);
 
   return (
     <article className="space-y-8">
@@ -89,9 +91,9 @@ export function GameDetail({
         </div>
       </header>
 
-      {isLive ? (
+      {showPlayByPlay && events ? (
         <section>
-          <SectionHeader title={he.live.playByPlay} icon={<span aria-hidden>🔴</span>} />
+          <SectionHeader title={he.live.playByPlay} icon={isLive ? <span aria-hidden>🔴</span> : undefined} />
           <PlayByPlay events={events} players={players} />
         </section>
       ) : null}

@@ -1,5 +1,5 @@
 import type { PlayerAggregate } from "@/lib/stats/aggregate";
-import { gameResult } from "@/lib/stats/games";
+import { gameResult, isCountedGame } from "@/lib/stats/games";
 import { computeShameAwards, type ShameCategory } from "@/lib/stats/shame";
 import type { Game, StatLine } from "@/types/domain";
 
@@ -52,7 +52,8 @@ export function buildWrapped({ playerId, games, lines, aggregates, completedGame
   let losses = 0;
   for (const l of mine) {
     const g = gamesById.get(l.gameId);
-    const r = g ? gameResult(g) : null;
+    if (!g || !isCountedGame(g)) continue;
+    const r = gameResult(g);
     if (r === "win") wins++;
     else if (r === "loss") losses++;
   }

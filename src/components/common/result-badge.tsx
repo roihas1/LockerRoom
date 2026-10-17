@@ -4,7 +4,10 @@ import { he } from "@/config/strings";
 import { gameResult } from "@/lib/stats/games";
 import type { Game } from "@/types/domain";
 
-export function ResultBadge({ game }: { game: Pick<Game, "status" | "teamScore" | "opponentScore"> }) {
+export function ResultBadge({ game }: { game: Pick<Game, "status" | "teamScore" | "opponentScore"> & { isPractice?: boolean } }) {
+  if (game.isPractice && game.status === "final") {
+    return <Badge tone="warning">{he.games.practice}</Badge>;
+  }
   const result = gameResult(game);
   if (result === "win") return <Badge tone="win">{he.result.win}</Badge>;
   if (result === "loss") return <Badge tone="loss">{he.result.loss}</Badge>;

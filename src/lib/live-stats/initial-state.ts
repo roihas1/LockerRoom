@@ -12,6 +12,7 @@ export function buildLiveGameSnapshot(game: Game, lines: StatLine[]): LiveGameSn
       assists: line.assists,
       turnovers: line.turnovers ?? 0,
       steals: line.steals ?? 0,
+      blocks: line.blocks ?? 0,
     };
   }
   return {

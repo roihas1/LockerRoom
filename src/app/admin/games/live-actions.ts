@@ -42,7 +42,7 @@ export async function saveLiveStatsSnapshot(_prev: ActionResult | null, formData
   const supabase = await createSessionClient();
   const [{ data: game, error: loadError }, { data: previousRows }] = await Promise.all([
     supabase.from("games").select("season_id, opponent_score").eq("id", gameId).single(),
-    supabase.from("player_game_stats").select("player_id, points, rebounds, assists, turnovers, steals").eq("game_id", gameId),
+    supabase.from("player_game_stats").select("player_id, points, rebounds, assists, turnovers, steals, blocks").eq("game_id", gameId),
   ]);
   if (loadError || !game) return mapErrorToAction(loadError ?? { message: "missing" });
 
@@ -54,6 +54,7 @@ export async function saveLiveStatsSnapshot(_prev: ActionResult | null, formData
     assists: l.assists,
     turnovers: l.turnovers,
     steals: l.steals,
+    blocks: l.blocks,
   }));
 
   if (rows.length > 0) {
@@ -82,6 +83,7 @@ export async function saveLiveStatsSnapshot(_prev: ActionResult | null, formData
     assists: r.assists,
     turnovers: r.turnovers ?? 0,
     steals: r.steals ?? 0,
+    blocks: r.blocks ?? 0,
   }));
   await applyEventDiff(supabase, gameId, diffSnapshots(previous, lines, game.opponent_score, opponentScore));
 
@@ -116,6 +118,7 @@ export async function startLiveGameAction(gameId: number, playerIds: number[]): 
     assists: 0,
     turnovers: 0,
     steals: 0,
+    blocks: 0,
   }));
 
   const { error: upsertError } = await supabase.from("player_game_stats").upsert(rows, { onConflict: "game_id,player_id" });

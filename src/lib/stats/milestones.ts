@@ -1,7 +1,7 @@
 import type { Game, StatLine } from "@/types/domain";
 import { currentStreak, gameResult, isCountedGame } from "./games";
 
-export type MilestoneStat = "points" | "rebounds" | "assists" | "steals" | "threes";
+export type MilestoneStat = "points" | "rebounds" | "assists" | "steals" | "blocks" | "threes";
 
 export type Milestone =
   | { kind: "season_total"; key: string; playerId: number; stat: MilestoneStat; value: number }
@@ -14,6 +14,7 @@ export const seasonTotalThresholds: Record<MilestoneStat, number[]> = {
   rebounds: [50, 100, 150, 200],
   assists: [25, 50, 75, 100],
   steals: [25, 50],
+  blocks: [10, 25, 50],
   threes: [10, 25, 50],
 };
 
@@ -23,6 +24,7 @@ export const seasonHighMinimums: Record<MilestoneStat, number> = {
   rebounds: 8,
   assists: 5,
   steals: 4,
+  blocks: 3,
   threes: 3,
 };
 
@@ -30,7 +32,7 @@ export const seasonHighMinimums: Record<MilestoneStat, number> = {
 export const MIN_PRIOR_GAMES_FOR_RECORDS = 2;
 export const winStreakMarks = [3, 5, 7, 10];
 
-const STATS: MilestoneStat[] = ["points", "rebounds", "assists", "steals", "threes"];
+const STATS: MilestoneStat[] = ["points", "rebounds", "assists", "steals", "blocks", "threes"];
 
 function statValue(line: StatLine, stat: MilestoneStat): number {
   const v = stat === "threes" ? line.threeMade : line[stat];

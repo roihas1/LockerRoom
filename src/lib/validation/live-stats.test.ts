@@ -10,6 +10,7 @@ const baseLine = {
   assists: 2,
   turnovers: 1,
   steals: 0,
+  blocks: 0,
 };
 
 describe("livePlayerStatLineSchema", () => {
@@ -77,6 +78,7 @@ describe("parseLiveStatsPayload", () => {
     fd.set("assists_7", "3");
     fd.set("turnovers_7", "1");
     fd.set("steals_7", "2");
+    fd.set("blocks_7", "1");
     fd.set("teamScore", "55");
     fd.set("opponentScore", "50");
 
@@ -88,6 +90,7 @@ describe("parseLiveStatsPayload", () => {
         points: 12,
         assists: 3,
         steals: 2,
+        blocks: 1,
       });
       expect(r.data.teamScore).toBe(55);
       expect(r.data.opponentScore).toBe(50);

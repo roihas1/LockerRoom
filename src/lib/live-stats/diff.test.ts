@@ -9,6 +9,7 @@ const line = (playerId: number, over: Partial<LivePlayerTotals> = {}): LivePlaye
   assists: 0,
   turnovers: 0,
   steals: 0,
+  blocks: 0,
   ...over,
 });
 

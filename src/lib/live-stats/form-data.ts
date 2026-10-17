@@ -8,7 +8,7 @@ export type LiveStatsClientState = {
 };
 
 export function emptyLiveLine(playerId: number): LivePlayerTotals {
-  return { playerId, points: 0, rebounds: 0, assists: 0, turnovers: 0, steals: 0 };
+  return { playerId, points: 0, rebounds: 0, assists: 0, turnovers: 0, steals: 0, blocks: 0 };
 }
 
 export function sumPlayedPoints(state: LiveStatsClientState): number {
@@ -26,6 +26,7 @@ export function buildLiveStatsFormData(gameId: number, state: LiveStatsClientSta
     fd.set(`assists_${playerId}`, String(line.assists));
     fd.set(`turnovers_${playerId}`, String(line.turnovers));
     fd.set(`steals_${playerId}`, String(line.steals));
+    fd.set(`blocks_${playerId}`, String(line.blocks));
   }
   fd.set("teamScore", String(state.teamScore));
   fd.set("opponentScore", String(state.opponentScore));

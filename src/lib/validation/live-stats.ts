@@ -12,6 +12,7 @@ export const livePlayerStatLineSchema = z.object({
   assists: liveCoreStat,
   turnovers: liveCoreStat,
   steals: liveCoreStat,
+  blocks: liveCoreStat,
 });
 
 export const saveLiveStatsSchema = z
@@ -53,6 +54,7 @@ function parseLiveStatsForm(formData: FormData) {
     assists: readStat(playerId, "assists"),
     turnovers: readStat(playerId, "turnovers"),
     steals: readStat(playerId, "steals"),
+    blocks: readStat(playerId, "blocks"),
   }));
 
   const teamRaw = formData.get("teamScore");

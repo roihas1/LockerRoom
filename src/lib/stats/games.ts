@@ -2,8 +2,8 @@ import type { Game } from "@/types/domain";
 
 export type GameResult = "win" | "loss";
 
-export function isCountedGame(game: Pick<Game, "status" | "isPublished">): boolean {
-  return game.status === "final" && game.isPublished;
+export function isCountedGame(game: Pick<Game, "status" | "isPublished" | "isPractice">): boolean {
+  return game.status === "final" && game.isPublished && !game.isPractice;
 }
 
 export function gameResult(game: Pick<Game, "status" | "teamScore" | "opponentScore">): GameResult | null {
@@ -18,6 +18,11 @@ export function completedGames(games: Game[]): Game[] {
   return games.filter((g) => gameResult(g) !== null).sort(byTipoff);
 }
 
+/** Final published non-practice games that count toward the season record. */
+export function recordGames(games: Game[]): Game[] {
+  return games.filter((g) => isCountedGame(g) && gameResult(g) !== null).sort(byTipoff);
+}
+
 export function isUpcomingGame(game: Pick<Game, "status">): boolean {
   return game.status === "scheduled" || game.status === "live" || game.status === "postponed";
 }
@@ -29,7 +34,7 @@ export function upcomingGames(games: Game[]): Game[] {
 export function record(games: Game[]): { wins: number; losses: number } {
   let wins = 0;
   let losses = 0;
-  for (const g of games) {
+  for (const g of recordGames(games)) {
     const r = gameResult(g);
     if (r === "win") wins++;
     else if (r === "loss") losses++;
@@ -37,9 +42,9 @@ export function record(games: Game[]): { wins: number; losses: number } {
   return { wins, losses };
 }
 
-/** Current run of consecutive identical results, counted from the most recent completed game. */
+/** Current run of consecutive identical results, counted from the most recent record game. */
 export function currentStreak(games: Game[]): { type: GameResult; count: number } | null {
-  const done = completedGames(games).reverse();
+  const done = recordGames(games).reverse();
   const first = done[0];
   if (!first) return null;
   const type = gameResult(first)!;

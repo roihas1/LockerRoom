@@ -11,7 +11,7 @@ export type ExerciseCategory =
   | "late_game";
 export type Difficulty = "easy" | "medium" | "hard";
 export type PostType = "announcement" | "photo" | "video" | "funny_moment" | "quote" | "highlight" | "award" | "play" | "milestone";
-export type GameEventKind = "points" | "rebound" | "assist" | "steal" | "turnover" | "opponent_points";
+export type GameEventKind = "points" | "rebound" | "assist" | "steal" | "block" | "turnover" | "opponent_points";
 export type AwardCategory = "official" | "fun";
 export type MediaKind = "image" | "video";
 export type AppRole = "user" | "admin";
@@ -109,6 +109,8 @@ export interface Game {
   potgNote: string | null;
   playOfGameMediaId: string | null;
   isPublished: boolean;
+  /** Practice / exhibition: shown publicly but excluded from W–L and season streaks. */
+  isPractice: boolean;
 }
 
 export interface StatLine {

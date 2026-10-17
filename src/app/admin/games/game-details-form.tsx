@@ -92,6 +92,20 @@ export function GameDetailsForm({
           ))}
         </Select>
       </Field>
+      <label className="flex items-start gap-3 rounded-xl border border-border px-3 py-3 text-sm">
+        <input
+          type="checkbox"
+          name="isPractice"
+          value="on"
+          defaultChecked={game?.isPractice ?? false}
+          disabled={disabled}
+          className="mt-0.5 size-4 accent-[var(--team-primary)]"
+        />
+        <span>
+          <span className="block font-semibold">{he.admin.gameForm.practice}</span>
+          <span className="text-muted">{he.admin.gameForm.practiceHint}</span>
+        </span>
+      </label>
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label={he.admin.gameForm.teamScore} htmlFor="teamScore" error={fieldError(state, "teamScore")}>
           <Input id="teamScore" name="teamScore" inputMode="numeric" defaultValue={game?.teamScore ?? ""} disabled={disabled} className="num" />

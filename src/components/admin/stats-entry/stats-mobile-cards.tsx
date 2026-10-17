@@ -55,8 +55,9 @@ export function StatsMobileCards({
   const player = played[safeIndex]!;
   const row = rows.find((r) => r.playerId === player.id)!;
 
-  const bump = (key: "rebounds" | "assists", delta: number) => {
-    onChange(player.id, { [key]: Math.max(0, row[key] + delta) });
+  const bump = (key: "rebounds" | "assists" | "steals" | "blocks" | "turnovers", delta: number) => {
+    const current = row[key] ?? 0;
+    onChange(player.id, { [key]: Math.max(0, current + delta) });
   };
 
   const addPoints = (n: number) => onChange(player.id, { points: row.points + n });
@@ -103,9 +104,12 @@ export function StatsMobileCards({
           </Button>
           <span className="num ms-auto self-center text-2xl font-bold">{row.points}</span>
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
           <Stepper label={he.stats.reboundsLong} value={row.rebounds} onDec={() => bump("rebounds", -1)} onInc={() => bump("rebounds", 1)} />
           <Stepper label={he.stats.assistsLong} value={row.assists} onDec={() => bump("assists", -1)} onInc={() => bump("assists", 1)} />
+          <Stepper label={he.stats.stealsLong} value={row.steals ?? 0} onDec={() => bump("steals", -1)} onInc={() => bump("steals", 1)} />
+          <Stepper label={he.stats.blocksLong} value={row.blocks ?? 0} onDec={() => bump("blocks", -1)} onInc={() => bump("blocks", 1)} />
+          <Stepper label={he.stats.turnoversLong} value={row.turnovers ?? 0} onDec={() => bump("turnovers", -1)} onInc={() => bump("turnovers", 1)} />
         </div>
       </div>
 

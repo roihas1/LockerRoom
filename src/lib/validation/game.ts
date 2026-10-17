@@ -26,6 +26,10 @@ export const gameDetailsFormSchema = z
       .optional(),
     homeAway: z.enum(["home", "away", "neutral"]),
     status: z.enum(["scheduled", "live", "final", "postponed", "cancelled"]),
+    isPractice: z
+      .union([z.literal("on"), z.literal("true"), z.literal("1"), z.literal(""), z.null()])
+      .optional()
+      .transform((v) => v === "on" || v === "true" || v === "1"),
     teamScore: scoreField.transform((v) => (v === "" ? null : v)),
     opponentScore: scoreField.transform((v) => (v === "" ? null : v)),
   })
@@ -57,6 +61,7 @@ export function parseGameDetailsForm(formData: FormData) {
     location: formData.get("location"),
     homeAway: formData.get("homeAway"),
     status: formData.get("status"),
+    isPractice: formData.get("isPractice"),
     teamScore: formData.get("teamScore"),
     opponentScore: formData.get("opponentScore"),
   };

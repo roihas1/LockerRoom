@@ -19,6 +19,7 @@ function toLivePlayerTotals(line: StatLine): LivePlayerTotals {
     assists: line.assists,
     turnovers: line.turnovers ?? 0,
     steals: line.steals ?? 0,
+    blocks: line.blocks ?? 0,
   };
 }
 

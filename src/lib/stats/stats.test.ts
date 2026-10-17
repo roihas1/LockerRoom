@@ -39,6 +39,7 @@ const game = (over: Partial<Game>): Game => ({
   potgNote: null,
   playOfGameMediaId: null,
   isPublished: true,
+  isPractice: false,
   ...over,
 });
 
@@ -124,6 +125,16 @@ describe("games", () => {
     expect(record(games)).toEqual({ wins: 2, losses: 1 });
     expect(currentStreak(games)).toEqual({ type: "win", count: 2 });
     expect(currentStreak([])).toBeNull();
+  });
+
+  it("excludes practice games from the season record and streak", () => {
+    const withPractice = [
+      game({ id: 1, tipoffAt: "2026-09-01T00:00:00Z", teamScore: 70, opponentScore: 80 }),
+      game({ id: 2, tipoffAt: "2026-09-08T00:00:00Z", isPractice: true }),
+      game({ id: 3, tipoffAt: "2026-09-15T00:00:00Z" }),
+    ];
+    expect(record(withPractice)).toEqual({ wins: 1, losses: 1 });
+    expect(currentStreak(withPractice)).toEqual({ type: "win", count: 1 });
   });
 
   it("finds last and next games", () => {

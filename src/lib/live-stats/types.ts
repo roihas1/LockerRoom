@@ -1,6 +1,6 @@
 import type { GameStatus } from "@/types/domain";
 
-export type LiveStatField = "points" | "rebounds" | "assists" | "turnovers" | "steals";
+export type LiveStatField = "points" | "rebounds" | "assists" | "turnovers" | "steals" | "blocks";
 
 export type LivePlayerTotals = {
   playerId: number;
@@ -9,6 +9,7 @@ export type LivePlayerTotals = {
   assists: number;
   turnovers: number;
   steals: number;
+  blocks: number;
 };
 
 /** Read model for loading the live scoring screen (fixture or Supabase). */

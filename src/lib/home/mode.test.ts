@@ -19,6 +19,7 @@ function game(id: number, tipoffAt: string, status: Game["status"], score: [numb
     potgNote: null,
     playOfGameMediaId: null,
     isPublished: true,
+  isPractice: false,
   };
 }
 

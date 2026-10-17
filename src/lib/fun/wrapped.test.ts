@@ -20,6 +20,7 @@ function game(id: number, teamScore: number, opponentScore: number): Game {
     potgNote: null,
     playOfGameMediaId: null,
     isPublished: true,
+  isPractice: false,
   };
 }
 

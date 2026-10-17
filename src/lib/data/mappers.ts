@@ -115,6 +115,7 @@ export function toGame(row: GameRow): Game {
     potgNote: row.potg_note,
     playOfGameMediaId: row.play_of_game_media_id,
     isPublished: row.is_published,
+    isPractice: row.is_practice,
   };
 }
 

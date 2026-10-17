@@ -35,7 +35,7 @@ export interface DataSource {
   getGame(id: number): Promise<Game | null>;
   getGameDetail(id: number): Promise<GameDetailData | null>;
   getGameLines(gameId: number): Promise<StatLine[]>;
-  /** Play-by-play of a game, newest first. */
+  /** Play-by-play of a game, newest first. Pass `limit` to cap the trail (e.g. live preview). */
   getGameEvents(gameId: number, limit?: number): Promise<GameEvent[]>;
   /** Stat rows of final, published games in a season. */
   getSeasonStatLines(seasonId: number): Promise<StatLine[]>;

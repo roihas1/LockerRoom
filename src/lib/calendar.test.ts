@@ -28,6 +28,7 @@ const game: Game = {
   potgNote: null,
   playOfGameMediaId: null,
   isPublished: true,
+  isPractice: false,
 };
 
 describe("gameCalendarEvent", () => {

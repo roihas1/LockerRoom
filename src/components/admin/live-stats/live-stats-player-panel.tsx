@@ -75,7 +75,7 @@ export function LiveStatsPlayerPanel({
     });
   };
 
-  const bump = (key: "rebounds" | "assists" | "turnovers" | "steals", delta: number) => {
+  const bump = (key: "rebounds" | "assists" | "turnovers" | "steals" | "blocks", delta: number) => {
     patchLine({ [key]: Math.max(0, line[key] + delta) });
   };
 
@@ -118,7 +118,7 @@ export function LiveStatsPlayerPanel({
           </Button>
         ))}
       </div>
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
         <StatStepper
           label={he.stats.reboundsLong}
           value={line.rebounds}
@@ -134,18 +134,25 @@ export function LiveStatsPlayerPanel({
           onInc={() => bump("assists", 1)}
         />
         <StatStepper
-          label={he.stats.turnoversLong}
-          value={line.turnovers}
-          disabled={disabled}
-          onDec={() => bump("turnovers", -1)}
-          onInc={() => bump("turnovers", 1)}
-        />
-        <StatStepper
           label={he.stats.stealsLong}
           value={line.steals}
           disabled={disabled}
           onDec={() => bump("steals", -1)}
           onInc={() => bump("steals", 1)}
+        />
+        <StatStepper
+          label={he.stats.blocksLong}
+          value={line.blocks}
+          disabled={disabled}
+          onDec={() => bump("blocks", -1)}
+          onInc={() => bump("blocks", 1)}
+        />
+        <StatStepper
+          label={he.stats.turnoversLong}
+          value={line.turnovers}
+          disabled={disabled}
+          onDec={() => bump("turnovers", -1)}
+          onInc={() => bump("turnovers", 1)}
         />
       </div>
     </section>

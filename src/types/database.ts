@@ -15,7 +15,7 @@ type ExerciseCategory =
   | "late_game";
 type Difficulty = "easy" | "medium" | "hard";
 type PostType = "announcement" | "photo" | "video" | "funny_moment" | "quote" | "highlight" | "award" | "play" | "milestone";
-type GameEventKind = "points" | "rebound" | "assist" | "steal" | "turnover" | "opponent_points";
+type GameEventKind = "points" | "rebound" | "assist" | "steal" | "block" | "turnover" | "opponent_points";
 type PushTopic = "games" | "live" | "plays" | "feed";
 type AwardCategory = "official" | "fun";
 type MediaKind = "image" | "video";
@@ -131,6 +131,7 @@ export type GameRow = {
   ibba_snapshot: Json | null;
   ibba_checked_at: string | null;
   is_published: boolean;
+  is_practice: boolean;
   created_at: string;
   updated_at: string;
 };

@@ -116,16 +116,17 @@ export function createSupabaseSource(client: Client, { includeDrafts = false } =
       return must(await client.from("player_game_stats").select("*").eq("game_id", gameId)).map(toStatLine);
     },
 
-    async getGameEvents(gameId, limit = 60) {
+    async getGameEvents(gameId, limit) {
       await connection();
       // Play-by-play is decorative; a missing table or failed read must not take the game page down.
-      const { data, error } = await client
+      let query = client
         .from("game_events")
         .select("*")
         .eq("game_id", gameId)
         .order("created_at", { ascending: false })
-        .order("id", { ascending: false })
-        .limit(limit);
+        .order("id", { ascending: false });
+      if (limit != null) query = query.limit(limit);
+      const { data, error } = await query;
       return error ? [] : (data ?? []).map(toGameEvent);
     },
 

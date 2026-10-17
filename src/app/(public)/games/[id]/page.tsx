@@ -31,7 +31,8 @@ export default async function GamePage({ params }: PageProps<"/games/[id]">) {
   const [detail, team] = await Promise.all([data.getGameDetail(id), data.getTeam()]);
   if (!detail) notFound();
   const isLive = detail.game.status === "live";
-  const events = isLive ? await data.getGameEvents(id) : undefined;
+  const isFinal = detail.game.status === "final";
+  const events = isLive || isFinal ? await data.getGameEvents(id) : undefined;
   const share = (
     <ShareButton
       path={`/games/${id}`}
