@@ -1,14 +1,16 @@
 "use client";
 
-import { ArrowDown } from "lucide-react";
+import { ArrowDown, ArrowUp } from "lucide-react";
 import { he } from "@/config/strings";
+import type { SortDir } from "@/lib/stats/sort-value";
 import { cn } from "@/lib/utils/cn";
 
-/** Clickable stats-table header; active column shows a descending arrow. */
+/** Clickable stats-table header; active column shows asc/desc arrow. */
 export function SortableTh({
   label,
   abbr,
   active,
+  dir = "desc",
   onSort,
   align = "center",
   sticky,
@@ -16,14 +18,16 @@ export function SortableTh({
   label: string;
   abbr?: string;
   active: boolean;
+  dir?: SortDir;
   onSort: () => void;
   align?: "start" | "center";
   sticky?: boolean;
 }) {
+  const Arrow = dir === "asc" ? ArrowUp : ArrowDown;
   return (
     <th
       scope="col"
-      aria-sort={active ? "descending" : "none"}
+      aria-sort={active ? (dir === "asc" ? "ascending" : "descending") : "none"}
       className={cn("p-0 font-semibold", sticky && "sticky start-0 z-10 bg-surface-2", align === "start" ? "text-start" : "text-center")}
     >
       <button
@@ -38,7 +42,7 @@ export function SortableTh({
       >
         <span className="flex items-center gap-0.5">
           {label}
-          {active ? <ArrowDown className="size-3" aria-hidden /> : null}
+          {active ? <Arrow className="size-3" aria-hidden /> : null}
         </span>
         {abbr ? <span className="text-[10px] tracking-wider opacity-70">{abbr}</span> : null}
       </button>

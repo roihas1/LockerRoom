@@ -13,7 +13,7 @@ import {
   scoringTotal,
   type ScoringFromEvents,
 } from "@/lib/stats/scoring-from-events";
-import { compareDesc, splitSortValue } from "@/lib/stats/sort-value";
+import { compareNum, compareText, toggleSortDir, type SortDir, splitSortValue } from "@/lib/stats/sort-value";
 import { cn } from "@/lib/utils/cn";
 import { formatInt, formatSplit } from "@/lib/utils/numbers";
 import type { GameEvent, Player, StatLine } from "@/types/domain";
@@ -25,7 +25,7 @@ type Col = {
   label: string;
   abbr: string;
   value: (l: StatLine, scoring: ScoringFromEvents) => string;
-  sortValue: (l: StatLine, scoring: ScoringFromEvents) => number;
+  sortValue: (l: StatLine, scoring: ScoringFromEvents) => number | null;
   has: (lines: StatLine[], fromEvents: boolean) => boolean;
   total: (t: ReturnType<typeof teamGameTotals>, eventTotals: ScoringFromEvents) => string;
 };
@@ -43,11 +43,11 @@ const columns: Col[] = [
   { key: "pts", label: he.stats.points, abbr: "PTS", value: (l) => formatInt(l.points), sortValue: (l) => l.points, has: always, total: (t) => formatInt(t.points) },
   { key: "reb", label: he.stats.rebounds, abbr: "REB", value: (l) => formatInt(l.rebounds), sortValue: (l) => l.rebounds, has: always, total: (t) => formatInt(t.rebounds) },
   { key: "ast", label: he.stats.assists, abbr: "AST", value: (l) => formatInt(l.assists), sortValue: (l) => l.assists, has: always, total: (t) => formatInt(t.assists) },
-  { key: "stl", label: he.stats.steals, abbr: "STL", value: (l) => formatInt(l.steals), sortValue: (l) => l.steals ?? Number.NEGATIVE_INFINITY, has: anyRecorded("steals"), total: (t) => formatInt(t.steals) },
-  { key: "blk", label: he.stats.blocks, abbr: "BLK", value: (l) => formatInt(l.blocks), sortValue: (l) => l.blocks ?? Number.NEGATIVE_INFINITY, has: anyRecorded("blocks"), total: (t) => formatInt(t.blocks) },
-  { key: "to", label: he.stats.turnovers, abbr: "TO", value: (l) => formatInt(l.turnovers), sortValue: (l) => l.turnovers ?? Number.NEGATIVE_INFINITY, has: anyRecorded("turnovers"), total: (t) => formatInt(t.turnovers) },
+  { key: "stl", label: he.stats.steals, abbr: "STL", value: (l) => formatInt(l.steals), sortValue: (l) => l.steals, has: anyRecorded("steals"), total: (t) => formatInt(t.steals) },
+  { key: "blk", label: he.stats.blocks, abbr: "BLK", value: (l) => formatInt(l.blocks), sortValue: (l) => l.blocks, has: anyRecorded("blocks"), total: (t) => formatInt(t.blocks) },
+  { key: "to", label: he.stats.turnovers, abbr: "TO", value: (l) => formatInt(l.turnovers), sortValue: (l) => l.turnovers, has: anyRecorded("turnovers"), total: (t) => formatInt(t.turnovers) },
   { key: "pir", label: he.stats.pir, abbr: "PIR", value: (l) => formatInt(computePir(l)), sortValue: (l) => computePir(l), has: always, total: (t) => formatInt(t.pir) },
-  { key: "pf", label: he.stats.fouls, abbr: "PF", value: (l) => formatInt(l.fouls), sortValue: (l) => l.fouls ?? Number.NEGATIVE_INFINITY, has: anyRecorded("fouls"), total: (t) => formatInt(t.fouls) },
+  { key: "pf", label: he.stats.fouls, abbr: "PF", value: (l) => formatInt(l.fouls), sortValue: (l) => l.fouls, has: anyRecorded("fouls"), total: (t) => formatInt(t.fouls) },
   {
     key: "twoEvt",
     label: he.live.twos,
@@ -118,6 +118,14 @@ export function BoxScoreTable({
   events?: GameEvent[];
 }) {
   const [sort, setSort] = useState<ColKey>("pir");
+  const [dir, setDir] = useState<SortDir>("desc");
+  const cycleSort = (key: ColKey) => {
+    if (key === sort) setDir(toggleSortDir);
+    else {
+      setSort(key);
+      setDir(key === "player" ? "asc" : "desc");
+    }
+  };
   const byId = new Map(players.map((p) => [p.id, p]));
   const byPlayer = events?.length ? playerScoringFromEvents(events) : new Map<number, ScoringFromEvents>();
   const fromEvents = [...byPlayer.values()].some(hasScoring);
@@ -131,10 +139,10 @@ export function BoxScoreTable({
     if (sort === "player") {
       const an = byId.get(a.playerId)?.name ?? "";
       const bn = byId.get(b.playerId)?.name ?? "";
-      return an.localeCompare(bn, "he") || a.playerId - b.playerId;
+      return compareText(an, bn, dir) || a.playerId - b.playerId;
     }
     const col = visible.find((c) => c.key === sort) ?? visible.find((c) => c.key === "pir")!;
-    return compareDesc(col.sortValue(a, scoringFor(a.playerId)), col.sortValue(b, scoringFor(b.playerId))) || a.playerId - b.playerId;
+    return compareNum(col.sortValue(a, scoringFor(a.playerId)), col.sortValue(b, scoringFor(b.playerId)), dir) || a.playerId - b.playerId;
   });
 
   return (
@@ -145,9 +153,9 @@ export function BoxScoreTable({
           <caption className="sr-only">{he.games.boxScore}</caption>
           <thead>
             <tr className="border-b border-border bg-surface-2 text-xs text-muted">
-              <SortableTh label={he.games.player} active={sort === "player"} onSort={() => setSort("player")} align="start" sticky />
+              <SortableTh label={he.games.player} active={sort === "player"} dir={dir} onSort={() => cycleSort("player")} align="start" sticky />
               {visible.map((c) => (
-                <SortableTh key={c.key} label={c.label} abbr={c.abbr} active={sort === c.key} onSort={() => setSort(c.key)} />
+                <SortableTh key={c.key} label={c.label} abbr={c.abbr} active={sort === c.key} dir={dir} onSort={() => cycleSort(c.key)} />
               ))}
             </tr>
           </thead>

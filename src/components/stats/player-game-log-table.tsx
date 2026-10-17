@@ -7,7 +7,7 @@ import { he } from "@/config/strings";
 import { gameResult } from "@/lib/stats/games";
 import { computePir } from "@/lib/stats/pir";
 import { emptyScoring, hasScoring, type ScoringFromEvents } from "@/lib/stats/scoring-from-events";
-import { compareDesc, splitSortValue } from "@/lib/stats/sort-value";
+import { compareNum, compareText, toggleSortDir, type SortDir, splitSortValue } from "@/lib/stats/sort-value";
 import { cn } from "@/lib/utils/cn";
 import { formatShortDate } from "@/lib/utils/dates";
 import { formatInt, formatSplit } from "@/lib/utils/numbers";
@@ -24,6 +24,14 @@ export function PlayerGameLogTable({
   scoringByGame?: Record<string, ScoringFromEvents>;
 }) {
   const [sort, setSort] = useState<SortKey>("pir");
+  const [dir, setDir] = useState<SortDir>("desc");
+  const onSort = (key: SortKey) => {
+    if (key === sort) setDir(toggleSortDir);
+    else {
+      setSort(key);
+      setDir(key === "opponent" ? "asc" : "desc");
+    }
+  };
   const fromEvents = scoringByGame ? Object.values(scoringByGame).some(hasScoring) : false;
   const scoringFor = (gameId: number) => scoringByGame?.[String(gameId)] ?? emptyScoring();
   const showManualShooting = !fromEvents && log.some((r) => r.line.fgAttempted !== null || r.line.threeAttempted !== null);
@@ -33,29 +41,29 @@ export function PlayerGameLogTable({
     const sb = scoringFor(b.game.id);
     switch (sort) {
       case "opponent":
-        return a.game.opponent.localeCompare(b.game.opponent, "he") || b.game.tipoffAt.localeCompare(a.game.tipoffAt);
+        return compareText(a.game.opponent, b.game.opponent, dir) || b.game.tipoffAt.localeCompare(a.game.tipoffAt);
       case "pts":
-        return compareDesc(a.line.points, b.line.points) || b.game.tipoffAt.localeCompare(a.game.tipoffAt);
+        return compareNum(a.line.points, b.line.points, dir) || b.game.tipoffAt.localeCompare(a.game.tipoffAt);
       case "reb":
-        return compareDesc(a.line.rebounds, b.line.rebounds) || b.game.tipoffAt.localeCompare(a.game.tipoffAt);
+        return compareNum(a.line.rebounds, b.line.rebounds, dir) || b.game.tipoffAt.localeCompare(a.game.tipoffAt);
       case "ast":
-        return compareDesc(a.line.assists, b.line.assists) || b.game.tipoffAt.localeCompare(a.game.tipoffAt);
+        return compareNum(a.line.assists, b.line.assists, dir) || b.game.tipoffAt.localeCompare(a.game.tipoffAt);
       case "fg":
-        return compareDesc(splitSortValue(a.line.fgMade, a.line.fgAttempted), splitSortValue(b.line.fgMade, b.line.fgAttempted)) || b.game.tipoffAt.localeCompare(a.game.tipoffAt);
+        return compareNum(splitSortValue(a.line.fgMade, a.line.fgAttempted), splitSortValue(b.line.fgMade, b.line.fgAttempted), dir) || b.game.tipoffAt.localeCompare(a.game.tipoffAt);
       case "three":
         return (
-          compareDesc(splitSortValue(a.line.threeMade, a.line.threeAttempted), splitSortValue(b.line.threeMade, b.line.threeAttempted)) ||
+          compareNum(splitSortValue(a.line.threeMade, a.line.threeAttempted), splitSortValue(b.line.threeMade, b.line.threeAttempted), dir) ||
           b.game.tipoffAt.localeCompare(a.game.tipoffAt)
         );
       case "twoEvt":
-        return compareDesc(sa.two, sb.two) || b.game.tipoffAt.localeCompare(a.game.tipoffAt);
+        return compareNum(sa.two, sb.two, dir) || b.game.tipoffAt.localeCompare(a.game.tipoffAt);
       case "threeEvt":
-        return compareDesc(sa.three, sb.three) || b.game.tipoffAt.localeCompare(a.game.tipoffAt);
+        return compareNum(sa.three, sb.three, dir) || b.game.tipoffAt.localeCompare(a.game.tipoffAt);
       case "ftEvt":
-        return compareDesc(sa.ft, sb.ft) || b.game.tipoffAt.localeCompare(a.game.tipoffAt);
+        return compareNum(sa.ft, sb.ft, dir) || b.game.tipoffAt.localeCompare(a.game.tipoffAt);
       case "pir":
       default:
-        return compareDesc(computePir(a.line), computePir(b.line)) || b.game.tipoffAt.localeCompare(a.game.tipoffAt);
+        return compareNum(computePir(a.line), computePir(b.line), dir) || b.game.tipoffAt.localeCompare(a.game.tipoffAt);
     }
   });
 
@@ -67,24 +75,24 @@ export function PlayerGameLogTable({
           <caption className="sr-only">{he.roster.gameLog}</caption>
           <thead>
             <tr className="border-b border-border bg-surface-2 text-xs text-muted">
-              <SortableTh label={he.admin.gameForm.opponent} active={sort === "opponent"} onSort={() => setSort("opponent")} align="start" />
-              <SortableTh label={he.stats.points} active={sort === "pts"} onSort={() => setSort("pts")} />
-              <SortableTh label={he.stats.rebounds} active={sort === "reb"} onSort={() => setSort("reb")} />
-              <SortableTh label={he.stats.assists} active={sort === "ast"} onSort={() => setSort("ast")} />
+              <SortableTh label={he.admin.gameForm.opponent} active={sort === "opponent"} dir={dir} onSort={() => onSort("opponent")} align="start" />
+              <SortableTh label={he.stats.points} active={sort === "pts"} dir={dir} onSort={() => onSort("pts")} />
+              <SortableTh label={he.stats.rebounds} active={sort === "reb"} dir={dir} onSort={() => onSort("reb")} />
+              <SortableTh label={he.stats.assists} active={sort === "ast"} dir={dir} onSort={() => onSort("ast")} />
               {fromEvents ? (
                 <>
-                  <SortableTh label={he.live.twos} abbr={he.live.twosAbbr} active={sort === "twoEvt"} onSort={() => setSort("twoEvt")} />
-                  <SortableTh label={he.stats.three} abbr="3PT" active={sort === "threeEvt"} onSort={() => setSort("threeEvt")} />
-                  <SortableTh label={he.stats.ft} abbr="FT" active={sort === "ftEvt"} onSort={() => setSort("ftEvt")} />
+                  <SortableTh label={he.live.twos} abbr={he.live.twosAbbr} active={sort === "twoEvt"} dir={dir} onSort={() => onSort("twoEvt")} />
+                  <SortableTh label={he.stats.three} abbr="3PT" active={sort === "threeEvt"} dir={dir} onSort={() => onSort("threeEvt")} />
+                  <SortableTh label={he.stats.ft} abbr="FT" active={sort === "ftEvt"} dir={dir} onSort={() => onSort("ftEvt")} />
                 </>
               ) : null}
               {showManualShooting ? (
                 <>
-                  <SortableTh label={he.stats.fg} active={sort === "fg"} onSort={() => setSort("fg")} />
-                  <SortableTh label={he.stats.three} active={sort === "three"} onSort={() => setSort("three")} />
+                  <SortableTh label={he.stats.fg} active={sort === "fg"} dir={dir} onSort={() => onSort("fg")} />
+                  <SortableTh label={he.stats.three} active={sort === "three"} dir={dir} onSort={() => onSort("three")} />
                 </>
               ) : null}
-              <SortableTh label={he.stats.pir} abbr="PIR" active={sort === "pir"} onSort={() => setSort("pir")} />
+              <SortableTh label={he.stats.pir} abbr="PIR" active={sort === "pir"} dir={dir} onSort={() => onSort("pir")} />
             </tr>
           </thead>
           <tbody>

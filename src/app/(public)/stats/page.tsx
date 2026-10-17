@@ -6,7 +6,7 @@ import { StatTile } from "@/components/common/stat-tile";
 import { SeasonSelect } from "@/components/games/season-select";
 import { GamesStatsTable } from "@/components/stats/games-stats-table";
 import { LeaderCard } from "@/components/stats/leader-board";
-import { PlayersStatsTable, sortKeys, type SortKey } from "@/components/stats/players-stats-table";
+import { PlayersStatsTable } from "@/components/stats/players-stats-table";
 import { ShameAwards } from "@/components/stats/shame-awards";
 import { TeamStatsStrip } from "@/components/stats/team-stats-strip";
 import { he } from "@/config/strings";
@@ -34,8 +34,6 @@ export default async function StatsPage({ searchParams }: PageProps<"/stats">) {
   const sp = await searchParams;
   const viewParam = firstParam(sp.view);
   const view: View = views.includes(viewParam as View) ? (viewParam as View) : "overview";
-  const sortParam = firstParam(sp.sort);
-  const sort: SortKey = sortKeys.includes(sortParam as SortKey) ? (sortParam as SortKey) : "pir";
   const seasonParam = firstParam(sp.season);
   const ctx = await getSeasonContext(seasonParam);
 
@@ -74,7 +72,7 @@ export default async function StatsPage({ searchParams }: PageProps<"/stats">) {
       ) : view === "overview" ? (
         <Overview ctx={ctx} />
       ) : view === "players" ? (
-        <PlayersStatsTable aggregates={ctx.aggregates} playersById={ctx.playersById} sort={sort} hrefFor={(s) => href({ view: "players", sort: s })} />
+        <PlayersStatsTable aggregates={ctx.aggregates} players={ctx.players} />
       ) : view === "leaders" ? (
         <div className="space-y-10">
           <Leaders ctx={ctx} />
