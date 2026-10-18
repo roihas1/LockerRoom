@@ -13,9 +13,9 @@ declare
   push_secret text;
   local_hour integer;
 begin
-  -- Fire once in the morning window (09:00–11:59 Asia/Jerusalem).
+  -- Fire once at 09:00 Asia/Jerusalem (paired with 06:00/07:00 UTC cron slots).
   local_hour := extract(hour from now() at time zone tz)::integer;
-  if local_hour < 9 or local_hour >= 12 then
+  if local_hour <> 9 then
     return 0;
   end if;
 
@@ -42,5 +42,5 @@ $$;
 
 revoke all on function private.send_birthday_pushes() from public, anon, authenticated;
 
--- Every hour; the function hour-gate keeps it to one morning window.
-select cron.schedule('birthday-pushes', '20 * * * *', $$select private.send_birthday_pushes()$$);
+-- 06:00 and 07:00 UTC cover 09:00 Israel in summer and winter; hour gate runs once.
+select cron.schedule('birthday-pushes', '0 6,7 * * *', $$select private.send_birthday_pushes()$$);
