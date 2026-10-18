@@ -174,6 +174,7 @@ export type ExerciseRow = {
   video_media_id: string | null;
   thumbnail_media_id: string | null;
   image_media_id: string | null;
+  diagram: unknown | null;
   is_published: boolean;
   sort_order: number;
   created_at: string;

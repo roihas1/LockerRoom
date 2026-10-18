@@ -19,6 +19,7 @@ function revalidateExercisePaths(id: number) {
   revalidatePath(`/admin/plays/${id}`);
   revalidatePath("/plays");
   revalidatePath(`/plays/${id}`);
+  revalidatePath(`/plays/${id}/practice`);
   revalidatePath("/admin/locker-room");
   revalidatePath("/locker-room");
   revalidatePath("/");
@@ -72,6 +73,7 @@ export async function saveExerciseAction(_prev: ActionResult | null, formData: F
     sort_order: parsed.data.sortOrder,
     ...(parsed.data.videoMediaId !== undefined ? { video_media_id: parsed.data.videoMediaId } : {}),
     ...(parsed.data.thumbnailMediaId !== undefined ? { thumbnail_media_id: parsed.data.thumbnailMediaId } : {}),
+    ...(parsed.data.diagram !== undefined ? { diagram: parsed.data.diagram } : {}),
   };
 
   const result = exerciseId

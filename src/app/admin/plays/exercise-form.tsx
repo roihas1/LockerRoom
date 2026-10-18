@@ -4,6 +4,7 @@ import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { MediaUploadField } from "@/components/admin/media-upload-field";
 import { StringListField } from "@/components/admin/string-list-field";
+import { DiagramEditor } from "@/components/practice/diagram-editor";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Select, Textarea } from "@/components/ui/form-controls";
 import { difficultyLabels, exerciseCategoryLabels, exerciseCategoryOrder } from "@/config/labels";
@@ -102,6 +103,10 @@ export function ExerciseForm({ exercise, demo }: { exercise?: Exercise; demo: bo
             disabled={disabled}
             error={fieldError(saveState, "coachingPoints")}
           />
+        </fieldset>
+
+        <fieldset className="card space-y-4 p-5">
+          <DiagramEditor name="diagram" defaultDiagram={exercise?.diagram ?? null} disabled={disabled} />
         </fieldset>
 
         <fieldset className="card space-y-4 p-5">

@@ -1,4 +1,6 @@
+import { sampleHornsDiagram, samplePickAndRollDiagram } from "@/lib/play-diagram/defaults";
 import type { Difficulty, Exercise, ExerciseCategory } from "@/types/domain";
+import type { PlayDiagram } from "@/types/play-diagram";
 import { placeholderMedia } from "./media";
 
 type Seed = [
@@ -104,6 +106,11 @@ const seeds: Seed[] = [
   ],
 ];
 
+const sampleDiagrams: Record<number, PlayDiagram> = {
+  1: samplePickAndRollDiagram(),
+  3: sampleHornsDiagram(),
+};
+
 export const fixtureExercises: Exercise[] = seeds.map(
   ([title, category, difficulty, description, instructions, coachingPoints, hasVideo], i) => ({
     id: i + 1,
@@ -117,6 +124,7 @@ export const fixtureExercises: Exercise[] = seeds.map(
     video: hasVideo ? placeholderMedia(`exercise-video-${i + 1}`, "video") : null,
     thumbnail: placeholderMedia(`exercise-${category}`, "image"),
     image: null,
+    diagram: sampleDiagrams[i + 1] ?? null,
     isPublished: true,
     sortOrder: i,
   }),

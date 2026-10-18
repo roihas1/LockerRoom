@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { he } from "@/config/strings";
+import { playDiagramSchema } from "@/lib/play-diagram/parse";
 import { mediaSlotField } from "./media";
 
 const optionalText = (max: number) =>
@@ -31,6 +32,23 @@ export const exerciseFormSchema = z.object({
   sortOrder: z.coerce.number().int(he.validation.integer).min(0).max(9999).default(0),
   videoMediaId: mediaSlotField,
   thumbnailMediaId: mediaSlotField,
+  diagram: z
+    .string()
+    .optional()
+    .transform((raw, ctx) => {
+      if (raw == null || raw.trim() === "") return null;
+      try {
+        const parsed = playDiagramSchema.safeParse(JSON.parse(raw));
+        if (!parsed.success) {
+          ctx.addIssue({ code: "custom", message: he.validation.invalidOption });
+          return z.NEVER;
+        }
+        return parsed.data;
+      } catch {
+        ctx.addIssue({ code: "custom", message: he.validation.invalidOption });
+        return z.NEVER;
+      }
+    }),
 });
 
 export function parseStringList(formData: FormData, name: string): string[] {
@@ -52,5 +70,6 @@ export function parseExerciseForm(formData: FormData) {
     sortOrder: formData.get("sortOrder") ?? "0",
     videoMediaId: formData.get("videoMediaId"),
     thumbnailMediaId: formData.get("thumbnailMediaId"),
+    diagram: formData.get("diagram") == null ? undefined : String(formData.get("diagram")),
   });
 }

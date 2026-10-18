@@ -1,3 +1,7 @@
+import type { PlayDiagram } from "./play-diagram";
+
+export type { PlayDiagram };
+
 export type GameStatus = "scheduled" | "live" | "final" | "postponed" | "cancelled";
 export type HomeAway = "home" | "away" | "neutral";
 export type PlayerPosition = "guard" | "forward" | "center";
@@ -143,6 +147,8 @@ export interface Exercise {
   video: Media | null;
   thumbnail: Media | null;
   image: Media | null;
+  /** Interactive half-court practice diagram; null when not authored. */
+  diagram: PlayDiagram | null;
   isPublished: boolean;
   sortOrder: number;
 }

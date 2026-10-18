@@ -4,11 +4,12 @@ import { notFound } from "next/navigation";
 import { BackLink } from "@/components/common/back-link";
 import { MediaImage } from "@/components/common/media-image";
 import { SectionHeader } from "@/components/common/section-header";
+import { ShareButton } from "@/components/common/share-button";
 import { VideoPlayer } from "@/components/media/video-player";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { difficultyLabels, exerciseCategoryLabels } from "@/config/labels";
 import { he } from "@/config/strings";
-import { ShareButton } from "@/components/common/share-button";
 import { getData } from "@/lib/data";
 import { shareMessage } from "@/lib/meta";
 import { parseId } from "@/lib/utils/params";
@@ -44,7 +45,14 @@ export default async function ExercisePage({ params }: PageProps<"/plays/[id]">)
           <h1 data-user-content className="font-display text-3xl font-black md:text-4xl">
             {exercise.title}
           </h1>
-          <ShareButton path={`/plays/${exercise.id}`} text={shareMessage.play(exercise)} title={exercise.title} />
+          <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+            {exercise.diagram ? (
+              <Button asChild size="sm">
+                <Link href={`/plays/${exercise.id}/practice`}>{he.training.practice.button}</Link>
+              </Button>
+            ) : null}
+            <ShareButton path={`/plays/${exercise.id}`} text={shareMessage.play(exercise)} title={exercise.title} />
+          </div>
         </div>
       </header>
 

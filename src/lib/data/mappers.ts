@@ -1,3 +1,4 @@
+import { parsePlayDiagram } from "@/lib/play-diagram/parse";
 import type {
   AwardRow,
   CoachRow,
@@ -163,6 +164,7 @@ export function toExercise(row: ExerciseRow, media: MediaLookup): Exercise {
     video: media(row.video_media_id),
     thumbnail: media(row.thumbnail_media_id),
     image: media(row.image_media_id),
+    diagram: parsePlayDiagram(row.diagram),
     isPublished: row.is_published,
     sortOrder: row.sort_order,
   };

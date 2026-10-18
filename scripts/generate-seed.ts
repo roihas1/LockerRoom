@@ -18,13 +18,14 @@ import {
 } from "../src/fixtures";
 import type { Media } from "../src/types/domain";
 
-type Value = string | number | boolean | null | undefined | string[];
+type Value = string | number | boolean | null | undefined | string[] | object;
 
 function lit(v: Value): string {
   if (v === null || v === undefined) return "null";
   if (typeof v === "number") return String(v);
   if (typeof v === "boolean") return v ? "true" : "false";
   if (Array.isArray(v)) return `array[${v.map(lit).join(", ")}]::text[]`;
+  if (typeof v === "object") return `${lit(JSON.stringify(v))}::jsonb`;
   return `'${v.replace(/'/g, "''")}'`;
 }
 
@@ -181,6 +182,7 @@ const parts: string[] = [
       video_media_id: e.video?.id,
       thumbnail_media_id: e.thumbnail?.id,
       image_media_id: e.image?.id,
+      diagram: e.diagram,
       is_published: e.isPublished,
       sort_order: e.sortOrder,
     })),
