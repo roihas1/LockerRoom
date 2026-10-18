@@ -32,7 +32,10 @@ export default async function GamePage({ params }: PageProps<"/games/[id]">) {
   if (!detail) notFound();
   const isLive = detail.game.status === "live";
   const isFinal = detail.game.status === "final";
-  const events = isLive || isFinal ? await data.getGameEvents(id) : undefined;
+  const [events, roast] = await Promise.all([
+    isLive || isFinal ? data.getGameEvents(id) : Promise.resolve(undefined),
+    isFinal ? data.getPublishedRoastForGame(id) : Promise.resolve(null),
+  ]);
   const share = (
     <ShareButton
       path={`/games/${id}`}
@@ -45,7 +48,7 @@ export default async function GamePage({ params }: PageProps<"/games/[id]">) {
   return (
     <>
       <BackLink href="/games" label={he.nav.games} className="mb-4" />
-      <GameDetail detail={detail} team={team} events={events} actions={share} />
+      <GameDetail detail={detail} team={team} events={events} actions={share} roast={roast} />
       {gameResult(detail.game) === "win" ? <WinConfetti id={`game-${detail.game.id}`} /> : null}
     </>
   );

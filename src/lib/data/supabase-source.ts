@@ -1,9 +1,11 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, MediaRow, PostRow } from "@/types/database";
+import { he } from "@/config/strings";
 import type { FeedItem, Media } from "@/types/domain";
-import { toAward, toCoach, toExercise, toGame, toGameEvent, toMedia, toPlayer, toPost, toSeason, toStatLine, toTeam } from "./mappers";
+import { isRoastPost, parseRoastBody } from "@/lib/fun/roasts";
 import { toReactionCounts } from "@/lib/reactions";
+import { toAward, toCoach, toExercise, toGame, toGameEvent, toMedia, toPlayer, toPost, toSeason, toStatLine, toTeam } from "./mappers";
 import type { DataSource } from "./types";
 
 type Client = SupabaseClient<Database>;
@@ -52,7 +54,7 @@ export function createSupabaseSource(client: Client, { includeDrafts = false } =
     return must(await client.from("seasons").select("*").order("start_date", { ascending: false })).map(toSeason);
   }
 
-  const source: Omit<DataSource, "getAwards"> = {
+  const source: Omit<DataSource, "getAwards" | "getPublishedRoastForGame"> = {
     mode: "supabase",
 
     async getTeam() {
@@ -265,12 +267,19 @@ export function createSupabaseSource(client: Client, { includeDrafts = false } =
       }
       const media = await mediaWithTags(must(mediaRes));
       const awardRows = must(awardsRes);
+      const roastMentionIds = rows.flatMap((r) => {
+        if (!isRoastPost({ type: r.type, title: r.title })) return [];
+        return parseRoastBody(r.body ?? "")
+          .lines.map((l) => l.playerId)
+          .filter((id): id is number => id != null);
+      });
       const playerIds = [
         ...rows.map((r) => r.quote_player_id),
         ...rows.map((r) => r.milestone_player_id),
         ...awardRows.map((a) => a.player_id),
+        ...roastMentionIds,
       ].filter((i): i is number => typeof i === "number");
-      const playerRows = playerIds.length ? must(await client.from("players").select("*").in("id", playerIds)) : [];
+      const playerRows = playerIds.length ? must(await client.from("players").select("*").in("id", [...new Set(playerIds)])) : [];
       const lookup = await mediaLookup([
         ...playerRows.map((p) => p.photo_media_id),
         ...awardRows.map((a) => a.image_media_id),
@@ -283,6 +292,17 @@ export function createSupabaseSource(client: Client, { includeDrafts = false } =
 
       return rows.map((r) => {
         const award = r.award_id ? (awards.get(r.award_id) ?? null) : null;
+        const mentionedPlayers = isRoastPost({ type: r.type, title: r.title })
+          ? [
+              ...new Set(
+                parseRoastBody(r.body ?? "")
+                  .lines.map((l) => l.playerId)
+                  .filter((id): id is number => id != null),
+              ),
+            ]
+              .map((id) => players.get(id))
+              .filter((p): p is NonNullable<typeof p> => !!p)
+          : [];
         return {
           ...toPost(
             r,
@@ -294,6 +314,7 @@ export function createSupabaseSource(client: Client, { includeDrafts = false } =
           milestonePlayer: r.milestone_player_id ? (players.get(r.milestone_player_id) ?? null) : null,
           game: r.game_id ? (games.get(r.game_id) ?? null) : null,
           play: r.exercise_id ? (plays.get(r.exercise_id) ?? null) : null,
+          mentionedPlayers,
           reactions: toReactionCounts(reactions.get(r.id)),
         };
       });
@@ -301,6 +322,19 @@ export function createSupabaseSource(client: Client, { includeDrafts = false } =
 
   return {
     ...source,
+    async getPublishedRoastForGame(gameId) {
+      const row = maybe(
+        await published(client.from("locker_room_posts").select("*"))
+          .eq("game_id", gameId)
+          .eq("type", "funny_moment")
+          .eq("title", he.fun.roast.title)
+          .order("id")
+          .limit(1)
+          .maybeSingle(),
+      );
+      if (!row) return null;
+      return (await hydrateFeed([row]))[0] ?? null;
+    },
     async getAwards(seasonId) {
       let q = published(client.from("awards").select("*"));
       if (seasonId) q = q.eq("season_id", seasonId);

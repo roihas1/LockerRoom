@@ -10,7 +10,9 @@ import {
   fixtureStatLines,
   fixtureTeam,
 } from "@/fixtures";
+import { he } from "@/config/strings";
 import type { FeedItem, Media, Post } from "@/types/domain";
+import { isRoastPost, parseRoastBody } from "@/lib/fun/roasts";
 import { emptyReactions } from "@/lib/reactions";
 import type { DataSource } from "./types";
 
@@ -22,6 +24,17 @@ export function createFixtureSource({ includeDrafts = false } = {}): DataSource 
   const publishedGameIds = () => new Set(visible(fixtureGames).map((g) => g.id));
   const toFeedItem = (p: Post): FeedItem => {
     const award = fixtureAwards.find((a) => a.id === p.awardId) ?? null;
+    const mentionedPlayers = isRoastPost(p)
+      ? [
+          ...new Set(
+            parseRoastBody(p.body ?? "")
+              .lines.map((l) => l.playerId)
+              .filter((id): id is number => id != null),
+          ),
+        ]
+          .map((id) => fixturePlayers.find((pl) => pl.id === id))
+          .filter((pl): pl is NonNullable<typeof pl> => !!pl)
+      : [];
     return {
       ...p,
       award,
@@ -30,6 +43,7 @@ export function createFixtureSource({ includeDrafts = false } = {}): DataSource 
       milestonePlayer: fixturePlayers.find((pl) => pl.id === p.milestonePlayerId) ?? null,
       game: fixtureGames.find((g) => g.id === p.gameId) ?? null,
       play: visible(fixtureExercises).find((e) => e.id === p.exerciseId) ?? null,
+      mentionedPlayers,
       reactions: emptyReactions(),
     };
   };
@@ -135,6 +149,12 @@ export function createFixtureSource({ includeDrafts = false } = {}): DataSource 
     },
     async getFeedItem(id) {
       const post = visible(fixturePosts).find((p) => p.id === id);
+      return post ? toFeedItem(post) : null;
+    },
+    async getPublishedRoastForGame(gameId) {
+      const post = visible(fixturePosts).find(
+        (p) => p.gameId === gameId && p.type === "funny_moment" && p.title === he.fun.roast.title,
+      );
       return post ? toFeedItem(post) : null;
     },
     async getAwards(seasonId) {

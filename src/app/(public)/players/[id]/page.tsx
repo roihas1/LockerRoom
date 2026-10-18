@@ -12,6 +12,7 @@ import { ActionGallery } from "@/components/media/action-gallery";
 import { PlayerTag } from "@/components/players/player-tag";
 import { SwipeNav } from "@/components/players/swipe-nav";
 import { PlayerGameLogTable } from "@/components/stats/player-game-log-table";
+import { PlayerTrendChart } from "@/components/stats/player-trend-chart";
 import { Badge } from "@/components/ui/badge";
 import { positionLabels } from "@/config/labels";
 import { he } from "@/config/strings";
@@ -20,6 +21,7 @@ import { getSeasonContext } from "@/lib/data/season";
 import { shareMessage } from "@/lib/meta";
 import { aggregateLines, seasonHighs, type HighKey } from "@/lib/stats/aggregate";
 import { hasScoring, scoringByGameFromEvents, scoringTotal } from "@/lib/stats/scoring-from-events";
+import { buildPlayerTrend } from "@/lib/stats/trends";
 import { formatAverage, formatInt, formatPercent } from "@/lib/utils/numbers";
 import { parseId } from "@/lib/utils/params";
 
@@ -59,6 +61,7 @@ export default async function PlayerPage({ params }: PageProps<"/players/[id]">)
     .map((l) => ({ line: l, game: gamesById.get(l.gameId)! }))
     .filter((x) => x.game)
     .sort((a, b) => b.game.tipoffAt.localeCompare(a.game.tipoffAt));
+  const trend = buildPlayerTrend(id, ctx.games, ctx.lines);
   const pointEvents = await data.getPlayerPointsEvents(
     id,
     log.map((r) => r.game.id),
@@ -239,6 +242,13 @@ export default async function PlayerPage({ params }: PageProps<"/players/[id]">)
                 );
               })}
             </ul>
+          </section>
+        ) : null}
+
+        {trend.length >= 2 ? (
+          <section>
+            <SectionHeader title={he.roster.trend} icon={<span aria-hidden>📈</span>} />
+            <PlayerTrendChart points={trend} />
           </section>
         ) : null}
 

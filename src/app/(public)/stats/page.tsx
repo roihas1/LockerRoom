@@ -5,16 +5,19 @@ import { PageHeader, SectionHeader } from "@/components/common/section-header";
 import { StatTile } from "@/components/common/stat-tile";
 import { SeasonSelect } from "@/components/games/season-select";
 import { GamesStatsTable } from "@/components/stats/games-stats-table";
+import { HotPlayerCard } from "@/components/stats/hot-player-card";
 import { LeaderCard } from "@/components/stats/leader-board";
 import { PlayersStatsTable } from "@/components/stats/players-stats-table";
 import { ShameAwards } from "@/components/stats/shame-awards";
 import { TeamStatsStrip } from "@/components/stats/team-stats-strip";
+import { TeamTrendChart } from "@/components/stats/team-trend-chart";
 import { he } from "@/config/strings";
 import { getSeasonContext } from "@/lib/data/season";
 import { teamSeasonAverages } from "@/lib/stats/aggregate";
 import { record } from "@/lib/stats/games";
 import { computeLeaders, countPotgByPlayer, minGamesForLeaders } from "@/lib/stats/leaders";
 import { computeShameAwards } from "@/lib/stats/shame";
+import { buildTeamTrend, computeHotPlayer } from "@/lib/stats/trends";
 import { cn } from "@/lib/utils/cn";
 import { formatAverage, formatInt, formatPercent } from "@/lib/utils/numbers";
 import { firstParam } from "@/lib/utils/params";
@@ -90,6 +93,8 @@ type Ctx = Awaited<ReturnType<typeof getSeasonContext>>;
 function Overview({ ctx }: { ctx: Ctx }) {
   const avg = teamSeasonAverages(ctx.games, ctx.lines);
   const rec = record(ctx.games);
+  const hot = computeHotPlayer(ctx.games, ctx.lines);
+  const teamTrend = buildTeamTrend(ctx.games);
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
@@ -98,6 +103,12 @@ function Overview({ ctx }: { ctx: Ctx }) {
         <StatTile value={formatAverage(avg.oppPpg)} label={he.stats.pointsAgainst} size="lg" />
         <StatTile value={formatInt(avg.gp)} label={he.stats.gamesPlayed} sublabel="GP" size="lg" />
       </div>
+      {hot ? (
+        <section>
+          <SectionHeader title={he.statsPage.hotPlayer.title} icon={<span aria-hidden>🔥</span>} />
+          <HotPlayerCard hot={hot} player={ctx.playersById.get(hot.playerId)} />
+        </section>
+      ) : null}
       <section>
         <SectionHeader title={he.statsPage.teamAverages} />
         <TeamStatsStrip averages={avg} wins={rec.wins} />
@@ -107,6 +118,12 @@ function Overview({ ctx }: { ctx: Ctx }) {
           </div>
         ) : null}
       </section>
+      {teamTrend.length >= 2 ? (
+        <section>
+          <SectionHeader title={he.statsPage.trends.teamTitle} />
+          <TeamTrendChart points={teamTrend} />
+        </section>
+      ) : null}
       <Leaders ctx={ctx} limit={3} />
     </div>
   );

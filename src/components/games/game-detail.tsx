@@ -4,6 +4,7 @@ import { EmptyState } from "@/components/common/empty-state";
 import { ResultBadge } from "@/components/common/result-badge";
 import { ScoreBoard } from "@/components/common/scoreboard";
 import { SectionHeader } from "@/components/common/section-header";
+import { RoastBody } from "@/components/locker-room/roast-card";
 import { ActionGallery } from "@/components/media/action-gallery";
 import { VideoPlayer } from "@/components/media/video-player";
 import { homeAwayLabels } from "@/config/labels";
@@ -11,7 +12,7 @@ import { he } from "@/config/strings";
 import { isCalendarEligible } from "@/lib/calendar";
 import { formatLongDate, formatTime, formatWeekday } from "@/lib/utils/dates";
 import type { ReactNode } from "react";
-import type { GameDetailData, GameEvent, Team } from "@/types/domain";
+import type { FeedItem, GameDetailData, GameEvent, Team } from "@/types/domain";
 import { AddToCalendar } from "./add-to-calendar";
 import { BoxScoreTable } from "./box-score-table";
 import { LiveGameSubscriber } from "./live-game-subscriber";
@@ -29,11 +30,13 @@ export function GameDetail({
   team,
   events,
   actions,
+  roast,
 }: {
   detail: GameDetailData;
   team: Team;
   events?: GameEvent[];
   actions?: ReactNode;
+  roast?: FeedItem | null;
 }) {
   const { game, lines, players, media, playOfGame } = detail;
   const potg = players.find((p) => p.id === game.playerOfGameId) ?? null;
@@ -131,6 +134,20 @@ export function GameDetail({
           <SectionHeader title={he.games.recap} />
           <div data-user-content className="card space-y-3 p-5 leading-relaxed whitespace-pre-line text-text/90">
             {game.recap}
+          </div>
+        </section>
+      ) : null}
+
+      {roast?.body ? (
+        <section>
+          <SectionHeader
+            title={he.fun.roast.sectionTitle}
+            href={`/locker-room/${roast.id}`}
+            linkLabel={he.fun.roast.toLockerPost}
+            icon={<span aria-hidden>🔥</span>}
+          />
+          <div className="card p-4">
+            <RoastBody body={roast.body} playersById={new Map(roast.mentionedPlayers.map((p) => [p.id, p]))} />
           </div>
         </section>
       ) : null}

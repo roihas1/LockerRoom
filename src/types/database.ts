@@ -106,6 +106,7 @@ export type PlayerContactRow = {
   email: string | null;
   phone: string | null;
   birth_date: string | null;
+  birthday_push_sent_on: string | null;
   created_at: string;
   updated_at: string;
 };

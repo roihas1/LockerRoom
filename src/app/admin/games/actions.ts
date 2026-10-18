@@ -6,7 +6,7 @@ import { createRoastDraft, type RoastDraftStatus } from "@/lib/admin/roast-post"
 import { blockDemoMutation } from "@/lib/auth/demo-guard";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { revalidatePublic } from "@/lib/cache/revalidate-public";
-import { notifyGameLive } from "@/lib/push/notify";
+import { notifyFeedPost, notifyGameLive } from "@/lib/push/notify";
 import { he } from "@/config/strings";
 import { createSessionClient } from "@/lib/supabase/server";
 import { actionFail, actionFromZod, actionSuccess, type ActionResult } from "@/lib/utils/action-result";
@@ -137,6 +137,42 @@ export async function regenerateRoastAction(_prev: ActionResult | null, formData
   revalidatePath(`/admin/games/${gameId}`);
   if (status === "failed") return actionFail(roastMessages.failed, "unknown");
   return actionSuccess(roastMessages[status]);
+}
+
+export async function publishRoastAction(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  await requireAdmin();
+  const demoBlock = blockDemoMutation();
+  if (demoBlock) return demoBlock;
+
+  const gameId = Number(formData.get("gameId"));
+  const postId = Number(formData.get("postId"));
+  if (!gameId || !postId) return actionFail(he.errors.notFound, "not_found");
+
+  const supabase = await createSessionClient();
+  const { data: before } = await supabase
+    .from("locker_room_posts")
+    .select("id, is_published, title, body, game_id")
+    .eq("id", postId)
+    .eq("game_id", gameId)
+    .eq("title", he.fun.roast.title)
+    .maybeSingle();
+  if (!before) return actionFail(he.errors.notFound, "not_found");
+
+  const { error } = await supabase
+    .from("locker_room_posts")
+    .update({ is_published: true, published_at: new Date().toISOString() })
+    .eq("id", postId);
+  if (error) return mapErrorToAction(error);
+
+  if (!before.is_published) notifyFeedPost(postId, before.title ?? before.body?.slice(0, 120) ?? null);
+  revalidatePublic();
+  revalidatePath("/admin/locker-room");
+  revalidatePath(`/admin/locker-room/${postId}`);
+  revalidatePath("/locker-room");
+  revalidatePath(`/admin/games/${gameId}`);
+  revalidatePath(`/games/${gameId}`);
+  revalidatePath("/");
+  return actionSuccess(he.fun.roast.publishedOk);
 }
 
 export async function saveGameHighlightsAction(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {

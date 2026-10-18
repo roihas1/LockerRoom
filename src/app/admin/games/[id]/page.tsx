@@ -96,7 +96,14 @@ export default async function AdminGamePage({ params, searchParams }: PageProps<
 
       {step === "review" ? (
         <>
-          <GameReviewPanel gameId={id} isPublished={game.isPublished} isFinal={game.status === "final"} roast={roast} demo={demo} />
+          <GameReviewPanel
+            gameId={id}
+            isPublished={game.isPublished}
+            isFinal={game.status === "final"}
+            roast={roast}
+            players={players}
+            demo={demo}
+          />
           {detail ? (
             <div className="rounded-2xl border border-border p-2">
               <p className="mb-4 px-2 text-sm text-muted">{he.actions.preview}</p>

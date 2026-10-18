@@ -9,17 +9,20 @@ type Client = SupabaseClient<Database>;
 
 export type RoastDraftStatus = "created" | "updated" | "exists" | "published" | "empty" | "failed";
 
-export async function findRoastPost(client: Client, gameId: number): Promise<{ id: number; isPublished: boolean } | null> {
+export async function findRoastPost(
+  client: Client,
+  gameId: number,
+): Promise<{ id: number; isPublished: boolean; body: string | null } | null> {
   const { data } = await client
     .from("locker_room_posts")
-    .select("id, is_published")
+    .select("id, is_published, body")
     .eq("game_id", gameId)
     .eq("type", "funny_moment")
     .eq("title", he.fun.roast.title)
     .order("id")
     .limit(1)
     .maybeSingle();
-  return data ? { id: data.id, isPublished: data.is_published } : null;
+  return data ? { id: data.id, isPublished: data.is_published, body: data.body } : null;
 }
 
 /**

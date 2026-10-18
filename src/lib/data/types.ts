@@ -52,5 +52,7 @@ export interface DataSource {
   getExercise(id: number): Promise<Exercise | null>;
   getFeed(opts: { type?: PostType; before?: string; limit: number }): Promise<FeedPage>;
   getFeedItem(id: number): Promise<FeedItem | null>;
+  /** Published post-game roast for a game, if any. */
+  getPublishedRoastForGame(gameId: number): Promise<FeedItem | null>;
   getAwards(seasonId?: number): Promise<Award[]>;
 }

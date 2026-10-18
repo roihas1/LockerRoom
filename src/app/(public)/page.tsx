@@ -11,6 +11,7 @@ import { NextGameCard } from "@/components/home/next-game-card";
 import { HomeStandings } from "@/components/home/home-standings";
 import { FeedItem } from "@/components/locker-room/feed-item";
 import { PlayGrid } from "@/components/home/play-grid";
+import { HotPlayerCard } from "@/components/stats/hot-player-card";
 import { LeaderCard } from "@/components/stats/leader-board";
 import { TeamStatsStrip } from "@/components/stats/team-stats-strip";
 import { siteConfig } from "@/config/site";
@@ -21,15 +22,16 @@ import { homeMode, type HomeMode } from "@/lib/home/mode";
 import { teamSeasonAverages } from "@/lib/stats/aggregate";
 import { currentStreak, gameResult, lastGame, nextGame, record } from "@/lib/stats/games";
 import { computeLeaders, countPotgByPlayer } from "@/lib/stats/leaders";
+import { computeHotPlayer } from "@/lib/stats/trends";
 
 const HOME_PLAYS_LIMIT = 6;
 
-type SectionKey = "games" | "standings" | "quote" | "teamStats" | "leaders" | "plays" | "recent" | "feed";
+type SectionKey = "games" | "standings" | "quote" | "teamStats" | "hotPlayer" | "leaders" | "plays" | "recent" | "feed";
 
 const sectionOrder: Record<HomeMode, SectionKey[]> = {
-  gameDay: ["games", "standings", "leaders", "plays", "quote", "teamStats", "recent", "feed"],
-  postGame: ["games", "standings", "feed", "leaders", "quote", "teamStats", "recent", "plays"],
-  default: ["quote", "games", "standings", "teamStats", "leaders", "plays", "recent", "feed"],
+  gameDay: ["games", "standings", "hotPlayer", "leaders", "plays", "quote", "teamStats", "recent", "feed"],
+  postGame: ["games", "standings", "hotPlayer", "feed", "leaders", "quote", "teamStats", "recent", "plays"],
+  default: ["quote", "games", "standings", "teamStats", "hotPlayer", "leaders", "plays", "recent", "feed"],
 };
 
 export default async function HomePage() {
@@ -52,6 +54,7 @@ export default async function HomePage() {
     categories: ["points", "assists", "rebounds", "pir", "potg", "threes", "blocks"],
     potgCounts: countPotgByPlayer(ctx.games),
   });
+  const hot = computeHotPlayer(ctx.games, ctx.lines);
   const recent = [...ctx.completed].reverse().slice(0, siteConfig.recentGamesCount);
 
   const nextCard = next ? <NextGameCard game={next} team={team} /> : <EmptyState emoji="📅" title={he.empty.upcoming.title} text={he.empty.upcoming.text} />;
@@ -88,6 +91,12 @@ export default async function HomePage() {
       <section>
         <SectionHeader title={he.home.teamStats} href="/stats" linkLabel={he.home.allStats} />
         <TeamStatsStrip averages={teamSeasonAverages(ctx.games, ctx.lines)} wins={rec.wins} />
+      </section>
+    ) : null,
+    hotPlayer: hot ? (
+      <section>
+        <SectionHeader title={he.home.hotPlayer} href="/stats" linkLabel={he.home.allStats} icon={<span aria-hidden>🔥</span>} />
+        <HotPlayerCard hot={hot} player={ctx.playersById.get(hot.playerId)} compact />
       </section>
     ) : null,
     leaders: leaders.length ? (

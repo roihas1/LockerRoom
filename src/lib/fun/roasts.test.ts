@@ -1,6 +1,15 @@
 import { describe, expect, it } from "vitest";
 import type { StatLine } from "@/types/domain";
-import { generateRoasts, MAX_ROASTS_PER_GAME, MAX_ROASTS_PER_PLAYER, roastPostBody } from "./roasts";
+import {
+  formatRoastLine,
+  generateRoasts,
+  isRoastPost,
+  MAX_ROASTS_PER_GAME,
+  MAX_ROASTS_PER_PLAYER,
+  parseRoastBody,
+  pickVariantIndex,
+  roastPostBody,
+} from "./roasts";
 
 function line(playerId: number, overrides: Partial<StatLine> = {}): StatLine {
   return {
@@ -30,6 +39,12 @@ const players = new Map([
 ]);
 const even = { teamScore: 60, opponentScore: 50 };
 
+describe("pickVariantIndex", () => {
+  it("is stable for the same seed", () => {
+    expect(pickVariantIndex("abc", 3)).toBe(pickVariantIndex("abc", 3));
+  });
+});
+
 describe("generateRoasts", () => {
   it("returns nothing for a normal game", () => {
     expect(generateRoasts([line(1), line(2)], players, even)).toEqual([]);
@@ -40,6 +55,7 @@ describe("generateRoasts", () => {
     expect(roasts[0]!.playerId).toBe(1);
     expect(roasts[0]!.text).toContain("הטיל");
     expect(roasts[0]!.text).toContain("9");
+    expect(roasts[0]!.tone).toBe("roast");
   });
 
   it("caps roasts per player and per game", () => {
@@ -81,18 +97,72 @@ describe("generateRoasts", () => {
     const airball = line(1, { threeMade: 0, threeAttempted: 5, fgMade: 2, fgAttempted: 4, points: 4 });
     const roasts = generateRoasts([airball], players, { teamScore: 50, opponentScore: 52 });
     expect(roasts[0]!.playerId).toBeNull();
-    expect(roasts.some((r) => r.playerId === 1 && r.text.includes("0 מתוך 5"))).toBe(true);
+    expect(roasts.some((r) => r.playerId === 1 && /0 מתוך 5/.test(r.text))).toBe(true);
+  });
+
+  it("roasts ghost nights and boards without assists", () => {
+    const ghost = line(1, { points: 0, rebounds: 1, assists: 0, fgMade: 0, fgAttempted: 4 });
+    const boards = line(2, { points: 6, rebounds: 10, assists: 0, fgMade: 3, fgAttempted: 8 });
+    const roasts = generateRoasts([ghost, boards], players, even);
+    expect(roasts.some((r) => r.playerId === 1)).toBe(true);
+    expect(roasts.some((r) => r.playerId === 2 && r.text.includes("10"))).toBe(true);
+  });
+
+  it("adds a praise line on wins when there is room", () => {
+    const star = line(1, {
+      points: 28,
+      rebounds: 10,
+      assists: 7,
+      steals: 2,
+      blocks: 1,
+      turnovers: 1,
+      fgMade: 10,
+      fgAttempted: 16,
+    });
+    const roasts = generateRoasts([star], players, { teamScore: 90, opponentScore: 70 });
+    expect(roasts.some((r) => r.tone === "praise" && r.playerId === 1)).toBe(true);
   });
 });
 
-describe("roastPostBody", () => {
+describe("roast body encode/decode", () => {
   it("is empty without roasts", () => {
     expect(roastPostBody([], "מכבי")).toBe("");
   });
 
-  it("lists each roast on its own line", () => {
-    const body = roastPostBody([{ playerId: 1, text: "א", severity: 1 }, { playerId: 2, text: "ב", severity: 1 }], "מכבי");
+  it("round-trips structured lines with player ids and tones", () => {
+    const roasts = [
+      { playerId: null, text: "צוות", tone: "roast" as const, severity: 1 },
+      { playerId: 1, text: "שחקן", tone: "roast" as const, severity: 1 },
+      { playerId: 2, text: "כל הכבוד", tone: "praise" as const, severity: 1 },
+    ];
+    const body = roastPostBody(roasts, "מכבי");
     expect(body).toContain("מכבי");
-    expect(body.split("\n").filter((l) => l.startsWith("🔥"))).toHaveLength(2);
+    const parsed = parseRoastBody(body);
+    expect(parsed.structured).toBe(true);
+    expect(parsed.intro).toContain("מכבי");
+    expect(parsed.lines).toEqual([
+      { playerId: null, tone: "roast", text: "צוות" },
+      { playerId: 1, tone: "roast", text: "שחקן" },
+      { playerId: 2, tone: "praise", text: "כל הכבוד" },
+    ]);
+  });
+
+  it("parses legacy fire lines without player ids", () => {
+    const parsed = parseRoastBody("פתיח\n\n🔥 שורה ישנה");
+    expect(parsed.intro).toBe("פתיח");
+    expect(parsed.lines).toEqual([{ playerId: null, tone: "roast", text: "שורה ישנה" }]);
+    expect(parsed.structured).toBe(false);
+  });
+
+  it("formats a single line", () => {
+    expect(formatRoastLine({ playerId: 5, text: "היי", tone: "roast", severity: 1 })).toBe("🔥 @5:r:היי");
+    expect(formatRoastLine({ playerId: null, text: "קבוצה", tone: "praise", severity: 1 })).toBe("🔥 @t:p:קבוצה");
+  });
+});
+
+describe("isRoastPost", () => {
+  it("matches funny_moment posts with the roast title", () => {
+    expect(isRoastPost({ type: "funny_moment", title: "🔥 הצלייה של אחרי המשחק" })).toBe(true);
+    expect(isRoastPost({ type: "funny_moment", title: "אחר" })).toBe(false);
   });
 });

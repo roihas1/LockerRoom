@@ -98,19 +98,11 @@ export const he = {
     roast: {
       title: "🔥 הצלייה של אחרי המשחק",
       intro: (opponent: string) => `סיכום לא רשמי של המשחק נגד ${opponent}. באהבה, כמובן.`,
-      bigLoss: (margin: number) => `הפסד ב־${margin}. נזכור את המשחק הזה. או שבעצם עדיף שלא.`,
-      closeWin: (margin: number) => `ניצחון ב־${margin}. הלב של המאמן עדיין לא חזר לקצב רגיל.`,
-      closeLoss: (margin: number) => `הפסד ב־${margin}. עוד סל אחד והיינו מספרים סיפור אחר.`,
-      blowout: (margin: number) => `ניצחון ב־${margin}. היריבה ביקשה שלא נעלה את התוצאה לאתר. סליחה.`,
-      zeroFg: (name: string, att: number) => `${name} זרק ${att} פעמים ולא קלע אף אחת. הטבעת שוקלת להגיש תלונה.`,
-      threes: (name: string, made: number, att: number) => `${name}: ${made} מתוך ${att} מחוץ לקשת. הביטחון גבוה יותר מהאחוזים.`,
-      airball: (name: string, att: number) => `${name} עם 0 מתוך ${att} משלוש. הרוח בחוץ יותר מדויקת.`,
-      turnovers: (name: string, n: number) => `${name} עם ${n} איבודים. נתן יותר מתנות מסבתא בחג.`,
-      fouls: (name: string, n: number) => `${name} סיים עם ${n} עבירות. השופט כבר שמר לו מקום בחתונה.`,
-      freeThrows: (name: string, made: number, att: number) => `${name} קלע ${made} מתוך ${att} מהקו. הקו החופשי לא כל כך חופשי.`,
-      brickFts: (name: string, att: number) => `${name} החטיא את כל ${att} העונשין. הקו ביקש שיחליף קו.`,
-      volume: (name: string, pts: number, att: number) => `${name} קלע ${pts}, וזה לקח לו רק ${att} זריקות. מכונת זריקות.`,
-      noBoards: (name: string, fga: number) => `${name} זרק ${fga} פעמים בלי ריבאונד אחד. הכדור בורח ממנו.`,
+      sectionTitle: "הצלייה של אחרי המשחק",
+      toLockerPost: "לפוסט המלא",
+      publish: "פרסם צלייה",
+      publishedOk: "הצלייה פורסמה בלוקר רום ✓",
+      preview: "תצוגה מקדימה",
       draftCreated: "נוצרה טיוטת צלייה בחדר ההלבשה. עברו עליה ופרסמו אם היא מצחיקה מספיק.",
       draftExists: "יש כבר טיוטת צלייה למשחק הזה בחדר ההלבשה.",
       draftPublished: "הצלייה של המשחק הזה כבר פורסמה.",
@@ -118,6 +110,80 @@ export const he = {
       regenerate: "צור צלייה מחדש",
       open: "לטיוטה",
       updated: "הצלייה עודכנה לפי הסטטיסטיקה האחרונה.",
+      bigLoss: [
+        (margin: number) => `הפסד ב־${margin}. נזכור את המשחק הזה. או שבעצם עדיף שלא.`,
+        (margin: number) => `${margin} נקודות הפרש. המאמן כבר פתח מצגת של 40 שקפים.`,
+        (margin: number) => `הפסד ב־${margin}. לפחות הספסל קיבל דקות.`,
+      ],
+      closeWin: [
+        (margin: number) => `ניצחון ב־${margin}. הלב של המאמן עדיין לא חזר לקצב רגיל.`,
+        (margin: number) => `ניצחון ב־${margin}. דרמה, הזעה, ושום דבר לא היה בטוח.`,
+        (margin: number) => `${margin} נקודות הפרש. ככה מנצחים בלי לתת ליריבה לחייך.`,
+      ],
+      closeLoss: [
+        (margin: number) => `הפסד ב־${margin}. עוד סל אחד והיינו מספרים סיפור אחר.`,
+        (margin: number) => `הפסד ב־${margin}. כואב יותר מנפילה על פרקט בלי כרית.`,
+        (margin: number) => `${margin} נקודות. ככה נראית גניבת ניצחון — מהצד הלא נכון.`,
+      ],
+      blowout: [
+        (margin: number) => `ניצחון ב־${margin}. היריבה ביקשה שלא נעלה את התוצאה לאתר. סליחה.`,
+        (margin: number) => `ניצחון ב־${margin}. שלחו את זה לקבוצת הוואטסאפ של ההורים.`,
+        (margin: number) => `${margin} הפרש. גם שעון המשחק ביקש הפסקה.`,
+      ],
+      zeroFg: [
+        (name: string, att: number) => `${name} זרק ${att} פעמים ולא קלע אף אחת. הטבעת שוקלת להגיש תלונה.`,
+        (name: string, att: number) => `${name} עם 0 מתוך ${att} מהשדה. הביטחון נשאר, הכדורים פחות.`,
+        (name: string, att: number) => `${att} זריקות ל־${name}, אפס קליעות. הסל היה סגור הערב.`,
+      ],
+      threes: [
+        (name: string, made: number, att: number) => `${name}: ${made} מתוך ${att} מחוץ לקשת. הביטחון גבוה יותר מהאחוזים.`,
+        (name: string, made: number, att: number) => `${name} חימם את היד מחוץ לקשת — ${made}/${att}. החימום נמשך.`,
+      ],
+      airball: [
+        (name: string, att: number) => `${name} עם 0 מתוך ${att} משלוש. הרוח בחוץ יותר מדויקת.`,
+        (name: string, att: number) => `${name} החטיא ${att} שלשות ברצף. הקשת ביקשה שיחה.`,
+      ],
+      turnovers: [
+        (name: string, n: number) => `${name} עם ${n} איבודים. נתן יותר מתנות מסבתא בחג.`,
+        (name: string, n: number) => `${n} איבודים ל־${name}. היריבה מודה על הנדיבות.`,
+        (name: string, n: number) => `${name} איבד ${n} כדורים. המאמן כבר סופר על האצבעות.`,
+      ],
+      fouls: [
+        (name: string, n: number) => `${name} סיים עם ${n} עבירות. השופט כבר שמר לו מקום בחתונה.`,
+        (name: string, n: number) => `${n} עבירות ל־${name}. הכיסא על הספסל חיכה לו.`,
+      ],
+      freeThrows: [
+        (name: string, made: number, att: number) => `${name} קלע ${made} מתוך ${att} מהקו. הקו החופשי לא כל כך חופשי.`,
+        (name: string, made: number, att: number) => `${name} מהעונשין: ${made}/${att}. הקו שלח לו חשבונית.`,
+      ],
+      brickFts: [
+        (name: string, att: number) => `${name} החטיא את כל ${att} העונשין. הקו ביקש שיחליף קו.`,
+        (name: string, att: number) => `${att} עונשין ל־${name}, אפס קליעות. גם המים בבקבוק פספסו.`,
+      ],
+      volume: [
+        (name: string, pts: number, att: number) => `${name} קלע ${pts}, וזה לקח לו רק ${att} זריקות. מכונת זריקות.`,
+        (name: string, pts: number, att: number) => `${name}: ${pts} נקודות מ־${att} ניסיונות. היעילות חיפשה אותו.`,
+      ],
+      noBoards: [
+        (name: string, fga: number) => `${name} זרק ${fga} פעמים בלי ריבאונד אחד. הכדור בורח ממנו.`,
+        (name: string, fga: number) => `${fga} זריקות ל־${name}, אפס ריבאונדים. מישהו אחר עשה את העבודה השחורה.`,
+      ],
+      ghost: [
+        (name: string) => `${name} היה על הפרקט, אבל הסטטיסטיקה כמעט לא שמה לב.`,
+        (name: string) => `${name} עבר את המשחק כמו רוח רפאים — בלי רעש, בלי מספרים.`,
+      ],
+      boardsNoDimes: [
+        (name: string, reb: number) => `${name} עם ${reb} ריבאונדים ואפס אסיסטים. הכדור נכנס אליו ולא יצא.`,
+        (name: string, reb: number) => `${reb} ריבאונדים ל־${name}, בלי מסירה אחת. החור השחור של הערב.`,
+      ],
+      praise: [
+        (name: string, pts: number, reb: number, ast: number) =>
+          `${name} שרף את הרצפה: ${pts} נק׳, ${reb} ריב׳, ${ast} אס׳. ככה נראה ערב גדול.`,
+        (name: string, pts: number, reb: number, ast: number) =>
+          `${name} מגיע לו כבוד — ${pts}/${reb}/${ast}. תודו לו בנסיעה חזרה.`,
+        (name: string, pts: number, reb: number, ast: number) =>
+          `${name} סחב: ${pts} נקודות, ${reb} ריבאונדים, ${ast} אסיסטים. מגיע לו המקלחת החמה.`,
+      ],
     },
     potg: {
       note: (name: string, s: { points: number; rebounds: number; assists: number; pir: number }) =>
@@ -219,6 +285,7 @@ export const he = {
     lastGame: "המשחק האחרון",
     teamStats: "סטטיסטיקות קבוצתיות",
     leaders: "מובילי הקבוצה",
+    hotPlayer: "שחקן חם",
     recentGames: "משחקים אחרונים",
     trainingPlays: "המהלכים שלנו",
     allPlays: "לכל המהלכים",
@@ -277,6 +344,33 @@ export const he = {
     teamAverages: "ממוצעים קבוצתיים",
     sortBy: "מיון לפי",
     minGames: (n: number) => `מינימום ${n} משחקים לדירוג`,
+    hotPlayer: {
+      title: "שחקן חם",
+      subtitle: "הבלתי עציר בשלושת המשחקים האחרונים",
+      windowHint: (played: number, window: number) => `${played} מתוך ${window} משחקים אחרונים`,
+      empty: "צריך לפחות שני משחקים עם נתונים כדי לבחור שחקן חם.",
+      toPlayer: "לכרטיס השחקן",
+    },
+    trends: {
+      playerTitle: "מגמה",
+      teamTitle: "מגמת הקבוצה",
+      rolling: "ממוצע נע",
+      scored: "קלענו",
+      allowed: "ספגנו",
+      selectMetric: "בחירת מדד",
+      emptyPlayer: "עוד אין מספיק משחקים להצגת מגמה.",
+      emptyTeam: "עוד אין משחקים שהסתיימו להצגת מגמת הקבוצה.",
+      pointDetail: (opponent: string, value: string, rolling: string) =>
+        `נגד ${opponent}: ${value} · ממוצע נע ${rolling}`,
+      summary: (metric: string, first: string, last: string, games: number) =>
+        `${metric} ב־${games} משחקים אחרונים: מ־${first} ל־${last}`,
+      metrics: {
+        points: "נקודות",
+        rebounds: "ריבאונדים",
+        assists: "אסיסטים",
+        pir: "PIR",
+      },
+    },
   },
 
   standingsPage: {
@@ -313,6 +407,7 @@ export const he = {
     seasonTotals: "סיכומי עונה",
     seasonHighs: "שיאי עונה",
     gameLog: "משחק אחר משחק",
+    trend: "מגמה",
     actionShots: "רגעים מהמגרש",
     inactive: "לא פעיל",
     browse: "מעבר בין שחקנים",
@@ -911,6 +1006,27 @@ export const he = {
     newPost: "😂 חדש בלוקר רום",
     newAward: "🏆 פרס חדש",
     newMilestone: "🏆 אבן דרך חדשה",
+    birthday: {
+      titles: [
+        (name: string) => `🎂 יום הולדת שמח, ${name}!`,
+        (name: string) => `🎉 ${name} חוגג היום`,
+        (name: string) => `🏀 נר אחד על הטבעת — ${name}`,
+      ],
+      bodies: [
+        (name: string) => `${name} מתבגר, הסטטיסטיקה נשארת צעירה. תאחל לו בלוקר רום.`,
+        (name: string) => `היום ל־${name} מותר להחטיא עונשין בלי צלייה. כמעט.`,
+        (name: string) => `${name} עוד שנה על הפרקט. מישהו מביא עוגה לאימון?`,
+        (name: string) => `מזל טוב ל־${name}! השנה הזאת — פחות איבודים, יותר מתנות.`,
+        (name: string) => `${name} חוגג. ההגנה שלו עדיין בלי יום חופש.`,
+      ],
+      /** Player-specific birthday blasts (keyed by player id). */
+      overrides: {
+        2: {
+          title: "מזל טוב לאוחיון 🎂",
+          body: "המנג׳ר חוגג 30 כעת חיה בוקובזה 🎉 שנה הבאה פחות טפסים יותר נקודות 🏀 אוהבים ❤️",
+        },
+      } as Record<number, { title: string; body: string }>,
+    },
   },
 
   meta: {

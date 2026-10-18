@@ -77,6 +77,11 @@ export function createCachedPublicSource(source: DataSource): DataSource {
     opts,
   );
   const getFeedItem = unstable_cache((id: number) => source.getFeedItem(id), ["public", "feed-item"], opts);
+  const getPublishedRoastForGame = unstable_cache(
+    (gameId: number) => source.getPublishedRoastForGame(gameId),
+    ["public", "game-roast"],
+    opts,
+  );
   const getAwards = unstable_cache(
     (seasonId: number) => source.getAwards(seasonId === 0 ? undefined : seasonId),
     ["public", "awards"],
@@ -108,6 +113,7 @@ export function createCachedPublicSource(source: DataSource): DataSource {
     getExercise,
     getFeed: (optsArg) => getFeed(optsArg.type ?? "", optsArg.before ?? "", optsArg.limit),
     getFeedItem,
+    getPublishedRoastForGame,
     getAwards: (seasonId) => getAwards(seasonId ?? 0),
   };
 }

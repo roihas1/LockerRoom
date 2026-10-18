@@ -198,6 +198,8 @@ export interface FeedItem extends Post {
   milestonePlayer: Player | null;
   game: Game | null;
   play: Exercise | null;
+  /** Players referenced in structured roast lines (for linked roast cards). */
+  mentionedPlayers: Player[];
 }
 
 export interface GameDetailData {

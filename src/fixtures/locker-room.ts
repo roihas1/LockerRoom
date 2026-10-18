@@ -1,3 +1,4 @@
+import { he } from "@/config/strings";
 import type { Award, Media, Post } from "@/types/domain";
 import { fixtureGames } from "./games";
 import { placeholderMedia } from "./media";
@@ -196,6 +197,27 @@ export const fixturePosts: Post[] = [
     isPinned: false,
     isPublished: true,
     publishedAt: "2026-10-07T18:00:00.000Z",
+    media: [],
+  },
+  {
+    id: 9,
+    type: "funny_moment",
+    title: he.fun.roast.title,
+    body: [
+      he.fun.roast.intro(lastFinal.opponent),
+      "",
+      "🔥 @t:r:ניצחון ב־2. הלב של המאמן עדיין לא חזר לקצב רגיל.",
+      "🔥 @2:r:הקוסם עם 5 איבודים. נתן יותר מתנות מסבתא בחג.",
+      "🔥 @1:p:המנוע שרף את הרצפה: 22 נק׳, 6 ריב׳, 8 אס׳. ככה נראה ערב גדול.",
+    ].join("\n"),
+    quotePlayerId: null,
+    gameId: lastFinal.id,
+    awardId: null,
+    exerciseId: null,
+    milestonePlayerId: null,
+    isPinned: false,
+    isPublished: true,
+    publishedAt: "2026-10-09T20:00:00.000Z",
     media: [],
   },
 ];

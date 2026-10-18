@@ -5,6 +5,7 @@ import { ShareButton } from "@/components/common/share-button";
 import { ActionGallery } from "@/components/media/action-gallery";
 import { Badge } from "@/components/ui/badge";
 import { ReactionBar } from "./reaction-bar";
+import { RoastBody, feedItemIsRoast } from "./roast-card";
 import { awardCategoryLabels, exerciseCategoryLabels, postTypeLabels } from "@/config/labels";
 import { he } from "@/config/strings";
 import { cn } from "@/lib/utils/cn";
@@ -204,6 +205,23 @@ function renderBody(item: FeedItemData, compact: boolean) {
           </figcaption>
         ) : null}
       </figure>
+    );
+  }
+
+  if (feedItemIsRoast(item) && item.body) {
+    return (
+      <div className="space-y-3">
+        {item.title ? (
+          <h3 data-user-content className="font-display text-lg font-extrabold">
+            {item.title}
+          </h3>
+        ) : null}
+        <RoastBody
+          body={item.body}
+          compact={compact}
+          playersById={new Map(item.mentionedPlayers.map((p) => [p.id, p]))}
+        />
+      </div>
     );
   }
 
