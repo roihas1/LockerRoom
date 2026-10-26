@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { MapPin } from "lucide-react";
 import { ScoreBoard } from "@/components/common/scoreboard";
+import { AddToCalendar } from "@/components/games/add-to-calendar";
 import { WazeButton } from "@/components/games/waze-button";
 import { homeAwayLabels } from "@/config/labels";
 import { he } from "@/config/strings";
+import { isCalendarEligible } from "@/lib/calendar";
 import { formatGameMoment, formatLongDate } from "@/lib/utils/dates";
 import type { Game, Team } from "@/types/domain";
 import { Countdown } from "./countdown";
@@ -39,6 +41,7 @@ export function NextGameCard({ game, team }: { game: Game; team: Team }) {
         >
           {he.scoutingPage.viewScouting}
         </Link>
+        {isCalendarEligible(game) ? <AddToCalendar game={game} team={team} /> : null}
         {game.location ? <WazeButton address={game.location} /> : null}
       </div>
     </div>

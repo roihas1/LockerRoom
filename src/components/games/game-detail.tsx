@@ -10,6 +10,7 @@ import { VideoPlayer } from "@/components/media/video-player";
 import { homeAwayLabels } from "@/config/labels";
 import { he } from "@/config/strings";
 import { isCalendarEligible } from "@/lib/calendar";
+import { isUpcomingGame } from "@/lib/stats/games";
 import { formatLongDate, formatTime, formatWeekday } from "@/lib/utils/dates";
 import type { ReactNode } from "react";
 import type { FeedItem, GameDetailData, GameEvent, Team } from "@/types/domain";
@@ -89,7 +90,7 @@ export function GameDetail({
             {he.scoutingPage.viewScouting}
           </Link>
           {isCalendarEligible(game) ? <AddToCalendar game={game} team={team} /> : null}
-          {isCalendarEligible(game) && game.location ? <WazeButton address={game.location} /> : null}
+          {game.location && isUpcomingGame(game) ? <WazeButton address={game.location} /> : null}
           {actions}
         </div>
       </header>

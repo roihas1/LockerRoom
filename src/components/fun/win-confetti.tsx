@@ -33,7 +33,7 @@ function pieceCount(): number {
   return 100;
 }
 
-/** Full-screen confetti burst, once per browser session for each `id`. */
+/** Full-screen confetti burst, once per win `id` (persists across app relaunches). */
 export function WinConfetti({ id }: { id: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -43,8 +43,10 @@ export function WinConfetti({ id }: { id: string }) {
     if (!canvas || !ctx) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const storageKey = `confetti:${id}`;
-    if (sessionStorage.getItem(storageKey)) return;
-    sessionStorage.setItem(storageKey, "1");
+    // localStorage: iOS Home Screen apps clear sessionStorage on each cold launch.
+    if (localStorage.getItem(storageKey) || sessionStorage.getItem(storageKey)) return;
+    localStorage.setItem(storageKey, "1");
+    sessionStorage.removeItem(storageKey);
 
     const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
     const resize = () => {
@@ -118,8 +120,8 @@ export function WinConfetti({ id }: { id: string }) {
     frame = requestAnimationFrame(tick);
 
     return () => {
-      // Interrupted bursts (including Strict Mode's dev double-mount) should be allowed to replay.
-      if (!done) sessionStorage.removeItem(storageKey);
+      // Only Strict Mode's instant remount should replay; leaving mid-burst still counts as seen.
+      if (!done && performance.now() - start < 100) localStorage.removeItem(storageKey);
       cancelAnimationFrame(frame);
       window.removeEventListener("resize", resize);
       document.removeEventListener("visibilitychange", onVisibility);
