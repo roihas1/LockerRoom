@@ -30,6 +30,10 @@ export const gameDetailsFormSchema = z
       .union([z.literal("on"), z.literal("true"), z.literal("1"), z.literal(""), z.null()])
       .optional()
       .transform((v) => v === "on" || v === "true" || v === "1"),
+    isCup: z
+      .union([z.literal("on"), z.literal("true"), z.literal("1"), z.literal(""), z.null()])
+      .optional()
+      .transform((v) => v === "on" || v === "true" || v === "1"),
     teamScore: scoreField.transform((v) => (v === "" ? null : v)),
     opponentScore: scoreField.transform((v) => (v === "" ? null : v)),
   })
@@ -38,6 +42,10 @@ export const gameDetailsFormSchema = z
       fromIsraelInputs(data.date, data.time);
     } catch {
       ctx.addIssue({ code: "custom", message: he.validation.invalidDate, path: ["date"] });
+    }
+
+    if (data.isPractice && data.isCup) {
+      ctx.addIssue({ code: "custom", message: he.validation.practiceOrCup, path: ["isCup"] });
     }
 
     if (data.status === "final") {
@@ -62,6 +70,7 @@ export function parseGameDetailsForm(formData: FormData) {
     homeAway: formData.get("homeAway"),
     status: formData.get("status"),
     isPractice: formData.get("isPractice"),
+    isCup: formData.get("isCup"),
     teamScore: formData.get("teamScore"),
     opponentScore: formData.get("opponentScore"),
   };

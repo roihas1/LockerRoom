@@ -50,7 +50,12 @@ export function gameCalendarEvent(game: Game, team: Team, siteUrl: string): Cale
       ? `${game.opponent} ${he.result.vs} ${team.name}`
       : `${team.name} ${he.result.vs} ${game.opponent}`;
   const url = `${siteUrl.replace(/\/$/, "")}/games/${game.id}`;
-  const description = [game.roundNumber ? he.games.round(game.roundNumber) : null, url].filter(Boolean).join("\n");
+  const description = [
+    game.isCup ? he.games.cup : game.roundNumber ? he.games.round(game.roundNumber) : null,
+    url,
+  ]
+    .filter(Boolean)
+    .join("\n");
   return {
     uid: `game-${game.id}@${new URL(url).host}`,
     title,

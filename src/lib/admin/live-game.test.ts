@@ -19,6 +19,7 @@ const game: Game = {
   playOfGameMediaId: null,
   isPublished: false,
   isPractice: false,
+  isCup: false,
 };
 
 const line: StatLine = {

@@ -40,6 +40,7 @@ const game = (over: Partial<Game>): Game => ({
   playOfGameMediaId: null,
   isPublished: true,
   isPractice: false,
+  isCup: false,
   ...over,
 });
 

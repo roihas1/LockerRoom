@@ -10,7 +10,7 @@ import { VideoPlayer } from "@/components/media/video-player";
 import { homeAwayLabels } from "@/config/labels";
 import { he } from "@/config/strings";
 import { isCalendarEligible } from "@/lib/calendar";
-import { isUpcomingGame } from "@/lib/stats/games";
+import { gameKindLabel, isUpcomingGame } from "@/lib/stats/games";
 import { formatLongDate, formatTime, formatWeekday } from "@/lib/utils/dates";
 import type { ReactNode } from "react";
 import type { FeedItem, GameDetailData, GameEvent, Team } from "@/types/domain";
@@ -48,14 +48,14 @@ export function GameDetail({
   const showStats = isFinal || isLive;
   // Live always shows (empty CTA while waiting); final only when live stats left a trail.
   const showPlayByPlay = isLive || (isFinal && !!events?.length);
+  const kind = gameKindLabel(game);
 
   return (
     <article className="space-y-8">
       <header className="card court-bg overflow-hidden p-5 md:p-8">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-2 text-sm text-muted">
           <span className="font-semibold">
-            {game.roundNumber ? he.games.round(game.roundNumber) : null}
-            {game.roundNumber ? " · " : null}
+            {kind ? `${kind} · ` : null}
             {homeAwayLabels[game.homeAway]}
           </span>
           {isLive ? <LiveGameSubscriber gameId={game.id} /> : <ResultBadge game={game} />}

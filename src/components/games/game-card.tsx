@@ -4,7 +4,7 @@ import { ResultBadge } from "@/components/common/result-badge";
 import { OpponentBadge } from "@/components/common/team-logo";
 import { homeAwayLabels } from "@/config/labels";
 import { he } from "@/config/strings";
-import { gameResult, isUpcomingGame } from "@/lib/stats/games";
+import { gameKindLabel, gameResult, isUpcomingGame } from "@/lib/stats/games";
 import { cn } from "@/lib/utils/cn";
 import { formatDate, formatGameMoment } from "@/lib/utils/dates";
 import type { Game } from "@/types/domain";
@@ -13,6 +13,7 @@ import { WazeButton } from "./waze-button";
 export function GameCard({ game, teamShortName, compact = false }: { game: Game; teamShortName: string; compact?: boolean }) {
   const result = gameResult(game);
   const hasScore = game.teamScore !== null && game.opponentScore !== null;
+  const kind = gameKindLabel(game);
   return (
     <div
       className={cn(
@@ -24,8 +25,7 @@ export function GameCard({ game, teamShortName, compact = false }: { game: Game;
       <Link href={`/games/${game.id}`} className="block p-4">
         <div className="mb-3 flex items-center justify-between gap-2 text-xs text-muted">
           <span className="font-semibold">
-            {game.roundNumber ? he.games.round(game.roundNumber) : null}
-            {game.roundNumber ? " · " : null}
+            {kind ? `${kind} · ` : null}
             {homeAwayLabels[game.homeAway]}
           </span>
           <ResultBadge game={game} />

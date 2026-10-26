@@ -44,6 +44,7 @@ export async function saveGameDetailsAction(_prev: ActionResult | null, formData
     home_away: parsed.data.homeAway,
     status: parsed.data.status,
     is_practice: parsed.data.isPractice,
+    is_cup: parsed.data.isCup,
     team_score: parsed.data.teamScore,
     opponent_score: parsed.data.opponentScore,
   };

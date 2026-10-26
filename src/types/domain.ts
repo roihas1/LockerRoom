@@ -115,6 +115,8 @@ export interface Game {
   isPublished: boolean;
   /** Practice / exhibition: shown publicly but excluded from W–L and season streaks. */
   isPractice: boolean;
+  /** Cup match: labeled as גביע and excluded from league W–L and season streaks. */
+  isCup: boolean;
 }
 
 export interface StatLine {

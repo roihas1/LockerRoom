@@ -29,7 +29,9 @@ export default async function Image({ params }: { params: Promise<{ id: string }
           : { text: gameStatusLabels[game.status], tone: "team" as const };
 
   return renderShareCard({
-    eyebrow: [game.roundNumber ? he.games.round(game.roundNumber) : null, homeAwayLabels[game.homeAway]].filter(Boolean).join(" · "),
+    eyebrow: [game.isCup ? he.games.cup : game.roundNumber ? he.games.round(game.roundNumber) : null, homeAwayLabels[game.homeAway]]
+      .filter(Boolean)
+      .join(" · "),
     title: `${he.result.vs} ${game.opponent}`,
     subtitle: [when, game.location].filter(Boolean).join(" · "),
     badge,

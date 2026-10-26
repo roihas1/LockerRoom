@@ -6,7 +6,7 @@ import type { Exercise, FeedItem, Game, Player, Team } from "@/types/domain";
 /** WhatsApp-friendly title and description for a game, e.g. "🏀 Team — ניצחון 82:74". */
 export function gameShareText(game: Game, team: Team): { title: string; description: string } {
   const result = gameResult(game);
-  const round = game.roundNumber ? he.games.round(game.roundNumber) : null;
+  const round = game.isCup ? he.games.cup : game.roundNumber ? he.games.round(game.roundNumber) : null;
   if (result && game.teamScore !== null && game.opponentScore !== null) {
     return {
       title: he.meta.gamePreview(team.name, result === "win" ? he.result.win : he.result.loss, `${game.teamScore}:${game.opponentScore}`),

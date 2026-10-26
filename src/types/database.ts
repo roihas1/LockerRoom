@@ -137,6 +137,7 @@ export type GameRow = {
   ibba_checked_at: string | null;
   is_published: boolean;
   is_practice: boolean;
+  is_cup: boolean;
   created_at: string;
   updated_at: string;
 };

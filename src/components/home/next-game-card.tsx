@@ -6,18 +6,20 @@ import { WazeButton } from "@/components/games/waze-button";
 import { homeAwayLabels } from "@/config/labels";
 import { he } from "@/config/strings";
 import { isCalendarEligible } from "@/lib/calendar";
+import { gameKindLabel } from "@/lib/stats/games";
 import { formatGameMoment, formatLongDate } from "@/lib/utils/dates";
 import type { Game, Team } from "@/types/domain";
 import { Countdown } from "./countdown";
 
 export function NextGameCard({ game, team }: { game: Game; team: Team }) {
+  const kind = gameKindLabel(game);
   return (
     <div className="card court-bg transition-colors hover:border-team/50">
       <Link href={`/games/${game.id}`} className="block space-y-4 p-5">
         <div className="flex items-center justify-between text-xs text-muted">
           <span className="font-bold tracking-wide text-team">{he.home.nextGame}</span>
           <span>
-            {game.roundNumber ? `${he.games.round(game.roundNumber)} · ` : null}
+            {kind ? `${kind} · ` : null}
             {homeAwayLabels[game.homeAway]}
           </span>
         </div>

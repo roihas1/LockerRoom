@@ -19,6 +19,7 @@ const game = (id: number, day: number, teamScore: number, opponentScore: number,
   playOfGameMediaId: null,
   isPublished: true,
   isPractice: false,
+  isCup: false,
   ...over,
 });
 

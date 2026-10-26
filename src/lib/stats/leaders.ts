@@ -24,7 +24,9 @@ export function minGamesForLeaders(completedGames: number, ratio = siteConfig.le
 }
 
 /** POTG selections on counted (final, published, non-practice) games. */
-export function countPotgByPlayer(games: Pick<Game, "playerOfGameId" | "status" | "isPublished" | "isPractice">[]): Map<number, number> {
+export function countPotgByPlayer(
+  games: Pick<Game, "playerOfGameId" | "status" | "isPublished" | "isPractice" | "isCup">[],
+): Map<number, number> {
   const counts = new Map<number, number>();
   for (const g of games) {
     if (!isCountedGame(g) || g.playerOfGameId == null) continue;

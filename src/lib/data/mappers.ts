@@ -117,6 +117,7 @@ export function toGame(row: GameRow): Game {
     playOfGameMediaId: row.play_of_game_media_id,
     isPublished: row.is_published,
     isPractice: row.is_practice,
+    isCup: row.is_cup,
   };
 }
 

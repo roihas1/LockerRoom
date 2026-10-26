@@ -21,6 +21,7 @@ function game(id: number, teamScore: number, opponentScore: number): Game {
     playOfGameMediaId: null,
     isPublished: true,
   isPractice: false,
+  isCup: false,
   };
 }
 

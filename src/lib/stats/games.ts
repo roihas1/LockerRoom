@@ -1,9 +1,18 @@
+import { he } from "@/config/strings";
 import type { Game } from "@/types/domain";
 
 export type GameResult = "win" | "loss";
 
-export function isCountedGame(game: Pick<Game, "status" | "isPublished" | "isPractice">): boolean {
-  return game.status === "final" && game.isPublished && !game.isPractice;
+export function isCountedGame(game: Pick<Game, "status" | "isPublished" | "isPractice" | "isCup">): boolean {
+  return game.status === "final" && game.isPublished && !game.isPractice && !game.isCup;
+}
+
+/** Round / cup / practice label for cards and headers; null when none apply. */
+export function gameKindLabel(game: Pick<Game, "roundNumber" | "isCup" | "isPractice">): string | null {
+  if (game.isCup) return he.games.cup;
+  if (game.roundNumber) return he.games.round(game.roundNumber);
+  if (game.isPractice) return he.games.practice;
+  return null;
 }
 
 export function gameResult(game: Pick<Game, "status" | "teamScore" | "opponentScore">): GameResult | null {

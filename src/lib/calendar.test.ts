@@ -29,6 +29,7 @@ const game: Game = {
   playOfGameMediaId: null,
   isPublished: true,
   isPractice: false,
+  isCup: false,
 };
 
 describe("gameCalendarEvent", () => {
