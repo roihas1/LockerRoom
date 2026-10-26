@@ -21,6 +21,8 @@ export function LiveGameSubscriber({ gameId, className }: { gameId: number; clas
 
   useEffect(() => {
     const refresh = () => {
+      // Avoid RSC refetch work while backgrounded (iOS PWAs are memory-sensitive on resume).
+      if (document.visibilityState !== "visible") return;
       if (timer.current) clearTimeout(timer.current);
       timer.current = setTimeout(() => router.refresh(), REFRESH_DEBOUNCE_MS);
     };

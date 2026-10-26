@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ViewTransition, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { InstallBanner } from "@/components/app/install-prompt";
 import { NotificationsBanner } from "@/components/app/notifications-banner";
 import { EasterEggs } from "@/components/fun/easter-eggs";
@@ -24,7 +24,9 @@ export default async function PublicLayout({ children }: { children: ReactNode }
       <SiteHeader team={team} />
       <main id="main" className="mx-auto w-full max-w-6xl px-4 pt-5 pb-6 md:pt-8 md:pb-16">
         <NotificationsBanner />
-        <ViewTransition>{children}</ViewTransition>
+        {/* Named ViewTransitions (player/coach photos) stay on those components. A page-wide
+            wrapper snapshots the full tree on every navigation and spikes memory on iOS PWAs. */}
+        {children}
       </main>
       <footer className="mx-auto hidden max-w-6xl items-center justify-between px-4 pb-10 text-xs text-muted md:flex">
         <span data-user-content>{team.name}</span>

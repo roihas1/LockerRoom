@@ -141,7 +141,7 @@ export function InstallBanner() {
 
   return (
     <div className="fixed inset-x-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-40 md:hidden" role="region" aria-label={he.app.install}>
-      <div className="flex items-center gap-3 rounded-2xl border border-border bg-surface/95 p-3 shadow-2xl backdrop-blur-lg">
+      <div className="flex items-center gap-3 rounded-2xl border border-border bg-surface p-3 shadow-2xl">
         <div className="min-w-0 flex-1">
           <p className="text-sm font-bold">{he.app.installCta}</p>
           <p className="truncate text-xs text-muted">{env.platform === "ios" ? he.app.iosNeedsInstall : he.app.installHint}</p>

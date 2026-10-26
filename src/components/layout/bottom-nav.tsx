@@ -25,7 +25,7 @@ export function BottomNav() {
   return (
     <nav
       aria-label={he.nav.mainLabel}
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-bg/90 pb-safe backdrop-blur-lg md:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-bg pb-safe md:hidden"
     >
       <ul className="mx-auto flex max-w-lg">
         {primary.map((item) => {
