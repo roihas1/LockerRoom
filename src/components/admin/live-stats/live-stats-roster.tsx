@@ -11,11 +11,14 @@ export function LiveStatsRoster({
   state,
   onChange,
   disabled,
+  allowClearAll = true,
 }: {
   players: Player[];
   state: LiveStatsClientState;
   onChange: (next: LiveStatsClientState) => void;
   disabled: boolean;
+  /** Off while the game is live: wiping the roster would delete the whole box score. */
+  allowClearAll?: boolean;
 }) {
   const played = new Set(state.playedPlayerIds);
 
@@ -58,9 +61,11 @@ export function LiveStatsRoster({
           <Button type="button" variant="ghost" size="sm" disabled={disabled} onClick={selectAll}>
             {he.admin.statsEntry.selectAll}
           </Button>
-          <Button type="button" variant="ghost" size="sm" disabled={disabled} onClick={clearAll}>
-            {he.admin.statsEntry.clearAll}
-          </Button>
+          {allowClearAll ? (
+            <Button type="button" variant="ghost" size="sm" disabled={disabled} onClick={clearAll}>
+              {he.admin.statsEntry.clearAll}
+            </Button>
+          ) : null}
         </div>
       </div>
       <ul className="grid gap-2 sm:grid-cols-2">

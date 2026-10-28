@@ -26,6 +26,10 @@ import { computeHotPlayer } from "@/lib/stats/trends";
 
 const HOME_PLAYS_LIMIT = 6;
 
+// Rendered per request: a cached ISR page (and CDN copy) could otherwise flip between "live" and "final"
+// across refreshes. Data reads stay cached (~60s) except around game time, see getSeasonContext.
+export const dynamic = "force-dynamic";
+
 type SectionKey = "games" | "standings" | "quote" | "teamStats" | "hotPlayer" | "leaders" | "plays" | "recent" | "feed";
 
 const sectionOrder: Record<HomeMode, SectionKey[]> = {

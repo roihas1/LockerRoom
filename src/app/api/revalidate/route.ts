@@ -1,4 +1,5 @@
 import { revalidatePath } from "next/cache";
+import { revalidatePublic } from "@/lib/cache/revalidate-public";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { isInternalPushAuthorized } from "@/lib/push/internal-auth";
@@ -11,6 +12,8 @@ export async function POST(request: Request) {
   if (!isInternalPushAuthorized(request)) return NextResponse.json({ ok: false }, { status: 401 });
   const parsed = bodySchema.safeParse(await request.json().catch(() => ({})));
   if (!parsed.success) return NextResponse.json({ ok: false, reason: "invalid" }, { status: 400 });
+  // Pages read through the tagged public data cache; busting paths alone would re-render from stale data.
+  revalidatePublic();
   for (const path of parsed.data.paths) {
     revalidatePath(path);
     if (path === "/games") revalidatePath("/games/[id]", "page");

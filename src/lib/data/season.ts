@@ -3,7 +3,8 @@ import { cache } from "react";
 import { aggregateByPlayer, type PlayerAggregate } from "@/lib/stats/aggregate";
 import { completedGames } from "@/lib/stats/games";
 import type { Game, Player, Season, StatLine } from "@/types/domain";
-import { getData } from ".";
+import { getData, getFreshData } from ".";
+import { anyInLiveWindow } from "./live-window";
 
 export interface SeasonContext {
   season: Season | null;
@@ -21,7 +22,12 @@ export const getSeasonContext = cache(async (seasonParam?: string): Promise<Seas
   const data = getData();
   const [seasons, active, players] = await Promise.all([data.getSeasons(), data.getActiveSeason(), data.getPlayers({ includeInactive: true })]);
   const season = (seasonParam ? seasons.find((s) => s.slug === seasonParam || String(s.id) === seasonParam) : null) ?? active;
-  const [games, lines] = season ? await Promise.all([data.getGames(season.id), data.getSeasonStatLines(season.id)]) : [[], []];
+  let [games, lines] = season ? await Promise.all([data.getGames(season.id), data.getSeasonStatLines(season.id)]) : [[], []];
+  if (season && anyInLiveWindow(games)) {
+    // Game time: bypass the ~60s cross-request cache so status/score/box score are never stale.
+    const fresh = getFreshData();
+    [games, lines] = await Promise.all([fresh.getGames(season.id), fresh.getSeasonStatLines(season.id)]);
+  }
   return {
     season,
     seasons,

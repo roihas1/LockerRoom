@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { finishLiveGameAction, startLiveGameAction } from "@/app/admin/games/live-actions";
 import { gameStatusLabels } from "@/config/labels";
@@ -46,6 +46,8 @@ export function LiveStatsApp({
     canUndo,
     saveStatus,
     saveStatusLabel,
+    flushSave,
+    pendingSave,
   } = useLiveStatsAutosave({
     gameId: game.id,
     demo,
@@ -55,9 +57,14 @@ export function LiveStatsApp({
   const [startPending, startTransition] = useTransition();
   const [finishPending, finishTransition] = useTransition();
 
+  const initedGameRef = useRef<number | null>(null);
   useEffect(() => {
+    // Load server state once per game. Every autosave calls revalidatePath, which hands this component a
+    // fresh snapshot prop each time; re-initialising on those would reset undo history, the "saved" status
+    // and any taps made since the save started. The local state is the source of truth while scoring.
+    if (initedGameRef.current === game.id) return;
+    initedGameRef.current = game.id;
     initState(clientStateFromSnapshot(initialSnapshot));
-    // Re-init when navigating to another game or after server refresh.
   }, [game.id, initialSnapshot, initState]);
 
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -95,8 +102,15 @@ export function LiveStatsApp({
       return;
     }
     finishTransition(async () => {
+      // Make sure the last taps are on the server before the game is finalized.
+      if (pendingSave.current) await flushSave();
+      if (pendingSave.current) {
+        toast.error(he.admin.liveStats.error);
+        return;
+      }
       const result = await finishLiveGameAction(game.id);
       if (result.ok) {
+        setStatus("final");
         toast.success(result.message);
         if (result.redirectTo) router.push(result.redirectTo);
         else router.refresh();
@@ -184,7 +198,13 @@ export function LiveStatsApp({
                 {he.admin.liveStats.manageRoster} ({state.playedPlayerIds.length})
               </summary>
               <div className="border-t border-border p-4">
-                <LiveStatsRoster players={players} state={state} disabled={scoringDisabled} onChange={(next) => setState(next)} />
+                <LiveStatsRoster
+                  players={players}
+                  state={state}
+                  disabled={scoringDisabled}
+                  onChange={(next) => setState(next)}
+                  allowClearAll={false}
+                />
               </div>
             </details>
           ) : null}

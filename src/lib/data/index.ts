@@ -16,6 +16,15 @@ export const getData = cache((): DataSource => {
   return createCachedPublicSource(createSupabaseSource(createPublicClient()));
 });
 
+/**
+ * Public, published-only reads that skip the cross-request cache. Used around game time so a finished
+ * (or just-started) game is never shown with a stale status or score.
+ */
+export const getFreshData = cache((): DataSource => {
+  if (isDemoMode()) return createFixtureSource();
+  return createSupabaseSource(createPublicClient());
+});
+
 /** Admin reads including drafts. Callers must have passed requireAdmin(). */
 export const getAdminData = cache(async (): Promise<DataSource> => {
   if (isDemoMode()) return createFixtureSource({ includeDrafts: true });

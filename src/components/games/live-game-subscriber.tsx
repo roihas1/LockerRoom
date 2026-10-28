@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils/cn";
 const REFRESH_DEBOUNCE_MS = 500;
 /** Safety net when the socket is down (e.g. a phone waking from sleep): refetch on this interval. */
 const FALLBACK_POLL_MS = 20_000;
+const JOINED_POLL_EVERY = 3;
 
 /**
  * Keeps a live game page fresh: listens to Realtime changes for this game and re-renders the
@@ -39,8 +40,13 @@ export function LiveGameSubscriber({ gameId, className }: { gameId: number; clas
         if (ok) refresh();
       });
 
+    // Poll even while the socket says "joined": Realtime can look connected yet miss events (filtered, throttled,
+    // or a half-dead mobile connection). Poll every tick when it is down, every third tick when it is up.
+    let tick = 0;
     const poll = setInterval(() => {
-      if (document.visibilityState === "visible" && channel?.state !== "joined") router.refresh();
+      tick += 1;
+      if (document.visibilityState !== "visible") return;
+      if (channel?.state !== "joined" || tick % JOINED_POLL_EVERY === 0) router.refresh();
     }, FALLBACK_POLL_MS);
     const onVisible = () => {
       if (document.visibilityState === "visible") refresh();

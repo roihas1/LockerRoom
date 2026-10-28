@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { saveLiveStatsSnapshot } from "@/app/admin/games/live-actions";
 import { he } from "@/config/strings";
 import { buildLiveStatsFormData, cloneLiveStatsState, type LiveStatsClientState } from "@/lib/live-stats/form-data";
@@ -8,6 +9,7 @@ import type { LiveSaveStatus } from "@/lib/live-stats/types";
 
 const DEBOUNCE_MS = 400;
 const MAX_UNDO = 80;
+const RETRY_MS = 4000;
 
 export function useLiveStatsAutosave({
   gameId,
@@ -32,15 +34,38 @@ export function useLiveStatsAutosave({
     stateRef.current = state;
   }, [state]);
 
+  const autosaveRef = useRef(autosaveEnabled);
+  const demoRef = useRef(demo);
+  const gameIdRef = useRef(gameId);
+  useEffect(() => {
+    autosaveRef.current = autosaveEnabled;
+    demoRef.current = demo;
+    gameIdRef.current = gameId;
+  }, [autosaveEnabled, demo, gameId]);
+
+  const retryRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const flushRef = useRef<() => Promise<void>>(async () => {});
+
+  const clearRetry = useCallback(() => {
+    if (retryRef.current) {
+      clearTimeout(retryRef.current);
+      retryRef.current = null;
+    }
+  }, []);
+
   const flushSave = useCallback(async () => {
     if (demo || !autosaveEnabled) return;
     const gen = ++saveGenRef.current;
-    pendingSaveRef.current = false;
-    setHasPendingSave(false);
     if (debounceRef.current) {
       clearTimeout(debounceRef.current);
       debounceRef.current = null;
     }
+    clearRetry();
+
+    // Unsaved changes stay "pending" until a save actually succeeds, so the unload warning and the
+    // retry/online handlers keep covering them after a failed or offline attempt.
+    pendingSaveRef.current = true;
+    setHasPendingSave(true);
 
     if (!navigator.onLine) {
       setSaveStatus("offline");
@@ -49,17 +74,43 @@ export function useLiveStatsAutosave({
 
     setSaveStatus("saving");
     const fd = buildLiveStatsFormData(gameId, stateRef.current);
-    const result = await saveLiveStatsSnapshot(null, fd);
+    let result: Awaited<ReturnType<typeof saveLiveStatsSnapshot>>;
+    try {
+      result = await saveLiveStatsSnapshot(null, fd);
+    } catch {
+      result = { ok: false, code: "network", message: "" };
+    }
     if (gen !== saveGenRef.current) return;
 
     if (result.ok) {
+      // A newer tap may already be waiting in the debounce: that change is still unsaved.
+      if (!debounceRef.current) {
+        pendingSaveRef.current = false;
+        setHasPendingSave(false);
+      }
       setSaveStatus("saved");
-    } else if (result.code === "demo") {
-      setSaveStatus("idle");
+    } else if (result.code === "demo" || result.code === "not_live") {
+      // Nothing to retry: the game is final (or demo). The server refused on purpose.
+      pendingSaveRef.current = false;
+      setHasPendingSave(false);
+      if (result.code === "not_live") {
+        setSaveStatus("error");
+        toast.error(result.message);
+      } else {
+        setSaveStatus("idle");
+      }
     } else {
       setSaveStatus("error");
+      retryRef.current = setTimeout(() => {
+        retryRef.current = null;
+        void flushRef.current();
+      }, RETRY_MS);
     }
-  }, [autosaveEnabled, demo, gameId]);
+  }, [autosaveEnabled, clearRetry, demo, gameId]);
+
+  useEffect(() => {
+    flushRef.current = flushSave;
+  }, [flushSave]);
 
   const scheduleSave = useCallback(() => {
     if (demo || !autosaveEnabled) return;
@@ -94,12 +145,13 @@ export function useLiveStatsAutosave({
       clearTimeout(debounceRef.current);
       debounceRef.current = null;
     }
+    clearRetry();
     saveGenRef.current += 1;
     setSaveStatus("idle");
     setHasPendingSave(false);
     setStateRaw(initial);
     stateRef.current = initial;
-  }, []);
+  }, [clearRetry]);
 
   const undoLast = useCallback(() => {
     const prev = undoStack.current.pop();
@@ -112,11 +164,11 @@ export function useLiveStatsAutosave({
 
   useEffect(() => {
     const onOnline = () => {
-      if (saveStatus === "offline" && autosaveEnabled && !demo) scheduleSave();
+      if (pendingSaveRef.current && autosaveEnabled && !demo) void flushRef.current();
     };
     window.addEventListener("online", onOnline);
     return () => window.removeEventListener("online", onOnline);
-  }, [autosaveEnabled, demo, saveStatus, scheduleSave]);
+  }, [autosaveEnabled, demo]);
 
   useEffect(() => {
     const dirty = hasPendingSave || saveStatus === "saving";
@@ -129,9 +181,16 @@ export function useLiveStatsAutosave({
     return () => window.removeEventListener("beforeunload", onBeforeUnload);
   }, [hasPendingSave, saveStatus]);
 
+  // Leaving the page (soft navigation, tab close) must not drop the last taps: if a save is still
+  // pending when the hook unmounts, fire it once. `beforeunload` does not cover in-app navigation.
   useEffect(
     () => () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
+      if (retryRef.current) clearTimeout(retryRef.current);
+      if (pendingSaveRef.current && autosaveRef.current && !demoRef.current && navigator.onLine) {
+        pendingSaveRef.current = false;
+        void saveLiveStatsSnapshot(null, buildLiveStatsFormData(gameIdRef.current, stateRef.current)).catch(() => {});
+      }
     },
     [],
   );
