@@ -68,16 +68,19 @@ export function LiveStatsRoster({
           ) : null}
         </div>
       </div>
-      <ul className="grid gap-2 sm:grid-cols-2">
+      <ul className="grid grid-cols-2 gap-2">
         {players.map((p) => (
           <li key={p.id}>
-            <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-border bg-surface-2 px-3 py-2 has-disabled:opacity-50">
+            <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-border bg-surface-2 px-3 py-2.5 has-checked:border-team/60 has-checked:bg-team/10 has-disabled:opacity-50">
               <Checkbox
                 checked={played.has(p.id)}
                 disabled={disabled}
                 onChange={(e) => setPlayed(p.id, e.target.checked)}
               />
-              <span className="font-medium">{p.name}</span>
+              <span className="num w-8 text-center font-black text-team">{p.jerseyNumber ?? "–"}</span>
+              <span className="min-w-0 flex-1 truncate font-medium" data-user-content>
+                {p.name}
+              </span>
             </label>
           </li>
         ))}

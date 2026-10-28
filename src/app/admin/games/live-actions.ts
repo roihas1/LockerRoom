@@ -6,6 +6,8 @@ import { handleGameFinalized } from "@/lib/admin/game-final";
 import { createRoastDraft } from "@/lib/admin/roast-post";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { revalidatePublic } from "@/lib/cache/revalidate-public";
+import { getAdminData } from "@/lib/data";
+import type { GameEvent } from "@/types/domain";
 import { applyEventDiff } from "@/lib/live-stats/apply-events";
 import { diffSnapshots } from "@/lib/live-stats/diff";
 import { nextLiveMaxDeficit } from "@/lib/push/live-moments";
@@ -21,6 +23,20 @@ async function revalidateGamePaths(gameId: number, seasonId: number) {
   revalidatePath("/admin/games");
   revalidatePath(`/admin/games/${gameId}`);
   revalidatePath(`/admin/games/${gameId}/live`);
+  revalidatePath("/games");
+  revalidatePath(`/games/${gameId}`);
+  revalidatePath(`/games?season=${seasonId}`);
+  revalidatePath("/");
+  revalidatePath("/stats");
+}
+
+/**
+ * Autosave runs on every burst of taps, so it only touches public caches. Revalidating the admin pages here
+ * would re-render the live page the scorer is looking at (and send that payload back) on every save, while the
+ * scoring screen deliberately ignores it. Start, finish and reopen still use the full set above.
+ */
+function revalidateLiveSavePaths(gameId: number, seasonId: number) {
+  revalidatePublic();
   revalidatePath("/games");
   revalidatePath(`/games/${gameId}`);
   revalidatePath(`/games?season=${seasonId}`);
@@ -103,8 +119,10 @@ export async function saveLiveStatsSnapshot(_prev: ActionResult | null, formData
     opponent_score?: number;
     live_max_deficit?: number;
   } = {};
-  if (teamScore !== undefined) gameUpdate.team_score = teamScore;
-  if (opponentScore !== undefined) gameUpdate.opponent_score = opponentScore;
+  // Only write what moved: a stats-only tap must not rewrite the game row (it would bump updated_at and
+  // fire a Realtime UPDATE that makes every open fan page refetch for nothing).
+  if (teamScore !== undefined && teamScore !== game.team_score) gameUpdate.team_score = teamScore;
+  if (opponentScore !== undefined && opponentScore !== game.opponent_score) gameUpdate.opponent_score = opponentScore;
   if (liveMeta && nextMaxDeficit !== null && nextMaxDeficit !== liveMeta.live_max_deficit) {
     gameUpdate.live_max_deficit = nextMaxDeficit;
   }
@@ -144,7 +162,7 @@ export async function saveLiveStatsSnapshot(_prev: ActionResult | null, formData
   }));
   await applyEventDiff(supabase, gameId, diffSnapshots(previous, lines, game.opponent_score, opponentScore));
 
-  await revalidateGamePaths(gameId, game.season_id);
+  revalidateLiveSavePaths(gameId, game.season_id);
   return actionSuccess(he.admin.liveStats.saved);
 }
 
@@ -167,6 +185,24 @@ export async function startLiveGameAction(gameId: number, playerIds: number[]): 
     .single();
   if (loadError || !game) return mapErrorToAction(loadError ?? { message: "missing" });
 
+  // A stale "Start" (second phone, old tab, double tap) must never touch a game that already went live or ended:
+  // it would zero a running box score or bring a final game back to life.
+  if (game.status === "live" || game.status === "final") return actionFail(he.admin.liveStats.startNotAllowed, "not_startable");
+
+  const before = { status: game.status, team_score: game.team_score, opponent_score: game.opponent_score };
+
+  // Claim the transition first, conditional on the status we just read, so two concurrent starts cannot both win.
+  // A live game starts 0:0 — a real score, not a missing one — so the public boards never show a half-empty result.
+  const { data: claimed, error: statusError } = await supabase
+    .from("games")
+    .update({ status: "live", team_score: before.team_score ?? 0, opponent_score: before.opponent_score ?? 0 })
+    .eq("id", gameId)
+    .eq("status", before.status)
+    .select("id")
+    .maybeSingle();
+  if (statusError) return mapErrorToAction(statusError);
+  if (!claimed) return actionFail(he.admin.liveStats.startNotAllowed, "not_startable");
+
   const rows = uniqueIds.map((playerId) => ({
     game_id: gameId,
     player_id: playerId,
@@ -178,17 +214,17 @@ export async function startLiveGameAction(gameId: number, playerIds: number[]): 
     blocks: 0,
   }));
 
-  const { error: upsertError } = await supabase.from("player_game_stats").upsert(rows, { onConflict: "game_id,player_id" });
-  if (upsertError) return mapErrorToAction(upsertError);
+  // Never overwrite a line that already exists: only players without a row get a fresh zeroed one.
+  const { error: upsertError } = await supabase
+    .from("player_game_stats")
+    .upsert(rows, { onConflict: "game_id,player_id", ignoreDuplicates: true });
+  if (upsertError) {
+    // Do not leave a live game without its roster behind; put the game back as it was.
+    await supabase.from("games").update(before).eq("id", gameId).eq("status", "live");
+    return mapErrorToAction(upsertError);
+  }
 
-  // A live game starts 0:0 — a real score, not a missing one — so the public boards never show a half-empty result.
-  const { error: statusError } = await supabase
-    .from("games")
-    .update({ status: "live", team_score: game.team_score ?? 0, opponent_score: game.opponent_score ?? 0 })
-    .eq("id", gameId);
-  if (statusError) return mapErrorToAction(statusError);
-
-  if (game.status !== "live") notifyGameLive({ id: gameId, opponent: game.opponent, is_published: game.is_published });
+  notifyGameLive({ id: gameId, opponent: game.opponent, is_published: game.is_published });
   await revalidateGamePaths(gameId, game.season_id);
   return actionSuccess(he.admin.liveStats.started);
 }
@@ -221,8 +257,17 @@ export async function finishLiveGameAction(gameId: number): Promise<ActionResult
     return actionFail(he.admin.liveStats.finishTied, "validation");
   }
 
-  const { error: updateError } = await supabase.from("games").update({ status: "final" }).eq("id", gameId);
+  // Conditional on live: a double tap or a second device that already finished the game must not run the
+  // finalize side effects (roast draft, milestones, push claim) a second time.
+  const { data: finished, error: updateError } = await supabase
+    .from("games")
+    .update({ status: "final" })
+    .eq("id", gameId)
+    .eq("status", "live")
+    .select("id")
+    .maybeSingle();
   if (updateError) return mapErrorToAction(updateError);
+  if (!finished) return actionFail(he.admin.liveStats.finishNotLive, "validation");
 
   await createRoastDraft(supabase, gameId);
   await handleGameFinalized(supabase, gameId);
@@ -230,4 +275,46 @@ export async function finishLiveGameAction(gameId: number): Promise<ActionResult
   revalidatePath("/admin/locker-room");
   revalidatePath("/locker-room");
   return actionSuccess(he.admin.liveStats.finished, `/admin/games/${gameId}?step=highlights`);
+}
+
+/**
+ * Undo for a mistaken "finish": a final game goes back to live so scoring can continue. The final-score push is
+ * claimed once per game (`final_push_sent_at`), so finishing again will not notify fans a second time.
+ */
+export async function reopenLiveGameAction(gameId: number): Promise<ActionResult> {
+  await requireAdmin();
+  const demoBlock = blockLiveDemoMutation();
+  if (demoBlock) return demoBlock;
+
+  if (!gameId || !Number.isInteger(gameId)) return actionFail(he.errors.notFound, "not_found");
+
+  const supabase = await createSessionClient();
+  const { data: game, error: loadError } = await supabase.from("games").select("season_id, status").eq("id", gameId).single();
+  if (loadError || !game) return mapErrorToAction(loadError ?? { message: "missing" });
+  if (game.status !== "final") return actionFail(he.admin.liveStats.reopenNotFinal, "validation");
+
+  const { data: reopened, error: updateError } = await supabase
+    .from("games")
+    .update({ status: "live" })
+    .eq("id", gameId)
+    .eq("status", "final")
+    .select("id")
+    .maybeSingle();
+  if (updateError) return mapErrorToAction(updateError);
+  if (!reopened) return actionFail(he.admin.liveStats.reopenNotFinal, "validation");
+
+  await revalidateGamePaths(gameId, game.season_id);
+  return actionSuccess(he.admin.liveStats.reopened);
+}
+
+/** Latest play-by-play of a game for the scorer's "מהלכים" sheet (newest first). Read-only; the scorer sees what fans see. */
+export async function getLiveGameEventsAction(gameId: number): Promise<GameEvent[] | null> {
+  await requireAdmin();
+  if (!Number.isInteger(gameId) || gameId <= 0) return null;
+  try {
+    const data = await getAdminData();
+    return await data.getGameEvents(gameId, 200);
+  } catch {
+    return null;
+  }
 }

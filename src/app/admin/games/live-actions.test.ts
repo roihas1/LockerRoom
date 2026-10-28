@@ -13,6 +13,8 @@ const db = vi.hoisted(() => ({
   beforeGamesUpdate: null as null | (() => void),
   updates: [] as { table: string; values: Row }[],
   deletes: [] as { table: string }[],
+  /** Makes the next player_game_stats upsert fail, like a dropped connection mid-start. */
+  failStatsUpsert: false,
 }));
 
 vi.mock("@/lib/auth/require-admin", () => ({ requireAdmin: vi.fn(async () => undefined) }));
@@ -31,6 +33,7 @@ vi.mock("@/lib/supabase/server", () => {
     private values: Row | Row[] = {};
     private columns = "";
     private returning = false;
+    private ignoreDuplicates = false;
     private mode: "one" | "maybe" | null = null;
 
     constructor(private table: string) {}
@@ -49,13 +52,18 @@ vi.mock("@/lib/supabase/server", () => {
       this.op = "delete";
       return this;
     }
-    upsert(values: Row[]) {
+    upsert(values: Row[], options?: { ignoreDuplicates?: boolean }) {
       this.op = "upsert";
       this.values = values;
+      this.ignoreDuplicates = options?.ignoreDuplicates ?? false;
       return this;
     }
     eq(col: string, val: unknown) {
       this.filters.push((r) => r[col] === val);
+      return this;
+    }
+    in(col: string, values: unknown[]) {
+      this.filters.push((r) => values.includes(r[col]));
       return this;
     }
     not(col: string, _op: string, list: string) {
@@ -84,7 +92,8 @@ vi.mock("@/lib/supabase/server", () => {
         if (this.table === "games" && db.missingLiveColumns && this.columns.includes("live_")) {
           return { data: null, error: { code: "42703", message: 'column "live_max_deficit" does not exist' } };
         }
-        const found = match();
+        // Like the real client, hand back a snapshot: later writes must not change what a caller already read.
+        const found = match().map((r) => ({ ...r }));
         if (this.mode === "one") {
           return found[0] ? { data: found[0], error: null } : { data: null, error: { code: "PGRST116", message: "no rows" } };
         }
@@ -107,10 +116,14 @@ vi.mock("@/lib/supabase/server", () => {
         return { data: null, error: null };
       }
 
+      if (db.failStatsUpsert && this.table === "player_game_stats") {
+        return { data: null, error: { code: "08006", message: "connection lost" } };
+      }
       for (const v of this.values as Row[]) {
         const existing = rows.find((r) => r.game_id === v.game_id && r.player_id === v.player_id);
-        if (existing) Object.assign(existing, v);
-        else rows.push({ ...v });
+        if (existing) {
+          if (!this.ignoreDuplicates) Object.assign(existing, v);
+        } else rows.push({ ...v });
       }
       return { data: null, error: null };
     }
@@ -119,7 +132,11 @@ vi.mock("@/lib/supabase/server", () => {
   return { createSessionClient: async () => ({ from: (table: string) => new Query(table) }) };
 });
 
-import { finishLiveGameAction, saveLiveStatsSnapshot, startLiveGameAction } from "./live-actions";
+import { revalidatePath } from "next/cache";
+import { handleGameFinalized } from "@/lib/admin/game-final";
+import { applyEventDiff } from "@/lib/live-stats/apply-events";
+import { notifyGameLive } from "@/lib/push/notify";
+import { finishLiveGameAction, reopenLiveGameAction, saveLiveStatsSnapshot, startLiveGameAction } from "./live-actions";
 
 const GAME_ID = 4;
 
@@ -151,7 +168,9 @@ const game = () => db.tables.games![0]!;
 const statRows = () => db.tables.player_game_stats!;
 
 beforeEach(() => {
+  vi.clearAllMocks();
   db.tables = { games: [liveGame()], player_game_stats: [] };
+  db.failStatsUpsert = false;
   db.missingLiveColumns = false;
   db.beforeGamesUpdate = null;
   db.updates = [];
@@ -233,6 +252,55 @@ describe("saveLiveStatsSnapshot", () => {
     errorSpy.mockRestore();
   });
 
+  it("does not rewrite the game row when only player stats changed", async () => {
+    // A consistent live game: the 2-point deficit it has already seen is recorded.
+    db.tables.games = [liveGame({ team_score: 10, opponent_score: 12, live_max_deficit: 2 })];
+
+    const result = await save(stateWith({ 7: { points: 10, rebounds: 4 } }, [10, 12]));
+
+    expect(result.ok).toBe(true);
+    expect(statRows()[0]).toMatchObject({ points: 10, rebounds: 4 });
+    expect(db.updates.filter((u) => u.table === "games")).toHaveLength(0);
+  });
+
+  it("writes only the score that moved", async () => {
+    db.tables.games = [liveGame({ team_score: 10, opponent_score: 12 })];
+
+    await save(stateWith({ 7: { points: 12 } }, [12, 12]));
+
+    const gameWrites = db.updates.filter((u) => u.table === "games");
+    expect(gameWrites).toHaveLength(1);
+    expect(gameWrites[0]!.values).toMatchObject({ team_score: 12 });
+    expect(gameWrites[0]!.values).not.toHaveProperty("opponent_score");
+    expect(game()).toMatchObject({ team_score: 12, opponent_score: 12 });
+  });
+
+  it("still saves a score that goes back down (undo)", async () => {
+    db.tables.games = [liveGame({ team_score: 12, opponent_score: 12 })];
+
+    await save(stateWith({ 7: { points: 10 } }, [10, 12]));
+
+    expect(game()).toMatchObject({ team_score: 10, opponent_score: 12 });
+  });
+
+  it("still writes events for every save, even when the game row is untouched", async () => {
+    db.tables.games = [liveGame({ team_score: 10, opponent_score: 12 })];
+
+    await save(stateWith({ 7: { points: 10 } }, [10, 12]));
+
+    expect(applyEventDiff).toHaveBeenCalledTimes(1);
+  });
+
+  it("only revalidates public pages while autosaving, never the admin pages", async () => {
+    await save(stateWith({ 7: { points: 2 } }, [2, 0]));
+
+    const paths = vi.mocked(revalidatePath).mock.calls.map(([p]) => p);
+    expect(paths).toContain(`/games/${GAME_ID}`);
+    expect(paths).toContain("/games");
+    expect(paths).toContain("/");
+    expect(paths.some((p) => p.startsWith("/admin"))).toBe(false);
+  });
+
   it("rejects invalid payloads without touching the database", async () => {
     const fd = buildLiveStatsFormData(GAME_ID, stateWith({ 7: { points: 2 } }, [2, 0]));
     fd.set("points_7", "-5");
@@ -268,6 +336,86 @@ describe("startLiveGameAction", () => {
 
     expect(await startLiveGameAction(GAME_ID, [])).toMatchObject({ ok: false, code: "validation" });
     expect(game().status).toBe("scheduled");
+  });
+
+  it("refuses a stale Start on a game that is already live and leaves its box score alone", async () => {
+    db.tables.games = [liveGame({ status: "live", team_score: 20, opponent_score: 15 })];
+    db.tables.player_game_stats = [
+      { game_id: GAME_ID, player_id: 7, points: 12, rebounds: 3, assists: 1, turnovers: 0, steals: 0, blocks: 0 },
+    ];
+
+    const result = await startLiveGameAction(GAME_ID, [7, 8]);
+
+    expect(result).toMatchObject({ ok: false, code: "not_startable" });
+    expect(statRows()).toHaveLength(1);
+    expect(statRows()[0]).toMatchObject({ player_id: 7, points: 12, rebounds: 3, assists: 1 });
+    expect(game()).toMatchObject({ status: "live", team_score: 20, opponent_score: 15 });
+    expect(notifyGameLive).not.toHaveBeenCalled();
+  });
+
+  it("refuses to bring a final game back to life", async () => {
+    db.tables.games = [liveGame({ status: "final", team_score: 55, opponent_score: 49 })];
+    db.tables.player_game_stats = [
+      { game_id: GAME_ID, player_id: 7, points: 55, rebounds: 0, assists: 0, turnovers: 0, steals: 0, blocks: 0 },
+    ];
+
+    const result = await startLiveGameAction(GAME_ID, [7]);
+
+    expect(result).toMatchObject({ ok: false, code: "not_startable" });
+    expect(game()).toMatchObject({ status: "final", team_score: 55, opponent_score: 49 });
+    expect(statRows()[0]).toMatchObject({ points: 55 });
+  });
+
+  it("keeps stats that already exist for a player when starting, and only adds the missing ones", async () => {
+    db.tables.games = [liveGame({ status: "scheduled", team_score: null, opponent_score: null })];
+    db.tables.player_game_stats = [
+      { game_id: GAME_ID, player_id: 7, points: 5, rebounds: 2, assists: 0, turnovers: 0, steals: 0, blocks: 0 },
+    ];
+
+    const result = await startLiveGameAction(GAME_ID, [7, 8]);
+
+    expect(result.ok).toBe(true);
+    expect(statRows().find((r) => r.player_id === 7)).toMatchObject({ points: 5, rebounds: 2 });
+    expect(statRows().find((r) => r.player_id === 8)).toMatchObject({ points: 0, rebounds: 0 });
+  });
+
+  it("lets only one of two simultaneous Starts through", async () => {
+    db.tables.games = [liveGame({ status: "scheduled", team_score: null, opponent_score: null })];
+
+    const [a, b] = await Promise.all([startLiveGameAction(GAME_ID, [7]), startLiveGameAction(GAME_ID, [7])]);
+
+    expect([a.ok, b.ok].filter(Boolean)).toHaveLength(1);
+    expect(game().status).toBe("live");
+    expect(notifyGameLive).toHaveBeenCalledTimes(1);
+  });
+
+  it("announces the game once, after it is really live", async () => {
+    db.tables.games = [liveGame({ status: "scheduled", team_score: null, opponent_score: null })];
+
+    await startLiveGameAction(GAME_ID, [7]);
+
+    expect(notifyGameLive).toHaveBeenCalledTimes(1);
+    expect(notifyGameLive).toHaveBeenCalledWith({ id: GAME_ID, opponent: "יריבה", is_published: true });
+  });
+
+  it("puts the game back as it was when the roster rows cannot be written", async () => {
+    db.tables.games = [liveGame({ status: "scheduled", team_score: null, opponent_score: null })];
+    db.failStatsUpsert = true;
+
+    const result = await startLiveGameAction(GAME_ID, [7]);
+
+    expect(result.ok).toBe(false);
+    expect(game()).toMatchObject({ status: "scheduled", team_score: null, opponent_score: null });
+    expect(notifyGameLive).not.toHaveBeenCalled();
+  });
+
+  it("can still start a postponed game", async () => {
+    db.tables.games = [liveGame({ status: "postponed", team_score: null, opponent_score: null })];
+
+    const result = await startLiveGameAction(GAME_ID, [7]);
+
+    expect(result.ok).toBe(true);
+    expect(game().status).toBe("live");
   });
 });
 
@@ -310,5 +458,79 @@ describe("finishLiveGameAction", () => {
 
     expect(late).toMatchObject({ ok: false, code: "not_live" });
     expect(game()).toMatchObject({ status: "final", team_score: 55, opponent_score: 49 });
+  });
+
+  it("runs the finalize side effects exactly once when the game is finished twice at once", async () => {
+    db.tables.games = [liveGame({ team_score: 55, opponent_score: 49 })];
+
+    const [a, b] = await Promise.all([finishLiveGameAction(GAME_ID), finishLiveGameAction(GAME_ID)]);
+
+    expect([a.ok, b.ok].filter(Boolean)).toHaveLength(1);
+    expect(handleGameFinalized).toHaveBeenCalledTimes(1);
+    expect(game().status).toBe("final");
+  });
+
+  it("does not finalize when the game stops being live between the check and the write", async () => {
+    db.tables.games = [liveGame({ team_score: 55, opponent_score: 49 })];
+    db.beforeGamesUpdate = () => {
+      game().status = "postponed";
+    };
+
+    const result = await finishLiveGameAction(GAME_ID);
+
+    expect(result).toMatchObject({ ok: false, code: "validation" });
+    expect(game().status).toBe("postponed");
+    expect(handleGameFinalized).not.toHaveBeenCalled();
+  });
+
+  it("still refreshes the admin pages once the game is finished", async () => {
+    db.tables.games = [liveGame({ team_score: 55, opponent_score: 49 })];
+
+    await finishLiveGameAction(GAME_ID);
+
+    const paths = vi.mocked(revalidatePath).mock.calls.map(([p]) => p);
+    expect(paths).toContain(`/admin/games/${GAME_ID}`);
+    expect(paths).toContain("/admin/games");
+  });
+});
+
+describe("reopenLiveGameAction", () => {
+  it("brings a finished game back to live with its score and stats intact", async () => {
+    db.tables.games = [liveGame({ status: "final", team_score: 55, opponent_score: 49 })];
+    db.tables.player_game_stats = [
+      { game_id: GAME_ID, player_id: 7, points: 55, rebounds: 0, assists: 0, turnovers: 0, steals: 0, blocks: 0 },
+    ];
+
+    const result = await reopenLiveGameAction(GAME_ID);
+
+    expect(result.ok).toBe(true);
+    expect(game()).toMatchObject({ status: "live", team_score: 55, opponent_score: 49 });
+    expect(statRows()[0]).toMatchObject({ points: 55 });
+    expect(notifyGameLive).not.toHaveBeenCalled();
+  });
+
+  it("lets scoring continue and finish again after a reopen", async () => {
+    db.tables.games = [liveGame({ status: "final", team_score: 50, opponent_score: 49 })];
+
+    await reopenLiveGameAction(GAME_ID);
+    const saved = await save(stateWith({ 7: { points: 52 } }, [52, 49]));
+    const finished = await finishLiveGameAction(GAME_ID);
+
+    expect(saved.ok).toBe(true);
+    expect(finished.ok).toBe(true);
+    expect(game()).toMatchObject({ status: "final", team_score: 52, opponent_score: 49 });
+  });
+
+  it("refuses a game that is not finished", async () => {
+    db.tables.games = [liveGame({ status: "live" })];
+    expect(await reopenLiveGameAction(GAME_ID)).toMatchObject({ ok: false, code: "validation" });
+
+    db.tables.games = [liveGame({ status: "scheduled" })];
+    expect(await reopenLiveGameAction(GAME_ID)).toMatchObject({ ok: false, code: "validation" });
+    expect(game().status).toBe("scheduled");
+  });
+
+  it("rejects a missing game id", async () => {
+    expect(await reopenLiveGameAction(0)).toMatchObject({ ok: false, code: "not_found" });
   });
 });
