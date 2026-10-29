@@ -138,6 +138,7 @@ export type GameRow = {
   is_published: boolean;
   is_practice: boolean;
   is_cup: boolean;
+  exclude_from_stats: boolean;
   created_at: string;
   updated_at: string;
 };

@@ -21,6 +21,7 @@ function game(id: number, tipoffAt: string, status: Game["status"], score: [numb
     isPublished: true,
   isPractice: false,
   isCup: false,
+  excludeFromStats: false,
   };
 }
 

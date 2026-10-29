@@ -42,7 +42,10 @@ export async function createMilestonePosts(client: Client, gameId: number): Prom
         "game_id",
         games.map((g) => g.id),
       );
-    const milestones = detectMilestones({ seasonId: game.seasonId, gameId, games, lines: (statRows ?? []).map(toStatLine) });
+    // An excluded game keeps its score/record milestones but contributes no player lines (totals, season highs).
+    const excludedIds = new Set(games.filter((g) => g.excludeFromStats).map((g) => g.id));
+    const lines = (statRows ?? []).map(toStatLine).filter((l) => !excludedIds.has(l.gameId));
+    const milestones = detectMilestones({ seasonId: game.seasonId, gameId, games, lines });
     if (milestones.length === 0) return 0;
 
     const playerIds = [...new Set(milestones.flatMap((m) => ("playerId" in m ? [m.playerId] : [])))];

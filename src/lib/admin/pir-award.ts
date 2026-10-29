@@ -43,7 +43,8 @@ export async function createSeasonPirAwardDraft(client: Client, seasonId: number
     ]);
     if (gamesRes.error || playersRes.error) return { status: "failed" };
 
-    const games = gamesRes.data.map(toGame);
+    // Games flagged "exclude from stats" never count toward the season PIR award.
+    const games = gamesRes.data.map(toGame).filter((g) => !g.excludeFromStats);
     const gameIds = games.map((g) => g.id);
     if (!gameIds.length) return { status: "empty" };
 

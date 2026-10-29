@@ -4,7 +4,7 @@ import { ResultBadge } from "@/components/common/result-badge";
 import { OpponentBadge } from "@/components/common/team-logo";
 import { homeAwayLabels } from "@/config/labels";
 import { he } from "@/config/strings";
-import { gameKindLabel, gameResult, isUpcomingGame } from "@/lib/stats/games";
+import { gameKindLabel, gameResult, isUpcomingGame, weAreOnRight } from "@/lib/stats/games";
 import { cn } from "@/lib/utils/cn";
 import { formatDate, formatGameMoment } from "@/lib/utils/dates";
 import type { Game } from "@/types/domain";
@@ -41,10 +41,21 @@ export function GameCard({ game, teamShortName, compact = false }: { game: Game;
             </div>
           </div>
           {hasScore ? (
+            // Home team on the right (the box is left-to-right, so the home score goes last).
             <bdi dir="ltr" className="num shrink-0 text-3xl font-black">
-              <span className={result === "win" ? "text-text" : "text-muted"}>{game.teamScore}</span>
-              <span className="mx-1 text-muted">:</span>
-              <span className={result === "loss" ? "text-text" : "text-muted"}>{game.opponentScore}</span>
+              {weAreOnRight(game) ? (
+                <>
+                  <span className={result === "loss" ? "text-text" : "text-muted"}>{game.opponentScore}</span>
+                  <span className="mx-1 text-muted">:</span>
+                  <span className={result === "win" ? "text-text" : "text-muted"}>{game.teamScore}</span>
+                </>
+              ) : (
+                <>
+                  <span className={result === "win" ? "text-text" : "text-muted"}>{game.teamScore}</span>
+                  <span className="mx-1 text-muted">:</span>
+                  <span className={result === "loss" ? "text-text" : "text-muted"}>{game.opponentScore}</span>
+                </>
+              )}
             </bdi>
           ) : (
             <span className="shrink-0 text-end text-sm font-semibold text-team">{formatGameMoment(game.tipoffAt)}</span>

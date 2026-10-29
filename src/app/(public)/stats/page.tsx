@@ -79,10 +79,10 @@ export default async function StatsPage({ searchParams }: PageProps<"/stats">) {
       ) : view === "leaders" ? (
         <div className="space-y-10">
           <Leaders ctx={ctx} />
-          <ShameAwards awards={computeShameAwards(ctx.aggregates, ctx.completed.length, ctx.lines)} playersById={ctx.playersById} />
+          <ShameAwards awards={computeShameAwards(ctx.aggregates, ctx.statCompleted.length, ctx.lines)} playersById={ctx.playersById} />
         </div>
       ) : (
-        <GamesStatsTable games={ctx.completed} lines={ctx.lines} playersById={ctx.playersById} />
+        <GamesStatsTable games={ctx.statCompleted} lines={ctx.lines} playersById={ctx.playersById} />
       )}
     </>
   );
@@ -98,7 +98,7 @@ function Overview({ ctx }: { ctx: Ctx }) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-        <StatTile value={`${rec.wins}-${rec.losses}`} label={he.stats.record} sublabel="W-L" size="lg" />
+        <StatTile value={`${rec.losses}-${rec.wins}`} label={he.stats.record} sublabel="L-W" size="lg" />
         <StatTile value={formatAverage(avg.ppg)} label={he.stats.pointsFor} sublabel="PPG" size="lg" />
         <StatTile value={formatAverage(avg.oppPpg)} label={he.stats.pointsAgainst} size="lg" />
         <StatTile value={formatInt(avg.gp)} label={he.stats.gamesPlayed} sublabel="GP" size="lg" />
@@ -130,14 +130,14 @@ function Overview({ ctx }: { ctx: Ctx }) {
 }
 
 function Leaders({ ctx, limit = 5 }: { ctx: Ctx; limit?: number }) {
-  const boards = computeLeaders(ctx.aggregates, ctx.completed.length, {
+  const boards = computeLeaders(ctx.aggregates, ctx.statCompleted.length, {
     limit,
     potgCounts: countPotgByPlayer(ctx.games),
   });
   return (
     <section>
       <SectionHeader title={he.statsPage.leaders} />
-      <p className="-mt-2 mb-3 text-xs text-muted">{he.statsPage.minGames(minGamesForLeaders(ctx.completed.length))}</p>
+      <p className="-mt-2 mb-3 text-xs text-muted">{he.statsPage.minGames(minGamesForLeaders(ctx.statCompleted.length))}</p>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {boards.map((b) => (
           <LeaderCard key={b.category} board={b} playersById={ctx.playersById} />

@@ -2,7 +2,7 @@ import { gameStatusLabels, homeAwayLabels } from "@/config/labels";
 import { he } from "@/config/strings";
 import { getData } from "@/lib/data";
 import { OG_SIZE, renderShareCard } from "@/lib/og/card";
-import { gameResult } from "@/lib/stats/games";
+import { gameResult, weAreOnRight } from "@/lib/stats/games";
 import { formatLongDate, formatTime } from "@/lib/utils/dates";
 import { parseId } from "@/lib/utils/params";
 
@@ -37,7 +37,7 @@ export default async function Image({ params }: { params: Promise<{ id: string }
     badge,
     score:
       hasScore && game.status !== "scheduled"
-        ? { team: game.teamScore!, opponent: game.opponentScore!, teamName: team.shortName, opponentName: game.opponent }
+        ? { team: game.teamScore!, opponent: game.opponentScore!, teamName: team.shortName, opponentName: game.opponent, teamOnRight: weAreOnRight(game) }
         : undefined,
   });
 }

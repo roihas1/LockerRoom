@@ -6,6 +6,7 @@ import { ResultBadge } from "@/components/common/result-badge";
 import { SortableTh } from "@/components/stats/sortable-th";
 import { he } from "@/config/strings";
 import { teamGameTotals } from "@/lib/stats/aggregate";
+import { scoreLeftToRight } from "@/lib/stats/games";
 import { compareNum, compareText, toggleSortDir, type SortDir } from "@/lib/stats/sort-value";
 import { cn } from "@/lib/utils/cn";
 import { formatShortDate } from "@/lib/utils/dates";
@@ -111,7 +112,7 @@ export function GamesStatsTable({
                   <span className="inline-flex items-center gap-2">
                     <ResultBadge game={r.game} />
                     <bdi dir="ltr" className="num font-bold">
-                      {r.game.teamScore}:{r.game.opponentScore}
+                      {scoreLeftToRight(r.game)}
                     </bdi>
                   </span>
                 </td>

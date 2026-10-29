@@ -136,7 +136,10 @@ export function createSupabaseSource(client: Client, { includeDrafts = false } =
     },
 
     async getSeasonStatLines(seasonId) {
-      const games = must(await published(client.from("games").select("id").eq("season_id", seasonId).eq("status", "final")));
+      // Games flagged "exclude from stats" keep their box score on the game page but never feed season numbers.
+      const games = must(
+        await published(client.from("games").select("id").eq("season_id", seasonId).eq("status", "final").eq("exclude_from_stats", false)),
+      );
       if (games.length === 0) return [];
       const rows = must(
         await client

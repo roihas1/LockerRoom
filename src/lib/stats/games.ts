@@ -21,10 +21,28 @@ export function gameResult(game: Pick<Game, "status" | "teamScore" | "opponentSc
   return game.teamScore > game.opponentScore ? "win" : "loss";
 }
 
+/**
+ * House rule for every scoreboard: the home team is shown on the right (the start side in Hebrew).
+ * We are on the right at home and at a neutral venue, and on the left away.
+ */
+export function weAreOnRight(game: { homeAway: string }): boolean {
+  return game.homeAway !== "away";
+}
+
+/** "left:right" text for a score in a left-to-right box, with the home side on the right. */
+export function scoreLeftToRight(game: { homeAway: string; teamScore: number | null; opponentScore: number | null }): string {
+  return weAreOnRight(game) ? `${game.opponentScore}:${game.teamScore}` : `${game.teamScore}:${game.opponentScore}`;
+}
+
 const byTipoff = (a: Game, b: Game) => a.tipoffAt.localeCompare(b.tipoffAt);
 
 export function completedGames(games: Game[]): Game[] {
   return games.filter((g) => gameResult(g) !== null).sort(byTipoff);
+}
+
+/** Games that feed player/team averages and leaderboards (an excluded game keeps its score and W–L only). */
+export function statCompletedGames(games: Game[]): Game[] {
+  return completedGames(games.filter((g) => !g.excludeFromStats));
 }
 
 /** Final published non-practice games that count toward the season record. */

@@ -36,9 +36,9 @@ export function Hero({
             <div>
               <span className="block text-xs text-muted">{he.stats.record}</span>
               <bdi dir="ltr" className="num text-4xl leading-none font-black md:text-5xl">
-                {record.wins}
-                <span className="mx-1 text-muted">-</span>
                 {record.losses}
+                <span className="mx-1 text-muted">-</span>
+                {record.wins}
               </bdi>
             </div>
             {streak && streak.count > 1 ? (

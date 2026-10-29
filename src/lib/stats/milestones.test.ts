@@ -20,6 +20,7 @@ const game = (id: number, day: number, teamScore: number, opponentScore: number,
   isPublished: true,
   isPractice: false,
   isCup: false,
+  excludeFromStats: false,
   ...over,
 });
 

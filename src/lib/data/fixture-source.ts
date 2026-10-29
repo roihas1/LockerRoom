@@ -95,7 +95,7 @@ export function createFixtureSource({ includeDrafts = false } = {}): DataSource 
     async getSeasonStatLines(seasonId) {
       const ids = new Set(
         visible(fixtureGames)
-          .filter((g) => g.seasonId === seasonId && g.status === "final")
+          .filter((g) => g.seasonId === seasonId && g.status === "final" && !g.excludeFromStats)
           .map((g) => g.id),
       );
       return fixtureStatLines.filter((l) => ids.has(l.gameId));

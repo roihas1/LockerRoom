@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Game, StatLine } from "@/types/domain";
 import { aggregateLines, countedLines, safeDivide, seasonHighs, teamGameTotals, teamSeasonAverages } from "./aggregate";
-import { currentStreak, gameResult, lastGame, nextGame, record } from "./games";
+import { completedGames, currentStreak, gameResult, lastGame, nextGame, record, scoreLeftToRight, statCompletedGames, weAreOnRight } from "./games";
 import { computeLeaders, countPotgByPlayer, minGamesForLeaders } from "./leaders";
 
 const line = (over: Partial<StatLine>): StatLine => ({
@@ -41,6 +41,7 @@ const game = (over: Partial<Game>): Game => ({
   isPublished: true,
   isPractice: false,
   isCup: false,
+  excludeFromStats: false,
   ...over,
 });
 
@@ -104,6 +105,35 @@ describe("team totals", () => {
     expect(avg.gp).toBe(2);
     expect(avg.ppg).toBe(70);
     expect(avg.oppPpg).toBe(68);
+  });
+
+  it("keeps the team score of an exclude-from-stats game in the scoring averages but leaves out its player stats", () => {
+    const games = [
+      game({ id: 1, teamScore: 80, opponentScore: 70 }),
+      game({ id: 2, tipoffAt: "2026-09-08T00:00:00Z", teamScore: 40, opponentScore: 30, excludeFromStats: true }),
+    ];
+    const avg = teamSeasonAverages(games, [line({ gameId: 1, points: 10, rebounds: 8 })]);
+    // Team score always counts (GP, PPG, opponent PPG); player-row averages use only the stat games.
+    expect(avg.gp).toBe(2);
+    expect(avg.ppg).toBe(60);
+    expect(avg.oppPpg).toBe(50);
+    expect(avg.rpg).toBe(8);
+    expect(record(games)).toEqual({ wins: 2, losses: 0 });
+    expect(statCompletedGames(games).map((g) => g.id)).toEqual([1]);
+    expect(completedGames(games).map((g) => g.id)).toEqual([1, 2]);
+  });
+});
+
+describe("home team on the right", () => {
+  it("puts us on the right at home or neutral and on the left away", () => {
+    expect(weAreOnRight({ homeAway: "home" })).toBe(true);
+    expect(weAreOnRight({ homeAway: "neutral" })).toBe(true);
+    expect(weAreOnRight({ homeAway: "away" })).toBe(false);
+  });
+
+  it("orders score text left-to-right with the home side last", () => {
+    expect(scoreLeftToRight({ homeAway: "home", teamScore: 55, opponentScore: 49 })).toBe("49:55");
+    expect(scoreLeftToRight({ homeAway: "away", teamScore: 55, opponentScore: 49 })).toBe("55:49");
   });
 });
 

@@ -68,7 +68,7 @@ function rollingAverage(values: number[], index: number, window = ROLLING_WINDOW
 
 /** Latest N counted (final + published + non-practice) games, oldest → newest. */
 export function recentCountedGames(games: Game[], limit = HOT_PLAYER_WINDOW): Game[] {
-  return recordGames(games).slice(-limit);
+  return recordGames(games.filter((g) => !g.excludeFromStats)).slice(-limit);
 }
 
 /**

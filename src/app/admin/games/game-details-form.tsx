@@ -120,6 +120,20 @@ export function GameDetailsForm({
           <span className="text-muted">{he.admin.gameForm.cupHint}</span>
         </span>
       </label>
+      <label className="flex items-start gap-3 rounded-xl border border-border px-3 py-3 text-sm">
+        <input
+          type="checkbox"
+          name="excludeFromStats"
+          value="on"
+          defaultChecked={game?.excludeFromStats ?? false}
+          disabled={disabled}
+          className="mt-0.5 size-4 accent-[var(--team-primary)]"
+        />
+        <span>
+          <span className="block font-semibold">{he.admin.gameForm.excludeFromStats}</span>
+          <span className="text-muted">{he.admin.gameForm.excludeFromStatsHint}</span>
+        </span>
+      </label>
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label={he.admin.gameForm.teamScore} htmlFor="teamScore" error={fieldError(state, "teamScore")}>
           <Input id="teamScore" name="teamScore" inputMode="numeric" defaultValue={game?.teamScore ?? ""} disabled={disabled} className="num" />

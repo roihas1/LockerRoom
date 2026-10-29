@@ -7,6 +7,7 @@ import { opponentLogo } from "@/config/opponents";
 import { he } from "@/config/strings";
 import { OpponentStandingLine } from "@/components/scouting/opponent-standing-line";
 import type { ScoutingBundle } from "@/lib/league/scouting";
+import { scoreLeftToRight } from "@/lib/stats/games";
 import { formatAverage } from "@/lib/utils/numbers";
 import { formatShortDate } from "@/lib/utils/dates";
 export function OpponentScoutingView({ bundle }: { bundle: ScoutingBundle }) {
@@ -66,7 +67,7 @@ export function OpponentScoutingView({ bundle }: { bundle: ScoutingBundle }) {
                 <span className="inline-flex items-center gap-2">
                   <ResultBadge game={g} />
                   <bdi dir="ltr" className="num font-bold">
-                    {g.teamScore}:{g.opponentScore}
+                    {scoreLeftToRight(g)}
                   </bdi>
                 </span>
               </li>

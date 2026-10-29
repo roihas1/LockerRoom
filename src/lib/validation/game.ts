@@ -34,6 +34,10 @@ export const gameDetailsFormSchema = z
       .union([z.literal("on"), z.literal("true"), z.literal("1"), z.literal(""), z.null()])
       .optional()
       .transform((v) => v === "on" || v === "true" || v === "1"),
+    excludeFromStats: z
+      .union([z.literal("on"), z.literal("true"), z.literal("1"), z.literal(""), z.null()])
+      .optional()
+      .transform((v) => v === "on" || v === "true" || v === "1"),
     teamScore: scoreField.transform((v) => (v === "" ? null : v)),
     opponentScore: scoreField.transform((v) => (v === "" ? null : v)),
   })
@@ -71,6 +75,7 @@ export function parseGameDetailsForm(formData: FormData) {
     status: formData.get("status"),
     isPractice: formData.get("isPractice"),
     isCup: formData.get("isCup"),
+    excludeFromStats: formData.get("excludeFromStats"),
     teamScore: formData.get("teamScore"),
     opponentScore: formData.get("opponentScore"),
   };

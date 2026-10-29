@@ -31,7 +31,7 @@ export function StandingsCard({ table }: { table: LeagueTable }) {
         {started ? (
           <div className="text-center">
             <bdi dir="ltr" className="num block text-xl font-black">
-              {us.w}-{us.l}
+              {us.l}-{us.w}
             </bdi>
             <span className="text-[11px] text-muted">{he.stats.record}</span>
           </div>
@@ -50,7 +50,7 @@ export function StandingsCard({ table }: { table: LeagueTable }) {
               {r.name}
             </span>
             <bdi dir="ltr" className="num shrink-0 text-xs text-muted">
-              {r.w}-{r.l}
+              {r.l}-{r.w}
             </bdi>
             <span className="num w-8 shrink-0 text-center font-bold">{r.pts}</span>
           </li>

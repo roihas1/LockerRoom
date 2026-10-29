@@ -25,7 +25,7 @@ export default async function GamesPage({ searchParams }: PageProps<"/games">) {
           <p className="card px-4 py-2 text-center">
             <span className="block text-[11px] text-muted">{he.stats.record}</span>
             <bdi dir="ltr" className="num text-2xl font-black">
-              {wins}-{losses}
+              {losses}-{wins}
             </bdi>
           </p>
         ) : null}

@@ -22,6 +22,7 @@ function game(id: number, teamScore: number, opponentScore: number): Game {
     isPublished: true,
   isPractice: false,
   isCup: false,
+  excludeFromStats: false,
   };
 }
 

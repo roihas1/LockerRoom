@@ -48,6 +48,7 @@ const game = (over: Partial<Game>): Game => ({
   isPublished: true,
   isPractice: false,
   isCup: false,
+  excludeFromStats: false,
   ...over,
 });
 

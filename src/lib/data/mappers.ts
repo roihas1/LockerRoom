@@ -118,6 +118,7 @@ export function toGame(row: GameRow): Game {
     isPublished: row.is_published,
     isPractice: row.is_practice,
     isCup: row.is_cup,
+    excludeFromStats: row.exclude_from_stats ?? false,
   };
 }
 

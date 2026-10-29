@@ -166,13 +166,19 @@ export interface TeamSeasonAverages {
   ftPct: number | null;
 }
 
-/** Season-level team averages. Scores come from the official game score, the rest from player rows. */
+/**
+ * Season-level team averages. Scores come from the official game score, the rest from player rows.
+ * A game flagged "exclude from stats" still counts for GP and the scoring averages (the team score always
+ * counts), but its player rows are left out of every other average.
+ */
 export function teamSeasonAverages(games: Game[], lines: StatLine[]): TeamSeasonAverages {
   const done = games.filter((g) => g.status === "final" && g.isPublished && g.teamScore !== null && g.opponentScore !== null);
   const gp = done.length;
+  const statDone = done.filter((g) => !g.excludeFromStats);
+  const statGp = statDone.length;
   const byGame = new Map<number, StatLine[]>();
   for (const l of lines) byGame.set(l.gameId, [...(byGame.get(l.gameId) ?? []), l]);
-  const totals = done.map((g) => teamGameTotals(byGame.get(g.id) ?? []));
+  const totals = statDone.map((g) => teamGameTotals(byGame.get(g.id) ?? []));
   const perGameOptional = (key: "steals" | "blocks" | "turnovers") => {
     const recorded = totals.map((t) => t[key]).filter((v): v is number => v !== null);
     return safeDivide(recorded.reduce((s, v) => s + v, 0), recorded.length);
@@ -186,8 +192,8 @@ export function teamSeasonAverages(games: Game[], lines: StatLine[]): TeamSeason
     gp,
     ppg: safeDivide(done.reduce((s, g) => s + (g.teamScore ?? 0), 0), gp),
     oppPpg: safeDivide(done.reduce((s, g) => s + (g.opponentScore ?? 0), 0), gp),
-    rpg: safeDivide(totals.reduce((s, t) => s + t.rebounds, 0), gp),
-    apg: safeDivide(totals.reduce((s, t) => s + t.assists, 0), gp),
+    rpg: safeDivide(totals.reduce((s, t) => s + t.rebounds, 0), statGp),
+    apg: safeDivide(totals.reduce((s, t) => s + t.assists, 0), statGp),
     spg: perGameOptional("steals"),
     bpg: perGameOptional("blocks"),
     topg: perGameOptional("turnovers"),

@@ -23,7 +23,7 @@ export default async function PlayerWrappedPage({ params }: PageProps<"/players/
   const [player, ctx] = await Promise.all([getData().getPlayer(id), getSeasonContext()]);
   if (!player) notFound();
 
-  const slides = buildWrapped({ playerId: id, games: ctx.games, lines: ctx.lines, aggregates: ctx.aggregates, completedGames: ctx.completed.length });
+  const slides = buildWrapped({ playerId: id, games: ctx.games, lines: ctx.lines, aggregates: ctx.aggregates, completedGames: ctx.statCompleted.length });
   if (!slides) notFound();
 
   return (

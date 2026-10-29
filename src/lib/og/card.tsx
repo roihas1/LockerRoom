@@ -23,7 +23,8 @@ export interface ShareCard {
   title: string;
   subtitle?: string;
   badge?: { text: string; tone: "live" | "win" | "loss" | "team" };
-  score?: { team: number; opponent: number; teamName: string; opponentName: string };
+  /** `teamOnRight` (default true): home team on the right, so an away game puts the opponent there instead. */
+  score?: { team: number; opponent: number; teamName: string; opponentName: string; teamOnRight?: boolean };
   image?: string | null;
 }
 
@@ -82,19 +83,28 @@ export async function renderShareCard(card: ShareCard) {
             {card.eyebrow ? <div style={{ display: "flex", fontSize: 34, color: accent, fontWeight: 800 }}>{t(card.eyebrow)}</div> : null}
             {card.score ? (
               <div style={{ display: "flex", alignItems: "center", gap: 36, fontWeight: 800, marginTop: 8 }}>
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                  <div style={{ display: "flex", fontSize: 150, lineHeight: 1, color: card.score.opponent > card.score.team ? "#fff" : "#9aa1ad" }}>
-                    {String(card.score.opponent)}
-                  </div>
-                  <div style={{ display: "flex", fontSize: 30, fontWeight: 500, color: "#9aa1ad" }}>{t(card.score.opponentName)}</div>
-                </div>
-                <div style={{ display: "flex", fontSize: 90, color: "#9aa1ad" }}>:</div>
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                  <div style={{ display: "flex", fontSize: 150, lineHeight: 1, color: card.score.team >= card.score.opponent ? "#fff" : "#9aa1ad" }}>
-                    {String(card.score.team)}
-                  </div>
-                  <div style={{ display: "flex", fontSize: 30, fontWeight: 500, color: "#9aa1ad" }}>{t(card.score.teamName)}</div>
-                </div>
+                {(card.score.teamOnRight === false ? ["team", "opponent"] : ["opponent", "team"]).flatMap((side, i) => {
+                  const isTeam = side === "team";
+                  const value = isTeam ? card.score!.team : card.score!.opponent;
+                  const other = isTeam ? card.score!.opponent : card.score!.team;
+                  const name = isTeam ? card.score!.teamName : card.score!.opponentName;
+                  // The team side wins a tie (only possible for a live game).
+                  const leads = isTeam ? value >= other : value > other;
+                  const block = (
+                    <div key={side} style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                      <div style={{ display: "flex", fontSize: 150, lineHeight: 1, color: leads ? "#fff" : "#9aa1ad" }}>{String(value)}</div>
+                      <div style={{ display: "flex", fontSize: 30, fontWeight: 500, color: "#9aa1ad" }}>{t(name)}</div>
+                    </div>
+                  );
+                  return i === 0
+                    ? [
+                        block,
+                        <div key="colon" style={{ display: "flex", fontSize: 90, color: "#9aa1ad" }}>
+                          :
+                        </div>,
+                      ]
+                    : [block];
+                })}
               </div>
             ) : (
               titleLines.map((line, i) => (

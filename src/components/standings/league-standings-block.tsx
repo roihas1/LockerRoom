@@ -18,17 +18,21 @@ export function LeagueStandingsBlock({ initial, onTitle }: Props) {
   const [loading, setLoading] = useState(!initial?.rows.length);
 
   useEffect(() => {
-    if (initial?.rows.length) {
-      onTitle?.(initial.title);
-      return;
-    }
+    // The server copy is cached for up to 30 minutes (and can predate the latest results), while the home screen
+    // always reads live from the browser. Show the server copy right away, then replace it with the live table
+    // so both screens agree. If the live read fails, the server copy simply stays.
+    if (initial?.rows.length) onTitle?.(initial.title);
     let cancelled = false;
     void (async () => {
       const loaded = await fetchLeagueTableInBrowser();
       if (cancelled) return;
-      setTable(loaded);
+      if (loaded) {
+        setTable(loaded);
+        onTitle?.(loaded.title);
+      } else if (!initial?.rows.length) {
+        setTable(null);
+      }
       setLoading(false);
-      if (loaded) onTitle?.(loaded.title);
     })();
     return () => {
       cancelled = true;

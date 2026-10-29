@@ -20,6 +20,7 @@ const game: Game = {
   isPublished: false,
   isPractice: false,
   isCup: false,
+  excludeFromStats: false,
 };
 
 const line: StatLine = {

@@ -117,6 +117,8 @@ export interface Game {
   isPractice: boolean;
   /** Cup match: labeled as גביע and excluded from league W–L and season streaks. */
   isCup: boolean;
+  /** Keeps score, box score and W–L, but leaves the game out of player/team averages and leaderboards. */
+  excludeFromStats: boolean;
 }
 
 export interface StatLine {

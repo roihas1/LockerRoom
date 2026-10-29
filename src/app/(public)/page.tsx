@@ -53,7 +53,7 @@ export default async function HomePage() {
   const last = lastGame(ctx.games);
   const lastLines = last ? ctx.lines.filter((l) => l.gameId === last.id) : [];
   const potg = last?.playerOfGameId ? (ctx.playersById.get(last.playerOfGameId) ?? null) : null;
-  const leaders = computeLeaders(ctx.aggregates, ctx.completed.length, {
+  const leaders = computeLeaders(ctx.aggregates, ctx.statCompleted.length, {
     limit: 1,
     categories: ["points", "assists", "rebounds", "pir", "potg", "threes", "blocks"],
     potgCounts: countPotgByPlayer(ctx.games),
@@ -91,7 +91,7 @@ export default async function HomePage() {
       </Suspense>
     ),
     quote: <QuoteOfDay players={[...ctx.playersById.values()]} coaches={coaches} />,
-    teamStats: ctx.completed.length ? (
+    teamStats: ctx.statCompleted.length ? (
       <section>
         <SectionHeader title={he.home.teamStats} href="/stats" linkLabel={he.home.allStats} />
         <TeamStatsStrip averages={teamSeasonAverages(ctx.games, ctx.lines)} wins={rec.wins} />

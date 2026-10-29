@@ -30,6 +30,7 @@ const game: Game = {
   isPublished: true,
   isPractice: false,
   isCup: false,
+  excludeFromStats: false,
 };
 
 describe("gameCalendarEvent", () => {
