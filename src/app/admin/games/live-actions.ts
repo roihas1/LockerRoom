@@ -10,6 +10,7 @@ import { getAdminData } from "@/lib/data";
 import type { GameEvent } from "@/types/domain";
 import { applyEventDiff } from "@/lib/live-stats/apply-events";
 import { diffSnapshots } from "@/lib/live-stats/diff";
+import { mergeEventDiff } from "@/lib/live-stats/event-log";
 import { nextLiveMaxDeficit } from "@/lib/push/live-moments";
 import { notifyGameLive, notifyLiveMomentOnce } from "@/lib/push/notify";
 import { isDemoMode } from "@/lib/supabase/env";
@@ -57,7 +58,7 @@ export async function saveLiveStatsSnapshot(_prev: ActionResult | null, formData
   const parsed = parseLiveStatsPayload(formData);
   if (!parsed.success) return actionFromZod(parsed.error);
 
-  const { gameId, playedPlayerIds, lines, teamScore, opponentScore } = parsed.data;
+  const { gameId, playedPlayerIds, lines, teamScore, opponentScore, eventLog } = parsed.data;
   const supabase = await createSessionClient();
   const [{ data: game, error: loadError }, { data: liveMeta, error: liveMetaError }, { data: previousRows }] = await Promise.all([
     supabase.from("games").select("season_id, status, team_score, opponent_score, is_published").eq("id", gameId).single(),
@@ -160,7 +161,8 @@ export async function saveLiveStatsSnapshot(_prev: ActionResult | null, formData
     steals: r.steals ?? 0,
     blocks: r.blocks ?? 0,
   }));
-  await applyEventDiff(supabase, gameId, diffSnapshots(previous, lines, game.opponent_score, opponentScore));
+  const snapDiff = diffSnapshots(previous, lines, game.opponent_score, opponentScore);
+  await applyEventDiff(supabase, gameId, mergeEventDiff(snapDiff, eventLog));
 
   revalidateLiveSavePaths(gameId, game.season_id);
   return actionSuccess(he.admin.liveStats.saved);

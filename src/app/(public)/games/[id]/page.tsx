@@ -32,16 +32,18 @@ export default async function GamePage({ params }: PageProps<"/games/[id]">) {
   const id = parseId((await params).id);
   if (!id) notFound();
   const data = getData();
-  const [cachedDetail, team] = await Promise.all([data.getGameDetail(id), data.getTeam()]);
-  if (!cachedDetail) notFound();
+  // Light probe first: decide cache vs fresh before paying for full game detail.
+  const [probe, team] = await Promise.all([data.getGame(id), data.getTeam()]);
+  if (!probe) notFound();
   // Around game time skip the ~60s cache so score, status and box score are never stale.
-  const fresh = isInLiveWindow(cachedDetail.game);
-  const detail = fresh ? ((await getFreshData().getGameDetail(id)) ?? cachedDetail) : cachedDetail;
+  const fresh = isInLiveWindow(probe);
+  const source = fresh ? getFreshData() : data;
+  const detail = await source.getGameDetail(id);
+  if (!detail) notFound();
   const isLive = detail.game.status === "live";
   const isFinal = detail.game.status === "final";
-  const eventsSource = fresh ? getFreshData() : data;
   const [events, roast] = await Promise.all([
-    isLive || isFinal ? eventsSource.getGameEvents(id) : Promise.resolve(undefined),
+    isLive || isFinal ? source.getGameEvents(id) : Promise.resolve(undefined),
     isFinal ? data.getPublishedRoastForGame(id) : Promise.resolve(null),
   ]);
   const share = (

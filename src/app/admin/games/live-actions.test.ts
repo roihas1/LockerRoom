@@ -160,7 +160,13 @@ function liveGame(over: Row = {}): Row {
 function stateWith(players: Record<number, Partial<ReturnType<typeof emptyLiveLine>>>, scores: [number, number]): LiveStatsClientState {
   const lines: LiveStatsClientState["lines"] = {};
   for (const [id, over] of Object.entries(players)) lines[Number(id)] = { ...emptyLiveLine(Number(id)), ...over };
-  return { playedPlayerIds: Object.keys(players).map(Number), lines, teamScore: scores[0], opponentScore: scores[1] };
+  return {
+    playedPlayerIds: Object.keys(players).map(Number),
+    lines,
+    teamScore: scores[0],
+    opponentScore: scores[1],
+    eventLog: [],
+  };
 }
 
 const save = (state: LiveStatsClientState) => saveLiveStatsSnapshot(null, buildLiveStatsFormData(GAME_ID, state));
@@ -225,7 +231,7 @@ describe("saveLiveStatsSnapshot", () => {
     await save(stateWith({ 7: { points: 10 }, 8: { points: 4 } }, [14, 10]));
     expect(statRows()).toHaveLength(2);
 
-    const result = await save({ playedPlayerIds: [], lines: {}, teamScore: 14, opponentScore: 10 });
+    const result = await save({ playedPlayerIds: [], lines: {}, teamScore: 14, opponentScore: 10, eventLog: [] });
 
     expect(result.ok).toBe(true);
     expect(statRows()).toHaveLength(2);

@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { he } from "@/config/strings";
 import { getBrowserClient } from "@/lib/supabase/browser";
@@ -12,20 +11,29 @@ const FALLBACK_POLL_MS = 20_000;
 const JOINED_POLL_EVERY = 3;
 
 /**
- * Keeps a live game page fresh: listens to Realtime changes for this game and re-renders the
- * server page (router.refresh) so the score, box score and play-by-play stay in one source of truth.
+ * Keeps a live game page fresh: listens to Realtime changes for this game and calls `onRefresh`
+ * (slim live JSON pull) so score, box score and play-by-play stay current without remounting the RSC tree.
  */
-export function LiveGameSubscriber({ gameId, className }: { gameId: number; className?: string }) {
-  const router = useRouter();
+export function LiveGameSubscriber({
+  gameId,
+  onRefresh,
+  className,
+}: {
+  gameId: number;
+  onRefresh: () => void;
+  className?: string;
+}) {
   const [connected, setConnected] = useState(true);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onRefreshRef = useRef(onRefresh);
+  onRefreshRef.current = onRefresh;
 
   useEffect(() => {
     const refresh = () => {
-      // Avoid RSC refetch work while backgrounded (iOS PWAs are memory-sensitive on resume).
+      // Avoid work while backgrounded (iOS PWAs are memory-sensitive on resume).
       if (document.visibilityState !== "visible") return;
       if (timer.current) clearTimeout(timer.current);
-      timer.current = setTimeout(() => router.refresh(), REFRESH_DEBOUNCE_MS);
+      timer.current = setTimeout(() => onRefreshRef.current(), REFRESH_DEBOUNCE_MS);
     };
 
     const client = getBrowserClient();
@@ -46,7 +54,7 @@ export function LiveGameSubscriber({ gameId, className }: { gameId: number; clas
     const poll = setInterval(() => {
       tick += 1;
       if (document.visibilityState !== "visible") return;
-      if (channel?.state !== "joined" || tick % JOINED_POLL_EVERY === 0) router.refresh();
+      if (channel?.state !== "joined" || tick % JOINED_POLL_EVERY === 0) onRefreshRef.current();
     }, FALLBACK_POLL_MS);
     const onVisible = () => {
       if (document.visibilityState === "visible") refresh();
@@ -59,7 +67,7 @@ export function LiveGameSubscriber({ gameId, className }: { gameId: number; clas
       if (timer.current) clearTimeout(timer.current);
       if (channel) void client?.removeChannel(channel);
     };
-  }, [gameId, router]);
+  }, [gameId]);
 
   return (
     <span

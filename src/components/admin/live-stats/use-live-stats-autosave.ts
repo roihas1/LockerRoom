@@ -69,7 +69,9 @@ export function useLiveStatsAutosave({
     }
 
     setSaveStatus("saving");
-    const fd = buildLiveStatsFormData(gameIdRef.current, stateRef.current);
+    const snapshot = stateRef.current;
+    const sentEventIds = new Set(snapshot.eventLog.map((e) => e.id));
+    const fd = buildLiveStatsFormData(gameIdRef.current, snapshot);
     let result: Awaited<ReturnType<typeof saveLiveStatsSnapshot>>;
     try {
       result = await saveLiveStatsSnapshot(null, fd);
@@ -80,6 +82,15 @@ export function useLiveStatsAutosave({
     if (gen !== saveGenRef.current) return false;
 
     if (result.ok) {
+      // Drop only the events this save carried; taps that arrived mid-flight keep their ids.
+      if (sentEventIds.size) {
+        const pruned = {
+          ...stateRef.current,
+          eventLog: stateRef.current.eventLog.filter((e) => !sentEventIds.has(e.id)),
+        };
+        stateRef.current = pruned;
+        setStateRaw(pruned);
+      }
       // Unsaved changes stay "pending" until a save actually succeeds. A newer tap may already be waiting
       // (in the debounce or queued behind this save): that change is still unsaved.
       if (!debounceRef.current && !queueRef.current?.hasQueued()) {
@@ -248,5 +259,5 @@ export function useLiveStatsAutosave({
 }
 
 function emptyPending(): LiveStatsClientState {
-  return { playedPlayerIds: [], lines: {}, teamScore: 0, opponentScore: 0 };
+  return { playedPlayerIds: [], lines: {}, teamScore: 0, opponentScore: 0, eventLog: [] };
 }

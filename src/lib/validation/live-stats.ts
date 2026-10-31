@@ -5,6 +5,25 @@ const liveCoreStat = z.coerce.number().int({ message: zhe.integer }).min(0, zhe.
 
 const liveScore = z.coerce.number().int({ message: zhe.integer }).min(0, zhe.nonNegative).max(999, zhe.tooLarge);
 
+const gameEventKindSchema = z.enum(["points", "rebound", "assist", "steal", "block", "turnover", "opponent_points"]);
+
+export const pendingLiveEventSchema = z.discriminatedUnion("op", [
+  z.object({
+    id: z.string().min(1).max(64),
+    op: z.literal("insert"),
+    playerId: z.number().int().positive().nullable(),
+    kind: gameEventKindSchema,
+    value: z.number().int().positive().max(100),
+  }),
+  z.object({
+    id: z.string().min(1).max(64),
+    op: z.literal("remove"),
+    playerId: z.number().int().positive().nullable(),
+    kind: gameEventKindSchema,
+    amount: z.number().int().positive().max(999),
+  }),
+]);
+
 export const livePlayerStatLineSchema = z.object({
   playerId: z.coerce.number().int().positive(zhe.invalidPlayer),
   points: liveCoreStat,
@@ -22,6 +41,7 @@ export const saveLiveStatsSchema = z
     lines: z.array(livePlayerStatLineSchema),
     teamScore: liveScore.optional(),
     opponentScore: liveScore.optional(),
+    eventLog: z.array(pendingLiveEventSchema).max(500).default([]),
   })
   .superRefine((data, ctx) => {
     const played = new Set(data.playedPlayerIds);
@@ -39,6 +59,16 @@ export const saveLiveStatsSchema = z
   });
 
 export type SaveLiveStatsInput = z.infer<typeof saveLiveStatsSchema>;
+
+function parseEventLog(raw: FormDataEntryValue | null): unknown {
+  if (raw == null || raw === "") return [];
+  if (typeof raw !== "string") return [];
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
 
 function parseLiveStatsForm(formData: FormData) {
   const gameId = formData.get("gameId");
@@ -59,11 +89,14 @@ function parseLiveStatsForm(formData: FormData) {
 
   const teamRaw = formData.get("teamScore");
   const opponentRaw = formData.get("opponentScore");
+  const eventLog = parseEventLog(formData.get("eventLog"));
 
   return saveLiveStatsSchema.safeParse({
     gameId,
     playedPlayerIds: lineIds,
     lines,
+    // Invalid JSON → fail schema (array expected); missing → [].
+    eventLog: eventLog === null ? { invalid: true } : eventLog,
     ...(teamRaw !== null && teamRaw !== "" ? { teamScore: teamRaw } : {}),
     ...(opponentRaw !== null && opponentRaw !== "" ? { opponentScore: opponentRaw } : {}),
   });

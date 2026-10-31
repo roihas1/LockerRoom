@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { StatTile } from "@/components/common/stat-tile";
 import { he } from "@/config/strings";
 import { opponentScoringFromEvents, scoringFromEvents, type ScoringFromEvents } from "@/lib/stats/scoring-from-events";
@@ -11,6 +11,7 @@ import type { GameEvent, Player } from "@/types/domain";
 
 /** First paint stays short; older events expand on demand (newest first). */
 const PAGE_SIZE = 40;
+const FLASH_MS = 1600;
 
 const eventEmoji: Record<GameEvent["kind"], string> = {
   points: "🏀",
@@ -36,9 +37,60 @@ function eventLabel(event: GameEvent): string {
   }
 }
 
+function eventCallout(event: GameEvent, playerName: string | null): string {
+  const c = he.live.eventCallout;
+  const name = playerName ?? "—";
+  switch (event.kind) {
+    case "points":
+      if (event.value === 1) return c.points1(name);
+      if (event.value === 2) return c.points2(name);
+      if (event.value === 3) return c.points3(name);
+      return c.pointsN(name, event.value);
+    case "opponent_points":
+      if (event.value === 1) return c.opponent_points1;
+      if (event.value === 2) return c.opponent_points2;
+      if (event.value === 3) return c.opponent_points3;
+      return c.opponent_pointsN(event.value);
+    case "rebound":
+      return c.rebound(name);
+    case "assist":
+      return c.assist(name);
+    case "steal":
+      return c.steal(name);
+    case "block":
+      return c.block(name);
+    case "turnover":
+      return c.turnover(name);
+  }
+}
+
+function flashClass(kind: GameEvent["kind"]): string {
+  if (kind === "points") return "motion-safe:animate-pbp-flash-win";
+  if (kind === "opponent_points") return "motion-safe:animate-pbp-flash-loss";
+  return "motion-safe:animate-pbp-flash";
+}
+
 export function PlayByPlay({ events, players }: { events: GameEvent[]; players: Player[] }) {
   const [visible, setVisible] = useState(PAGE_SIZE);
+  const [flashIds, setFlashIds] = useState<ReadonlySet<number>>(() => new Set());
+  const seenIds = useRef<Set<number> | null>(null);
   const byId = new Map(players.map((p) => [p.id, p]));
+
+  useEffect(() => {
+    const ids = events.map((e) => e.id);
+    if (seenIds.current === null) {
+      // Initial paint: don't flash the whole history.
+      seenIds.current = new Set(ids);
+      return;
+    }
+    const fresh = ids.filter((id) => !seenIds.current!.has(id));
+    if (fresh.length === 0) return;
+    for (const id of ids) seenIds.current.add(id);
+    setFlashIds(new Set(fresh));
+    const timer = window.setTimeout(() => setFlashIds(new Set()), FLASH_MS);
+    return () => window.clearTimeout(timer);
+  }, [events]);
+
   if (events.length === 0) return <p className="card p-5 text-sm text-muted">{he.live.noEvents}</p>;
 
   const us = scoringFromEvents(events);
@@ -61,16 +113,32 @@ export function PlayByPlay({ events, players }: { events: GameEvent[]; players: 
         {shown.map((event) => {
           const player = event.playerId ? byId.get(event.playerId) : null;
           const isOpponent = event.kind === "opponent_points";
+          const isNew = flashIds.has(event.id);
+          const callout = eventCallout(event, player?.name ?? null);
           return (
-            <li key={event.id} className="flex items-center gap-3 px-4 py-2.5 text-sm">
+            <li
+              key={event.id}
+              className={cn(
+                "flex items-center gap-3 px-4 py-2.5 text-sm",
+                isNew && "motion-safe:animate-pbp-enter",
+                isNew && flashClass(event.kind),
+              )}
+            >
               <span className="num w-12 shrink-0 text-xs text-muted">{formatTime(event.createdAt)}</span>
               <span aria-hidden>{eventEmoji[event.kind]}</span>
-              <span className="min-w-0 flex-1 truncate font-semibold">
-                {isOpponent ? he.live.opponent : <span data-user-content>{player?.name ?? "—"}</span>}
+              <span data-user-content={!isOpponent || undefined} className="min-w-0 flex-1 font-semibold text-text">
+                {callout}
               </span>
-              <span className={cn("num shrink-0 font-bold", event.kind === "points" ? "text-win" : isOpponent ? "text-loss" : "text-text")}>
-                {eventLabel(event)}
-              </span>
+              {(event.kind === "points" || event.kind === "opponent_points") && (
+                <span
+                  className={cn(
+                    "num shrink-0 font-bold",
+                    event.kind === "points" ? "text-win" : "text-loss",
+                  )}
+                >
+                  {eventLabel(event)}
+                </span>
+              )}
             </li>
           );
         })}

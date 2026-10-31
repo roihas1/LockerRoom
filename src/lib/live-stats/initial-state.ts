@@ -35,11 +35,12 @@ export function clientStateFromSnapshot(snapshot: LiveGameSnapshot): LiveStatsCl
     lines,
     teamScore: snapshot.teamScore ?? 0,
     opponentScore: snapshot.opponentScore ?? 0,
+    eventLog: [],
   };
 }
 
 export function emptyClientState(): LiveStatsClientState {
-  return { playedPlayerIds: [], lines: {}, teamScore: 0, opponentScore: 0 };
+  return { playedPlayerIds: [], lines: {}, teamScore: 0, opponentScore: 0, eventLog: [] };
 }
 
 export function ensureLine(state: LiveStatsClientState, playerId: number): LiveStatsClientState {

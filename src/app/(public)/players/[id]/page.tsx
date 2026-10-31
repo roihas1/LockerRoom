@@ -17,7 +17,6 @@ import { Badge } from "@/components/ui/badge";
 import { positionLabels } from "@/config/labels";
 import { he } from "@/config/strings";
 import { getData } from "@/lib/data";
-import { getSeasonContext } from "@/lib/data/season";
 import { shareMessage } from "@/lib/meta";
 import { aggregateLines, seasonHighs, type HighKey } from "@/lib/stats/aggregate";
 import { hasScoring, scoringByGameFromEvents, scoringTotal } from "@/lib/stats/scoring-from-events";
@@ -50,18 +49,26 @@ export default async function PlayerPage({ params }: PageProps<"/players/[id]">)
   const id = parseId((await params).id);
   if (!id) notFound();
   const data = getData();
-  const [player, ctx, media, team] = await Promise.all([data.getPlayer(id), getSeasonContext(), data.getPlayerMedia(id, 12), data.getTeam()]);
+  const [player, season, media, team, rosterAll] = await Promise.all([
+    data.getPlayer(id),
+    data.getActiveSeason(),
+    data.getPlayerMedia(id, 12),
+    data.getTeam(),
+    data.getPlayers({ includeInactive: true }),
+  ]);
   if (!player) notFound();
 
-  const lines = ctx.lines.filter((l) => l.playerId === id);
+  const [games, lines] = season
+    ? await Promise.all([data.getGames(season.id), data.getPlayerSeasonStatLines(id, season.id)])
+    : [[], []];
   const agg = aggregateLines(id, lines);
   const highs = seasonHighs(lines);
-  const gamesById = new Map(ctx.games.map((g) => [g.id, g]));
+  const gamesById = new Map(games.map((g) => [g.id, g]));
   const log = lines
     .map((l) => ({ line: l, game: gamesById.get(l.gameId)! }))
     .filter((x) => x.game)
     .sort((a, b) => b.game.tipoffAt.localeCompare(a.game.tipoffAt));
-  const trend = buildPlayerTrend(id, ctx.games, ctx.lines);
+  const trend = buildPlayerTrend(id, games, lines);
   const pointEvents = await data.getPlayerPointsEvents(
     id,
     log.map((r) => r.game.id),
@@ -76,7 +83,7 @@ export default async function PlayerPage({ params }: PageProps<"/players/[id]">)
     { label: he.roster.quote, value: player.quote },
   ].filter((f) => f.value);
 
-  const roster = ctx.players.filter((p) => p.isActive);
+  const roster = rosterAll.filter((p) => p.isActive);
   const pos = roster.findIndex((p) => p.id === id);
   const neighbor = (i: number) => {
     const p = pos >= 0 ? roster[i] : undefined;

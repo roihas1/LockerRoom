@@ -18,6 +18,7 @@ import { siteConfig } from "@/config/site";
 import { he } from "@/config/strings";
 import { getData } from "@/lib/data";
 import { getSeasonContext } from "@/lib/data/season";
+import { getLeagueTable } from "@/lib/league/table";
 import { homeMode, type HomeMode } from "@/lib/home/mode";
 import { teamSeasonAverages } from "@/lib/stats/aggregate";
 import { currentStreak, gameResult, lastGame, nextGame, record } from "@/lib/stats/games";
@@ -40,12 +41,13 @@ const sectionOrder: Record<HomeMode, SectionKey[]> = {
 
 export default async function HomePage() {
   const data = getData();
-  const [ctx, team, feed, plays, coaches] = await Promise.all([
+  const [ctx, team, feed, plays, coaches, standings] = await Promise.all([
     getSeasonContext(),
     data.getTeam(),
     data.getFeed({ limit: 3 }),
     data.getExercises(),
     data.getCoaches(),
+    getLeagueTable(),
   ]);
   const mode = homeMode(ctx.games);
   const rec = record(ctx.games);
@@ -87,7 +89,7 @@ export default async function HomePage() {
       ),
     standings: (
       <Suspense fallback={null}>
-        <HomeStandings />
+        <HomeStandings initial={standings} />
       </Suspense>
     ),
     quote: <QuoteOfDay players={[...ctx.playersById.values()]} coaches={coaches} />,

@@ -74,11 +74,13 @@ export function createFixtureSource({ includeDrafts = false } = {}): DataSource 
       const game = visible(fixtureGames).find((g) => g.id === id);
       if (!game) return null;
       const media = fixtureGameMedia.filter((m) => m.gameId === id);
+      const lines = fixtureStatLines.filter((l) => l.gameId === id);
+      const playerIds = new Set([...lines.map((l) => l.playerId), ...(game.playerOfGameId ? [game.playerOfGameId] : [])]);
       return {
         game,
         season: fixtureSeasons.find((s) => s.id === game.seasonId) ?? null,
-        lines: fixtureStatLines.filter((l) => l.gameId === id),
-        players: fixturePlayers,
+        lines,
+        players: fixturePlayers.filter((p) => playerIds.has(p.id)),
         media,
         playOfGame: media.find((m) => m.id === game.playOfGameMediaId) ?? null,
       };
@@ -99,6 +101,14 @@ export function createFixtureSource({ includeDrafts = false } = {}): DataSource 
           .map((g) => g.id),
       );
       return fixtureStatLines.filter((l) => ids.has(l.gameId));
+    },
+    async getPlayerSeasonStatLines(playerId, seasonId) {
+      const ids = new Set(
+        visible(fixtureGames)
+          .filter((g) => g.seasonId === seasonId && g.status === "final" && !g.excludeFromStats)
+          .map((g) => g.id),
+      );
+      return fixtureStatLines.filter((l) => ids.has(l.gameId) && l.playerId === playerId);
     },
     async getPlayers({ includeInactive = false } = {}) {
       return fixturePlayers.filter((p) => includeInactive || p.isActive).sort((a, b) => a.sortOrder - b.sortOrder);

@@ -1,3 +1,4 @@
+import type { PendingLiveEvent } from "@/lib/live-stats/event-log";
 import type { LivePlayerTotals } from "@/lib/live-stats/types";
 
 export type LiveStatsClientState = {
@@ -5,6 +6,8 @@ export type LiveStatsClientState = {
   lines: Record<number, LivePlayerTotals>;
   teamScore: number;
   opponentScore: number;
+  /** Scorer taps not yet confirmed saved into game_events. */
+  eventLog: PendingLiveEvent[];
 };
 
 export function emptyLiveLine(playerId: number): LivePlayerTotals {
@@ -30,6 +33,7 @@ export function buildLiveStatsFormData(gameId: number, state: LiveStatsClientSta
   }
   fd.set("teamScore", String(state.teamScore));
   fd.set("opponentScore", String(state.opponentScore));
+  if (state.eventLog.length) fd.set("eventLog", JSON.stringify(state.eventLog));
   return fd;
 }
 
@@ -39,5 +43,11 @@ export function cloneLiveStatsState(state: LiveStatsClientState): LiveStatsClien
     lines: Object.fromEntries(Object.entries(state.lines).map(([k, v]) => [Number(k), { ...v }])),
     teamScore: state.teamScore,
     opponentScore: state.opponentScore,
+    eventLog: state.eventLog.map((e) => ({ ...e })),
   };
+}
+
+export function appendEvents(state: LiveStatsClientState, events: PendingLiveEvent[]): LiveStatsClientState {
+  if (events.length === 0) return state;
+  return { ...state, eventLog: [...state.eventLog, ...events] };
 }

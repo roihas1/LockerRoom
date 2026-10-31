@@ -88,19 +88,22 @@ export function createSupabaseSource(client: Client, { includeDrafts = false } =
       const row = maybe(await published(client.from("games").select("*").eq("id", id)).maybeSingle());
       if (!row) return null;
       const game = toGame(row);
-      const [season, lines, players, media] = await Promise.all([
+      const [season, linesRes, media] = await Promise.all([
         client.from("seasons").select("*").eq("id", game.seasonId).maybeSingle(),
         client.from("player_game_stats").select("*").eq("game_id", id),
-        client.from("players").select("*").order("sort_order"),
         client.from("media").select("*").eq("game_id", id).order("sort_order"),
       ]);
-      const playerRows = must(players);
+      const lines = must(linesRes).map(toStatLine);
+      const playerIds = [...new Set([...lines.map((l) => l.playerId), ...(game.playerOfGameId ? [game.playerOfGameId] : [])])];
+      const playerRows = playerIds.length
+        ? must(await client.from("players").select("*").in("id", playerIds).order("sort_order"))
+        : [];
       const lookup = await mediaLookup([...playerRows.map((p) => p.photo_media_id), game.playOfGameMediaId]);
       const gallery = await mediaWithTags(must(media));
       return {
         game,
         season: season.data ? toSeason(season.data) : null,
-        lines: must(lines).map(toStatLine),
+        lines,
         players: playerRows.map((p) => toPlayer(p, lookup)),
         media: gallery,
         playOfGame: gallery.find((m) => m.id === game.playOfGameMediaId) ?? lookup(game.playOfGameMediaId),
@@ -151,6 +154,23 @@ export function createSupabaseSource(client: Client, { includeDrafts = false } =
           ),
       );
       return rows.map(toStatLine);
+    },
+
+    async getPlayerSeasonStatLines(playerId, seasonId) {
+      const games = must(
+        await published(client.from("games").select("id").eq("season_id", seasonId).eq("status", "final").eq("exclude_from_stats", false)),
+      );
+      if (games.length === 0) return [];
+      return must(
+        await client
+          .from("player_game_stats")
+          .select("*")
+          .eq("player_id", playerId)
+          .in(
+            "game_id",
+            games.map((g) => g.id),
+          ),
+      ).map(toStatLine);
     },
 
     async getPlayers({ includeInactive = false } = {}) {

@@ -18,7 +18,8 @@ import { LiveStatsStickyScores } from "@/components/admin/live-stats/live-stats-
 import { useLiveStatsAutosave } from "@/components/admin/live-stats/use-live-stats-autosave";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog";
-import { emptyLiveLine, sumPlayedPoints } from "@/lib/live-stats/form-data";
+import { appendEvents, emptyLiveLine, sumPlayedPoints } from "@/lib/live-stats/form-data";
+import { eventsForOpponentEdit } from "@/lib/live-stats/event-log";
 import { clientStateFromSnapshot } from "@/lib/live-stats/initial-state";
 import type { LiveGameSnapshot } from "@/lib/live-stats/types";
 import { haptic } from "@/lib/utils/haptics";
@@ -176,8 +177,9 @@ export function LiveStatsApp({
 
   const scoringDisabled = demo || readOnly || !isLive;
 
+  // Haptics / tap pop live on the scoring controls (player panel + opponent), not here —
+  // so roster edits stay quiet and each tap can announce what was pressed.
   const recordChange = (next: typeof state) => {
-    haptic();
     setState(next);
   };
 
@@ -198,7 +200,11 @@ export function LiveStatsApp({
         backLabel={`${he.result.vs} ${game.opponent}`}
         disabled={scoringDisabled}
         onTeamScore={(teamScore) => setState({ ...state, teamScore })}
-        onOpponentScore={(opponentScore) => setState({ ...state, opponentScore })}
+        onOpponentScore={(opponentScore) => {
+          const next = Math.max(0, opponentScore);
+          const delta = next - state.opponentScore;
+          setState(appendEvents({ ...state, opponentScore: next }, eventsForOpponentEdit(delta)));
+        }}
       />
 
       {notice}

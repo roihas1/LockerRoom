@@ -41,6 +41,8 @@ export interface DataSource {
   getPlayerPointsEvents(playerId: number, gameIds: number[]): Promise<GameEvent[]>;
   /** Stat rows of final, published games in a season. */
   getSeasonStatLines(seasonId: number): Promise<StatLine[]>;
+  /** One player's season lines (final, published, stats-counted games only). */
+  getPlayerSeasonStatLines(playerId: number, seasonId: number): Promise<StatLine[]>;
   getPlayers(opts?: { includeInactive?: boolean }): Promise<Player[]>;
   getPlayer(id: number): Promise<Player | null>;
   getPlayerMedia(playerId: number, limit: number): Promise<Media[]>;

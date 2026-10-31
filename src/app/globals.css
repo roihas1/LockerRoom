@@ -63,6 +63,12 @@
   --animate-story-progress: story-progress 5.5s linear forwards;
   --animate-fade-up: fade-up 0.45s ease-out both;
   --animate-shake: shake 0.5s ease-in-out;
+  --animate-pbp-enter: pbp-enter 0.45s ease-out both;
+  --animate-pbp-flash-win: pbp-flash-win 1.6s ease-out both;
+  --animate-pbp-flash-loss: pbp-flash-loss 1.6s ease-out both;
+  --animate-pbp-flash: pbp-flash 1.6s ease-out both;
+  --animate-tap-pop: tap-pop 0.28s ease-out;
+  --animate-tap-tick: tap-tick 0.28s ease-out;
 
   @keyframes story-progress {
     from { width: 0%; }
@@ -78,6 +84,32 @@
     40% { transform: translateX(6px) rotate(1deg); }
     60% { transform: translateX(-4px); }
     80% { transform: translateX(4px); }
+  }
+  @keyframes pbp-enter {
+    from { opacity: 0; transform: translateY(-0.5rem); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes pbp-flash-win {
+    0% { background-color: color-mix(in oklab, var(--color-win) 28%, transparent); }
+    100% { background-color: transparent; }
+  }
+  @keyframes pbp-flash-loss {
+    0% { background-color: color-mix(in oklab, var(--color-loss) 28%, transparent); }
+    100% { background-color: transparent; }
+  }
+  @keyframes pbp-flash {
+    0% { background-color: color-mix(in oklab, var(--team-primary) 22%, transparent); }
+    100% { background-color: transparent; }
+  }
+  @keyframes tap-pop {
+    0% { transform: scale(1); }
+    35% { transform: scale(0.9); }
+    100% { transform: scale(1); }
+  }
+  @keyframes tap-tick {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.28); }
+    100% { transform: scale(1); }
   }
 }
 
