@@ -89,12 +89,14 @@ describe("milestone balls", () => {
     expect(points.next).toBe(125);
   });
 
-  it("ranks players by ball count", () => {
+  it("ranks all players by ball count and pads missing roster ids", () => {
     const leaders = milestoneBallLeaders(
       [agg({ playerId: 1, points: 120 }), agg({ playerId: 2, points: 55 }), agg({ playerId: 3, points: 10 })],
-      5,
+      { ensurePlayerIds: [1, 2, 3, 4, 5] },
     );
-    expect(leaders.map((l) => l.playerId)).toEqual([1, 2, 3]);
+    expect(leaders.map((l) => l.playerId)).toEqual([1, 2, 3, 4, 5]);
     expect(leaders[0]?.balls).toBe(4);
+    expect(leaders[3]).toMatchObject({ playerId: 4, balls: 0, next: null });
+    expect(leaders[4]).toMatchObject({ playerId: 5, balls: 0, next: null });
   });
 });

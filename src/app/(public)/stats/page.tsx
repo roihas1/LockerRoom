@@ -79,8 +79,8 @@ export default async function StatsPage({ searchParams }: PageProps<"/stats">) {
         <Overview ctx={ctx} href={href} />
       ) : view === "players" ? (
         <div className="space-y-8">
-          <MilestoneBallsRace leaders={milestoneBallLeaders(ctx.aggregates, 8)} playersById={ctx.playersById} />
           <PlayersStatsTable aggregates={ctx.aggregates} players={ctx.players} />
+          <MilestoneBallsRace leaders={ballLeadersFor(ctx)} playersById={ctx.playersById} />
         </div>
       ) : view === "leaders" ? (
         <div className="space-y-10">
@@ -96,6 +96,13 @@ export default async function StatsPage({ searchParams }: PageProps<"/stats">) {
 
 type Ctx = Awaited<ReturnType<typeof getSeasonContext>>;
 
+/** Active roster always appears in the race, even with no counted box scores yet. */
+function ballLeadersFor(ctx: Ctx) {
+  return milestoneBallLeaders(ctx.aggregates, {
+    ensurePlayerIds: ctx.players.filter((p) => p.isActive).map((p) => p.id),
+  });
+}
+
 function Overview({ ctx, href }: { ctx: Ctx; href: (params: Record<string, string>) => string }) {
   const avg = teamSeasonAverages(ctx.games, ctx.lines);
   const rec = record(ctx.games);
@@ -107,7 +114,7 @@ function Overview({ ctx, href }: { ctx: Ctx; href: (params: Record<string, strin
     categories: ["rebounds"],
     potgCounts,
   })[0];
-  const ballLeaders = milestoneBallLeaders(ctx.aggregates, 8);
+  const ballLeaders = ballLeadersFor(ctx);
   const explore: ExplorePromptSnapshot = {
     hot,
     glass: glassBoard?.entries.map((e) => ({ playerId: e.playerId, value: e.value })) ?? [],

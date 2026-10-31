@@ -82,17 +82,31 @@ export function milestoneBallCount(agg: PlayerAggregate): number {
   return milestoneTracksForAggregate(agg).reduce((n, t) => n + t.earned.length, 0);
 }
 
-/** Season competition: most balls first. */
-export function milestoneBallLeaders(aggregates: PlayerAggregate[], limit = 8): MilestoneBallLeader[] {
-  return aggregates
-    .map((a) => ({
-      playerId: a.playerId,
-      balls: milestoneBallCount(a),
-      next: nextMilestoneForAggregate(a),
-    }))
-    .filter((e) => e.balls > 0 || e.next !== null)
-    .sort((a, b) => b.balls - a.balls || (b.next?.progress ?? 0) - (a.next?.progress ?? 0) || a.playerId - b.playerId)
-    .slice(0, limit);
+/**
+ * Season competition: most balls first.
+ * Pass `ensurePlayerIds` (e.g. active roster) so players without counted lines still appear at 0.
+ */
+export function milestoneBallLeaders(
+  aggregates: PlayerAggregate[],
+  { limit, ensurePlayerIds = [] }: { limit?: number; ensurePlayerIds?: number[] } = {},
+): MilestoneBallLeader[] {
+  const byId = new Map(
+    aggregates.map((a) => [
+      a.playerId,
+      {
+        playerId: a.playerId,
+        balls: milestoneBallCount(a),
+        next: nextMilestoneForAggregate(a),
+      } satisfies MilestoneBallLeader,
+    ]),
+  );
+  for (const id of ensurePlayerIds) {
+    if (!byId.has(id)) byId.set(id, { playerId: id, balls: 0, next: null });
+  }
+  const ranked = [...byId.values()].sort(
+    (a, b) => b.balls - a.balls || (b.next?.progress ?? 0) - (a.next?.progress ?? 0) || a.playerId - b.playerId,
+  );
+  return limit === undefined ? ranked : ranked.slice(0, limit);
 }
 
 /** Individual box-score lines with the highest PIR this season. */
