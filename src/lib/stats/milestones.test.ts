@@ -86,7 +86,7 @@ describe("detectMilestones", () => {
 
   it("does not count a tie with the previous high or a value under the minimum", () => {
     const games = [game(1, 1, 60, 50), game(2, 2, 62, 50), game(3, 3, 50, 60)];
-    const lines = [line(1, 7, { points: 20 }), line(3, 9, { points: 20, rebounds: 5 })];
+    const lines = [line(1, 7, { points: 20 }), line(3, 9, { points: 20, rebounds: 2 })];
     const result = detectMilestones({ seasonId: 1, gameId: 3, games, lines });
     expect(result.some((m) => m.kind === "season_high")).toBe(false);
   });

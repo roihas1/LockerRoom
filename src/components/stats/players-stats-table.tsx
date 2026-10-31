@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { BallCountChip } from "@/components/stats/milestone-balls";
 import { SortableTh } from "@/components/stats/sortable-th";
 import { he } from "@/config/strings";
 import type { PlayerAggregate } from "@/lib/stats/aggregate";
+import { milestoneBallCount } from "@/lib/stats/explore-prompts";
 import { compareNum, compareText, toggleSortDir, type SortDir } from "@/lib/stats/sort-value";
 import { cn } from "@/lib/utils/cn";
 import { formatAverage, formatInt, formatPercent } from "@/lib/utils/numbers";
@@ -47,6 +49,11 @@ export function PlayersStatsTable({
   const [sort, setSort] = useState<SortKey>("pir");
   const [dir, setDir] = useState<SortDir>("desc");
   const playersById = new Map(players.map((p) => [p.id, p]));
+  const ballsByPlayer = useMemo(() => {
+    const map = new Map<number, number>();
+    for (const a of aggregates) map.set(a.playerId, milestoneBallCount(a));
+    return map;
+  }, [aggregates]);
   const visible = cols.filter((c) => c.has(aggregates));
   const onSort = (key: SortKey) => {
     if (key === sort) setDir(toggleSortDir);
@@ -82,13 +89,17 @@ export function PlayersStatsTable({
           <tbody>
             {rows.map((a) => {
               const p = playersById.get(a.playerId);
+              const balls = ballsByPlayer.get(a.playerId) ?? 0;
               return (
                 <tr key={a.playerId} className="border-b border-border/60 last:border-0">
                   <th scope="row" className="sticky start-0 z-10 bg-surface px-3 py-2.5 text-start font-semibold">
                     <Link href={`/players/${a.playerId}`} className="flex items-center gap-2 hover:text-team">
                       <span className="num w-6 text-xs text-muted">{p?.jerseyNumber}</span>
-                      <span data-user-content className="max-w-36 truncate">
-                        {p?.name}
+                      <span className="min-w-0">
+                        <span data-user-content className="block max-w-36 truncate">
+                          {p?.name}
+                        </span>
+                        <BallCountChip balls={balls} />
                       </span>
                     </Link>
                   </th>

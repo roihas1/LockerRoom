@@ -11,6 +11,7 @@ import { StatTile } from "@/components/common/stat-tile";
 import { ActionGallery } from "@/components/media/action-gallery";
 import { PlayerTag } from "@/components/players/player-tag";
 import { SwipeNav } from "@/components/players/swipe-nav";
+import { PlayerMilestoneBalls } from "@/components/stats/milestone-balls";
 import { PlayerGameLogTable } from "@/components/stats/player-game-log-table";
 import { PlayerTrendChart } from "@/components/stats/player-trend-chart";
 import { Badge } from "@/components/ui/badge";
@@ -225,6 +226,8 @@ export default async function PlayerPage({ params }: PageProps<"/players/[id]">)
             ) : null}
           </section>
         ) : null}
+
+        {agg.gp ? <PlayerMilestoneBalls aggregate={agg} /> : null}
 
         {highs.length ? (
           <section>

@@ -9,11 +9,14 @@ import { HotPlayerCard } from "@/components/stats/hot-player-card";
 import { LeaderCard } from "@/components/stats/leader-board";
 import { PlayersStatsTable } from "@/components/stats/players-stats-table";
 import { ShameAwards } from "@/components/stats/shame-awards";
+import { MilestoneBallsRace } from "@/components/stats/milestone-balls";
+import { StatsExplorePrompts, type ExplorePromptSnapshot } from "@/components/stats/stats-explore-prompts";
 import { TeamStatsStrip } from "@/components/stats/team-stats-strip";
 import { TeamTrendChart } from "@/components/stats/team-trend-chart";
 import { he } from "@/config/strings";
 import { getSeasonContext } from "@/lib/data/season";
 import { teamSeasonAverages } from "@/lib/stats/aggregate";
+import { milestoneBallLeaders, topPirNights } from "@/lib/stats/explore-prompts";
 import { record } from "@/lib/stats/games";
 import { computeLeaders, countPotgByPlayer, minGamesForLeaders } from "@/lib/stats/leaders";
 import { computeShameAwards } from "@/lib/stats/shame";
@@ -73,9 +76,12 @@ export default async function StatsPage({ searchParams }: PageProps<"/stats">) {
       {ctx.completed.length === 0 ? (
         <EmptyState emoji="📊" title={he.empty.stats.title} text={he.empty.stats.text} />
       ) : view === "overview" ? (
-        <Overview ctx={ctx} />
+        <Overview ctx={ctx} href={href} />
       ) : view === "players" ? (
-        <PlayersStatsTable aggregates={ctx.aggregates} players={ctx.players} />
+        <div className="space-y-8">
+          <MilestoneBallsRace leaders={milestoneBallLeaders(ctx.aggregates, 8)} playersById={ctx.playersById} />
+          <PlayersStatsTable aggregates={ctx.aggregates} players={ctx.players} />
+        </div>
       ) : view === "leaders" ? (
         <div className="space-y-10">
           <Leaders ctx={ctx} />
@@ -90,41 +96,77 @@ export default async function StatsPage({ searchParams }: PageProps<"/stats">) {
 
 type Ctx = Awaited<ReturnType<typeof getSeasonContext>>;
 
-function Overview({ ctx }: { ctx: Ctx }) {
+function Overview({ ctx, href }: { ctx: Ctx; href: (params: Record<string, string>) => string }) {
   const avg = teamSeasonAverages(ctx.games, ctx.lines);
   const rec = record(ctx.games);
   const hot = computeHotPlayer(ctx.games, ctx.lines);
   const teamTrend = buildTeamTrend(ctx.games);
+  const potgCounts = countPotgByPlayer(ctx.games);
+  const glassBoard = computeLeaders(ctx.aggregates, ctx.statCompleted.length, {
+    limit: 5,
+    categories: ["rebounds"],
+    potgCounts,
+  })[0];
+  const ballLeaders = milestoneBallLeaders(ctx.aggregates, 8);
+  const explore: ExplorePromptSnapshot = {
+    hot,
+    glass: glassBoard?.entries.map((e) => ({ playerId: e.playerId, value: e.value })) ?? [],
+    pirNights: topPirNights(ctx.statCompleted, ctx.lines, 5),
+    shame: computeShameAwards(ctx.aggregates, ctx.statCompleted.length, ctx.lines),
+    ballLeaders,
+    playersById: Object.fromEntries(
+      ctx.players.map((p) => [
+        String(p.id),
+        {
+          id: p.id,
+          name: p.name,
+          jerseyNumber: p.jerseyNumber,
+          nickname: p.nickname,
+          hashtag: p.hashtag,
+          photo: p.photo,
+        },
+      ]),
+    ),
+    leadersHref: href({ view: "leaders" }),
+    gamesHref: href({ view: "games" }),
+    playersHref: href({ view: "players" }),
+  };
+
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-        <StatTile value={`${rec.losses}-${rec.wins}`} label={he.stats.record} sublabel="L-W" size="lg" />
-        <StatTile value={formatAverage(avg.ppg)} label={he.stats.pointsFor} sublabel="PPG" size="lg" />
-        <StatTile value={formatAverage(avg.oppPpg)} label={he.stats.pointsAgainst} size="lg" />
-        <StatTile value={formatInt(avg.gp)} label={he.stats.gamesPlayed} sublabel="GP" size="lg" />
-      </div>
-      {hot ? (
-        <section>
-          <SectionHeader title={he.statsPage.hotPlayer.title} icon={<span aria-hidden>🔥</span>} />
-          <HotPlayerCard hot={hot} player={ctx.playersById.get(hot.playerId)} />
-        </section>
-      ) : null}
-      <section>
-        <SectionHeader title={he.statsPage.teamAverages} />
-        <TeamStatsStrip averages={avg} wins={rec.wins} />
-        {avg.ftPct !== null ? (
-          <div className="mt-2 grid grid-cols-3 gap-2">
-            <StatTile value={formatPercent(avg.ftPct)} label={he.stats.ftPct} sublabel="FT%" size="sm" />
-          </div>
+    <div className="space-y-10">
+      <StatsExplorePrompts data={explore} />
+
+      <div className="space-y-6 border-t border-border pt-8">
+        <SectionHeader title={he.statsPage.classicOverview} />
+        <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+          <StatTile value={`${rec.losses}-${rec.wins}`} label={he.stats.record} sublabel="L-W" size="lg" />
+          <StatTile value={formatAverage(avg.ppg)} label={he.stats.pointsFor} sublabel="PPG" size="lg" />
+          <StatTile value={formatAverage(avg.oppPpg)} label={he.stats.pointsAgainst} size="lg" />
+          <StatTile value={formatInt(avg.gp)} label={he.stats.gamesPlayed} sublabel="GP" size="lg" />
+        </div>
+        {hot ? (
+          <section>
+            <SectionHeader title={he.statsPage.hotPlayer.title} icon={<span aria-hidden>🔥</span>} />
+            <HotPlayerCard hot={hot} player={ctx.playersById.get(hot.playerId)} />
+          </section>
         ) : null}
-      </section>
-      {teamTrend.length >= 2 ? (
         <section>
-          <SectionHeader title={he.statsPage.trends.teamTitle} />
-          <TeamTrendChart points={teamTrend} />
+          <SectionHeader title={he.statsPage.teamAverages} />
+          <TeamStatsStrip averages={avg} wins={rec.wins} />
+          {avg.ftPct !== null ? (
+            <div className="mt-2 grid grid-cols-3 gap-2">
+              <StatTile value={formatPercent(avg.ftPct)} label={he.stats.ftPct} sublabel="FT%" size="sm" />
+            </div>
+          ) : null}
         </section>
-      ) : null}
-      <Leaders ctx={ctx} limit={3} />
+        {teamTrend.length >= 2 ? (
+          <section>
+            <SectionHeader title={he.statsPage.trends.teamTitle} />
+            <TeamTrendChart points={teamTrend} />
+          </section>
+        ) : null}
+        <Leaders ctx={ctx} limit={3} />
+      </div>
     </div>
   );
 }

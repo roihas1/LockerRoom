@@ -9,23 +9,24 @@ export type Milestone =
   | { kind: "team_points"; key: string; value: number }
   | { kind: "win_streak"; key: string; count: number };
 
+/** Amateur-friendly season totals (roughly half pro/college marks — games often land ~50–60 pts). */
 export const seasonTotalThresholds: Record<MilestoneStat, number[]> = {
-  points: [50, 100, 150, 200, 250, 300, 400, 500],
-  rebounds: [50, 100, 150, 200],
-  assists: [25, 50, 75, 100],
-  steals: [25, 50],
-  blocks: [10, 25, 50],
-  threes: [10, 25, 50],
+  points: [25, 50, 75, 100, 125, 150, 200, 250],
+  rebounds: [15, 30, 45, 60],
+  assists: [5, 10, 20, 30],
+  steals: [5, 10, 15],
+  blocks: [5, 10, 25],
+  threes: [5, 10, 25],
 };
 
 /** A season high only counts when it is a real performance, not 2 points in game two. */
 export const seasonHighMinimums: Record<MilestoneStat, number> = {
-  points: 15,
-  rebounds: 8,
-  assists: 5,
-  steals: 4,
-  blocks: 3,
-  threes: 3,
+  points: 8,
+  rebounds: 3,
+  assists: 2,
+  steals: 2,
+  blocks: 2,
+  threes: 2,
 };
 
 /** Records need some history; the first games of a season would otherwise set every record. */
