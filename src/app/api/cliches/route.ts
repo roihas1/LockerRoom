@@ -17,13 +17,25 @@ export type SubmitClicheResult =
   | { ok: true; id: number }
   | { ok: false; reason: "demo" | "invalid" | "rate_limited" | "duplicate" | "failed" };
 
-function mapApprovedRow(row: { id: number; body: string; said_by: string; weight: number; verified: boolean }): CupCliche {
+type ApprovedRow = {
+  id: number;
+  body: string;
+  said_by: string;
+  weight: number;
+  verified: boolean;
+  said_on: string | null;
+  source_url: string | null;
+};
+
+function mapApprovedRow(row: ApprovedRow): CupCliche {
   return {
     id: row.id,
     body: row.body,
     saidBy: row.said_by,
     weight: row.weight,
     verified: row.verified,
+    saidOn: row.said_on,
+    sourceUrl: row.source_url,
   };
 }
 
@@ -34,6 +46,8 @@ function demoApproved(): CupCliche[] {
     saidBy: row.saidBy,
     weight: row.weight,
     verified: row.verified,
+    saidOn: row.date ?? null,
+    sourceUrl: row.source ?? null,
   }));
 }
 
@@ -77,6 +91,8 @@ export async function POST(request: Request) {
     p_said_by: parsed.data.saidBy,
     p_weight: parsed.data.weight,
     p_device_id: parsed.data.deviceId,
+    p_said_on: parsed.data.saidOn,
+    p_source_url: parsed.data.sourceUrl,
   });
 
   if (error) {

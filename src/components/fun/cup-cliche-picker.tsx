@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import type { PickClicheResult } from "@/app/api/cliches/route";
+import { CupClicheMeta } from "@/components/fun/cup-cliche-meta";
 import { Button } from "@/components/ui/button";
 import { he } from "@/config/strings";
 import type { CupCliche } from "@/lib/fun/cliches";
@@ -47,8 +48,11 @@ export function CupClichePicker({
           <p data-user-content className="font-display text-2xl font-bold leading-snug text-balance">
             ״{current.body}״
           </p>
-          <footer data-user-content className="text-sm text-muted">
-            — {current.saidBy}
+          <footer className="space-y-1">
+            <p data-user-content className="text-sm text-muted">
+              — {current.saidBy}
+            </p>
+            <CupClicheMeta item={current} />
           </footer>
         </blockquote>
       ) : (

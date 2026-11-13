@@ -13,6 +13,8 @@ export async function loadInitialCupCliche(): Promise<CupCliche | null> {
       saidBy: row.saidBy,
       weight: row.weight,
       verified: row.verified,
+      saidOn: row.date ?? null,
+      sourceUrl: row.source ?? null,
     }));
     return pickWeightedCliche(items);
   }
@@ -26,6 +28,8 @@ export async function loadInitialCupCliche(): Promise<CupCliche | null> {
       saidBy: row.said_by,
       weight: row.weight,
       verified: row.verified,
+      saidOn: row.said_on,
+      sourceUrl: row.source_url,
     })),
   );
 }

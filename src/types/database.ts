@@ -360,10 +360,25 @@ export type Database = {
       toggle_reaction: { Args: { p_post_id: number; p_device_id: string; p_emoji: string }; Returns: Record<string, number> };
       list_approved_cup_cliches: {
         Args: Record<string, never>;
-        Returns: { id: number; body: string; said_by: string; weight: number; verified: boolean }[];
+        Returns: {
+          id: number;
+          body: string;
+          said_by: string;
+          weight: number;
+          verified: boolean;
+          said_on: string | null;
+          source_url: string | null;
+        }[];
       };
       submit_cup_cliche: {
-        Args: { p_body: string; p_said_by: string; p_weight: number; p_device_id: string };
+        Args: {
+          p_body: string;
+          p_said_by: string;
+          p_weight: number;
+          p_device_id: string;
+          p_said_on?: string | null;
+          p_source_url?: string | null;
+        };
         Returns: number;
       };
     };

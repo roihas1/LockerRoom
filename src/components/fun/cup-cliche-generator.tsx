@@ -26,6 +26,8 @@ export function CupClicheGenerator({ initial, openSuggest = false }: { initial: 
   const [submitting, startSubmit] = useTransition();
   const [body, setBody] = useState("");
   const [saidBy, setSaidBy] = useState("");
+  const [saidOn, setSaidOn] = useState("");
+  const [sourceUrl, setSourceUrl] = useState("");
   const [weight, setWeight] = useState<CupClicheWeightBucket>(80);
 
   const submit = () =>
@@ -34,7 +36,14 @@ export function CupClicheGenerator({ initial, openSuggest = false }: { initial: 
         const res = await fetch("/api/cliches", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ body, saidBy, weight, deviceId: getOrCreateDeviceId() }),
+          body: JSON.stringify({
+            body,
+            saidBy,
+            weight,
+            deviceId: getOrCreateDeviceId(),
+            saidOn: saidOn.trim() || null,
+            sourceUrl: sourceUrl.trim() || null,
+          }),
         });
         const json = (await res.json()) as SubmitClicheResult;
         if (!json.ok) {
@@ -54,6 +63,8 @@ export function CupClicheGenerator({ initial, openSuggest = false }: { initial: 
         toast.success(t.submitted);
         setBody("");
         setSaidBy("");
+        setSaidOn("");
+        setSourceUrl("");
         setWeight(80);
         haptic([10, 40, 10]);
       } catch {
@@ -84,6 +95,26 @@ export function CupClicheGenerator({ initial, openSuggest = false }: { initial: 
           <label className="block space-y-1.5">
             <span className="text-sm font-semibold">{t.suggestSaidBy}</span>
             <Input value={saidBy} onChange={(e) => setSaidBy(e.target.value)} maxLength={120} required />
+          </label>
+          <label className="block space-y-1.5">
+            <span className="text-sm font-semibold">{t.suggestSaidOn}</span>
+            <Input
+              value={saidOn}
+              onChange={(e) => setSaidOn(e.target.value)}
+              maxLength={40}
+              placeholder={t.suggestSaidOnHint}
+            />
+          </label>
+          <label className="block space-y-1.5">
+            <span className="text-sm font-semibold">{t.suggestSource}</span>
+            <Input
+              value={sourceUrl}
+              onChange={(e) => setSourceUrl(e.target.value)}
+              maxLength={500}
+              inputMode="url"
+              dir="ltr"
+              className="text-start"
+            />
           </label>
           <fieldset className="space-y-2">
             <legend className="text-sm font-semibold">{t.suggestWeight}</legend>
