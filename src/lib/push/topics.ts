@@ -1,4 +1,9 @@
-export const PUSH_TOPICS = ["games", "live", "plays", "feed"] as const;
+export const FAN_PUSH_TOPICS = ["games", "live", "plays", "feed"] as const;
+export type FanPushTopic = (typeof FAN_PUSH_TOPICS)[number];
+
+export const ADMIN_PUSH_TOPIC = "admin" as const;
+
+export const PUSH_TOPICS = [...FAN_PUSH_TOPICS, ADMIN_PUSH_TOPIC] as const;
 export type PushTopic = (typeof PUSH_TOPICS)[number];
 
 export interface PushMessage {

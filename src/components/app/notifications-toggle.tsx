@@ -6,8 +6,17 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/form-controls";
 import { he } from "@/config/strings";
-import { announcePushChange, disablePush, enablePush, readTopics, updateTopics, type EnableResult, type PushState } from "@/lib/push/client";
-import { PUSH_TOPICS, type PushTopic } from "@/lib/push/topics";
+import {
+  announcePushChange,
+  disablePush,
+  enablePush,
+  readTopics,
+  updateTopics,
+  withPreservedAdminTopic,
+  type EnableResult,
+  type PushState,
+} from "@/lib/push/client";
+import { FAN_PUSH_TOPICS, type FanPushTopic, type PushTopic } from "@/lib/push/topics";
 import { usePushState } from "./use-push-state";
 
 /** Shared by the toggle and the banner so both report failures the same way. */
@@ -18,19 +27,23 @@ export function stateAfterFailedEnable(reason: Extract<EnableResult, { ok: false
   return "off";
 }
 
+function fanTopicsOnly(topics: PushTopic[]): FanPushTopic[] {
+  return topics.filter((t): t is FanPushTopic => (FAN_PUSH_TOPICS as readonly string[]).includes(t));
+}
+
 export function NotificationsToggle() {
   const [state, setState] = usePushState();
-  const [topics, setTopics] = useState<PushTopic[]>([...PUSH_TOPICS]);
+  const [topics, setTopics] = useState<FanPushTopic[]>([...FAN_PUSH_TOPICS]);
   const [pending, startTransition] = useTransition();
 
   useEffect(() => {
-    const frame = requestAnimationFrame(() => setTopics(readTopics()));
+    const frame = requestAnimationFrame(() => setTopics(fanTopicsOnly(readTopics())));
     return () => cancelAnimationFrame(frame);
   }, [state]);
 
   const enable = () =>
     startTransition(async () => {
-      const result = await enablePush(topics);
+      const result = await enablePush(withPreservedAdminTopic(topics));
       if (result.ok) {
         setState("on");
         announcePushChange();
@@ -48,17 +61,18 @@ export function NotificationsToggle() {
       announcePushChange();
     });
 
-  const toggleTopic = (topic: PushTopic, checked: boolean) => {
+  const toggleTopic = (topic: FanPushTopic, checked: boolean) => {
     const next = checked ? [...new Set([...topics, topic])] : topics.filter((t) => t !== topic);
     setTopics(next);
     if (state === "on") {
       startTransition(async () => {
-        if (next.length === 0) {
+        const merged = withPreservedAdminTopic(next);
+        if (merged.length === 0) {
           await disablePush();
           setState("off");
           return;
         }
-        if (await updateTopics(next)) toast.success(he.app.saved);
+        if (await updateTopics(merged)) toast.success(he.app.saved);
       });
     }
   };
@@ -98,7 +112,7 @@ export function NotificationsToggle() {
 
       {state === "on" || state === "off" ? (
         <fieldset className="space-y-2.5" disabled={pending}>
-          {PUSH_TOPICS.map((topic) => (
+          {FAN_PUSH_TOPICS.map((topic) => (
             <label key={topic} className="flex items-center gap-3 text-sm">
               <Checkbox checked={topics.includes(topic)} onChange={(e) => toggleTopic(topic, e.currentTarget.checked)} />
               {he.app.topics[topic]}

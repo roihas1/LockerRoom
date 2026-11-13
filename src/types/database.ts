@@ -16,7 +16,8 @@ type ExerciseCategory =
 type Difficulty = "easy" | "medium" | "hard";
 type PostType = "announcement" | "photo" | "video" | "funny_moment" | "quote" | "highlight" | "award" | "play" | "milestone";
 type GameEventKind = "points" | "rebound" | "assist" | "steal" | "block" | "turnover" | "opponent_points";
-type PushTopic = "games" | "live" | "plays" | "feed";
+type PushTopic = "games" | "live" | "plays" | "feed" | "admin";
+type CupClicheStatus = "pending" | "approved" | "rejected";
 type AwardCategory = "official" | "fun";
 type MediaKind = "image" | "video";
 type AppRole = "user" | "admin";
@@ -312,6 +313,19 @@ export type OpponentScoutingRow = {
   updated_at: string;
 };
 
+export type CupClicheRow = {
+  id: number;
+  body: string;
+  said_by: string;
+  weight: number;
+  verified: boolean;
+  said_on: string | null;
+  source_url: string | null;
+  status: CupClicheStatus;
+  device_id: string | null;
+  created_at: string;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -336,6 +350,7 @@ export type Database = {
       ibba_league_games: Table<IbbaLeagueGameRow, "event_id" | "played_at" | "home_team_id" | "away_team_id">;
       ibba_players: Table<IbbaPlayerRow, "player_id" | "team_id" | "name">;
       opponent_scouting: Table<OpponentScoutingRow, "opponent_name">;
+      cup_cliches: Table<CupClicheRow, "body" | "said_by">;
     };
     Views: Record<never, never>;
     Functions: {
@@ -343,6 +358,14 @@ export type Database = {
       admin_set_role: { Args: { target_email: string; new_role: AppRole }; Returns: undefined };
       reaction_counts: { Args: { p_post_ids: number[] }; Returns: { post_id: number; emoji: string; total: number }[] };
       toggle_reaction: { Args: { p_post_id: number; p_device_id: string; p_emoji: string }; Returns: Record<string, number> };
+      list_approved_cup_cliches: {
+        Args: Record<string, never>;
+        Returns: { id: number; body: string; said_by: string; weight: number; verified: boolean }[];
+      };
+      submit_cup_cliche: {
+        Args: { p_body: string; p_said_by: string; p_weight: number; p_device_id: string };
+        Returns: number;
+      };
     };
     Enums: {
       game_status: GameStatus;

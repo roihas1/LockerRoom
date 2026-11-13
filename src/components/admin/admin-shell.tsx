@@ -6,7 +6,15 @@ import { Button } from "@/components/ui/button";
 import { he } from "@/config/strings";
 import { isDemoMode } from "@/lib/supabase/env";
 
-export function AdminShell({ children, email }: { children: ReactNode; email: string | null }) {
+export function AdminShell({
+  children,
+  email,
+  pendingCliches = 0,
+}: {
+  children: ReactNode;
+  email: string | null;
+  pendingCliches?: number;
+}) {
   const demo = isDemoMode();
   return (
     <div className="min-h-dvh bg-bg">
@@ -31,12 +39,12 @@ export function AdminShell({ children, email }: { children: ReactNode; email: st
           </div>
         </div>
         <div className="mx-auto max-w-6xl px-4 pb-3 md:hidden">
-          <AdminNav orientation="horizontal" />
+          <AdminNav orientation="horizontal" pendingCliches={pendingCliches} />
         </div>
       </header>
       <div className="mx-auto grid max-w-6xl gap-6 px-4 py-6 md:grid-cols-[12rem_1fr]">
         <aside className="hidden md:block">
-          <AdminNav />
+          <AdminNav pendingCliches={pendingCliches} />
         </aside>
         <div className="min-w-0">{children}</div>
       </div>

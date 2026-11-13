@@ -5,11 +5,11 @@ import { SectionHeader } from "@/components/common/section-header";
 import { QuoteOfDay } from "@/components/fun/quote-of-day";
 import { WinConfetti } from "@/components/fun/win-confetti";
 import { GameCard } from "@/components/games/game-card";
+import { CupClicheHomeCard } from "@/components/home/cup-cliche-card";
 import { Hero } from "@/components/home/hero";
 import { LastGameCard } from "@/components/home/last-game-card";
 import { NextGameCard } from "@/components/home/next-game-card";
 import { HomeStandings } from "@/components/home/home-standings";
-import { FeedItem } from "@/components/locker-room/feed-item";
 import { PlayGrid } from "@/components/home/play-grid";
 import { HotPlayerCard } from "@/components/stats/hot-player-card";
 import { LeaderCard } from "@/components/stats/leader-board";
@@ -19,6 +19,8 @@ import { he } from "@/config/strings";
 import { getData } from "@/lib/data";
 import { getSeasonContext } from "@/lib/data/season";
 import { getLeagueTable } from "@/lib/league/table";
+import { showCupClicheHomeCard } from "@/lib/fun/cup-cliche-entry";
+import { loadInitialCupCliche } from "@/lib/fun/load-cliche";
 import { homeMode, type HomeMode } from "@/lib/home/mode";
 import { teamSeasonAverages } from "@/lib/stats/aggregate";
 import { currentStreak, gameResult, lastGame, nextGame, record } from "@/lib/stats/games";
@@ -31,20 +33,19 @@ const HOME_PLAYS_LIMIT = 6;
 // across refreshes. Data reads stay cached (~60s) except around game time, see getSeasonContext.
 export const dynamic = "force-dynamic";
 
-type SectionKey = "games" | "standings" | "quote" | "teamStats" | "hotPlayer" | "leaders" | "plays" | "recent" | "feed";
+type SectionKey = "games" | "cupCliche" | "standings" | "quote" | "teamStats" | "hotPlayer" | "leaders" | "plays" | "recent";
 
 const sectionOrder: Record<HomeMode, SectionKey[]> = {
-  gameDay: ["games", "standings", "hotPlayer", "leaders", "plays", "quote", "teamStats", "recent", "feed"],
-  postGame: ["games", "standings", "hotPlayer", "feed", "leaders", "quote", "teamStats", "recent", "plays"],
-  default: ["quote", "games", "standings", "teamStats", "hotPlayer", "leaders", "plays", "recent", "feed"],
+  gameDay: ["games", "cupCliche", "standings", "hotPlayer", "leaders", "plays", "quote", "teamStats", "recent"],
+  postGame: ["games", "cupCliche", "standings", "hotPlayer", "leaders", "quote", "teamStats", "recent", "plays"],
+  default: ["quote", "games", "cupCliche", "standings", "teamStats", "hotPlayer", "leaders", "plays", "recent"],
 };
 
 export default async function HomePage() {
   const data = getData();
-  const [ctx, team, feed, plays, coaches, standings] = await Promise.all([
+  const [ctx, team, plays, coaches, standings] = await Promise.all([
     getSeasonContext(),
     data.getTeam(),
-    data.getFeed({ limit: 3 }),
     data.getExercises(),
     data.getCoaches(),
     getLeagueTable(),
@@ -53,6 +54,8 @@ export default async function HomePage() {
   const rec = record(ctx.games);
   const next = nextGame(ctx.games);
   const last = lastGame(ctx.games);
+  const cupClichePromo = showCupClicheHomeCard(ctx.games);
+  const initialCliche = cupClichePromo ? await loadInitialCupCliche() : null;
   const lastLines = last ? ctx.lines.filter((l) => l.gameId === last.id) : [];
   const potg = last?.playerOfGameId ? (ctx.playersById.get(last.playerOfGameId) ?? null) : null;
   const leaders = computeLeaders(ctx.aggregates, ctx.statCompleted.length, {
@@ -87,6 +90,7 @@ export default async function HomePage() {
           {mode === "gameDay" && last ? <div className="opacity-80">{lastCard}</div> : null}
         </section>
       ),
+    cupCliche: cupClichePromo ? <CupClicheHomeCard initial={initialCliche} /> : null,
     standings: (
       <Suspense fallback={null}>
         <HomeStandings initial={standings} />
@@ -129,16 +133,6 @@ export default async function HomePage() {
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {recent.map((g) => (
             <GameCard key={g.id} game={g} teamShortName={team.shortName} compact />
-          ))}
-        </div>
-      </section>
-    ) : null,
-    feed: feed.items.length ? (
-      <section>
-        <SectionHeader title={he.home.lockerRoom} href="/locker-room" linkLabel={he.home.toLockerRoom} icon={<span aria-hidden>🔥</span>} />
-        <div className="grid gap-3 md:grid-cols-3">
-          {feed.items.map((item) => (
-            <FeedItem key={item.id} item={item} compact linked />
           ))}
         </div>
       </section>

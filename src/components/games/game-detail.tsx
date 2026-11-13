@@ -82,6 +82,14 @@ export function GameDetail({
       >
         {he.scoutingPage.viewScouting}
       </Link>
+      {game.isCup ? (
+        <Link
+          href="/cup-cliches?suggest=1"
+          className="rounded-xl border border-border px-3 py-2 text-sm font-semibold text-team hover:bg-team/10"
+        >
+          {he.fun.cliche.fromGame}
+        </Link>
+      ) : null}
       {isCalendarEligible(game) ? <AddToCalendar game={game} team={team} /> : null}
       {game.location && isUpcomingGame(game) ? <WazeButton address={game.location} /> : null}
       {actions}

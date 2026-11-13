@@ -8,6 +8,7 @@ import {
   ClipboardList,
   LayoutDashboard,
   type LucideIcon,
+  MessageSquareQuote,
   Newspaper,
   ScanSearch,
   Settings,
@@ -25,9 +26,10 @@ interface NavLink {
   label: string;
   icon: LucideIcon;
   exact?: boolean;
+  badge?: number;
 }
 
-const contentLinks: NavLink[] = [
+const contentLinksBase: Omit<NavLink, "badge">[] = [
   { href: "/admin", label: he.admin.dashboard, icon: LayoutDashboard, exact: true },
   { href: "/admin/games", label: he.admin.games, icon: Trophy },
   { href: "/admin/scouting", label: he.admin.scoutingNotes, icon: ScanSearch },
@@ -35,6 +37,7 @@ const contentLinks: NavLink[] = [
   { href: "/admin/coaches", label: he.admin.coaches, icon: Whistle },
   { href: "/admin/plays", label: he.admin.exercises, icon: ClipboardList },
   { href: "/admin/locker-room", label: he.admin.posts, icon: Newspaper },
+  { href: "/admin/cliches", label: he.admin.cliches, icon: MessageSquareQuote },
   { href: "/admin/notifications", label: he.admin.notifications, icon: BellRing },
 ];
 
@@ -48,12 +51,34 @@ function isActive(link: NavLink, pathname: string): boolean {
   return link.exact ? pathname === link.href : pathname.startsWith(link.href);
 }
 
-export function AdminNav({ orientation = "vertical" }: { orientation?: "vertical" | "horizontal" }) {
-  const pathname = usePathname();
-  return orientation === "horizontal" ? <ChipNav pathname={pathname} /> : <SideNav pathname={pathname} />;
+function Badge({ count }: { count: number }) {
+  if (count <= 0) return null;
+  return (
+    <span className="ms-auto inline-flex min-w-5 items-center justify-center rounded-full bg-team px-1.5 text-[11px] font-bold text-black">
+      {he.admin.clicheModeration.pendingBadge(count)}
+    </span>
+  );
 }
 
-function ChipNav({ pathname }: { pathname: string }) {
+export function AdminNav({
+  orientation = "vertical",
+  pendingCliches = 0,
+}: {
+  orientation?: "vertical" | "horizontal";
+  pendingCliches?: number;
+}) {
+  const pathname = usePathname();
+  const contentLinks: NavLink[] = contentLinksBase.map((link) =>
+    link.href === "/admin/cliches" ? { ...link, badge: pendingCliches } : link,
+  );
+  return orientation === "horizontal" ? (
+    <ChipNav pathname={pathname} links={[...contentLinks, ...accountLinks]} />
+  ) : (
+    <SideNav pathname={pathname} contentLinks={contentLinks} />
+  );
+}
+
+function ChipNav({ pathname, links }: { pathname: string; links: NavLink[] }) {
   const activeRef = useRef<HTMLAnchorElement>(null);
 
   useEffect(() => {
@@ -63,7 +88,7 @@ function ChipNav({ pathname }: { pathname: string }) {
   return (
     <nav aria-label={he.admin.title} className="-mx-4 overflow-x-auto px-4 py-1 scrollbar-none">
       <ul className="flex gap-2">
-        {[...contentLinks, ...accountLinks].map((link) => {
+        {links.map((link) => {
           const active = isActive(link, pathname);
           const Icon = link.icon;
           return (
@@ -81,6 +106,11 @@ function ChipNav({ pathname }: { pathname: string }) {
               >
                 <Icon className="size-4 shrink-0" aria-hidden />
                 {link.label}
+                {link.badge ? (
+                  <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-black/15 px-1.5 text-[11px] font-bold">
+                    {he.admin.clicheModeration.pendingBadge(link.badge)}
+                  </span>
+                ) : null}
               </Link>
             </li>
           );
@@ -90,7 +120,7 @@ function ChipNav({ pathname }: { pathname: string }) {
   );
 }
 
-function SideNav({ pathname }: { pathname: string }) {
+function SideNav({ pathname, contentLinks }: { pathname: string; contentLinks: NavLink[] }) {
   const renderGroup = (links: NavLink[]) => (
     <ul className="flex flex-col gap-1">
       {links.map((link) => {
@@ -107,7 +137,8 @@ function SideNav({ pathname }: { pathname: string }) {
               )}
             >
               <Icon className="size-4 shrink-0" aria-hidden />
-              {link.label}
+              <span className="min-w-0 flex-1 truncate">{link.label}</span>
+              <Badge count={link.badge ?? 0} />
             </Link>
           </li>
         );

@@ -1,5 +1,5 @@
 import type { PushSubscribeResult } from "@/app/api/push/subscribe/route";
-import { PUSH_TOPICS, vapidPublicKey, type PushTopic } from "./topics";
+import { FAN_PUSH_TOPICS, PUSH_TOPICS, vapidPublicKey, type PushTopic } from "./topics";
 
 const TOPICS_KEY = "lr:push-topics";
 
@@ -26,7 +26,14 @@ export function readTopics(): PushTopic[] {
     const raw = JSON.parse(localStorage.getItem(TOPICS_KEY) ?? "null");
     if (Array.isArray(raw)) return raw.filter((t): t is PushTopic => (PUSH_TOPICS as readonly string[]).includes(t));
   } catch {}
-  return [...PUSH_TOPICS];
+  return [...FAN_PUSH_TOPICS];
+}
+
+/** Keep the admin topic when fans change their topic checkboxes. */
+export function withPreservedAdminTopic(nextFanTopics: PushTopic[], current: PushTopic[] = readTopics()): PushTopic[] {
+  const hasAdmin = current.includes("admin");
+  const fans = nextFanTopics.filter((t) => t !== "admin");
+  return hasAdmin ? [...fans, "admin"] : fans;
 }
 
 function writeTopics(topics: PushTopic[]) {

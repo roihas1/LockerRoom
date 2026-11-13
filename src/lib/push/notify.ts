@@ -39,6 +39,16 @@ export function notifyFeedPost(postId: number, title: string | null, opts: { kin
   });
 }
 
+/** Admin-only: a fan submitted a cup cliché that needs review. */
+export function notifyClichePending(clicheId: number, body: string) {
+  queuePush("admin", {
+    title: he.push.newClicheTitle,
+    body,
+    url: "/admin/cliches",
+    tag: `cliche-${clicheId}`,
+  });
+}
+
 /** "Game started" push, only for games fans can actually open. */
 export function notifyGameLive(game: { id: number; opponent: string; is_published: boolean }) {
   if (!game.is_published) return;
