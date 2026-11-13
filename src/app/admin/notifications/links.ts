@@ -7,6 +7,7 @@ export const BROADCAST_LINKS = [
   { url: "/locker-room", label: he.admin.broadcast.links.feed },
   { url: "/plays", label: he.admin.broadcast.links.plays },
   { url: "/stats", label: he.admin.broadcast.links.stats },
+  { url: "/cup-cliches", label: he.admin.broadcast.links.cliches },
 ] as const;
 
 export const BROADCAST_URLS = BROADCAST_LINKS.map((l) => l.url) as [string, ...string[]];

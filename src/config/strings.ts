@@ -982,6 +982,7 @@ export const he = {
         feed: "לוקר רום",
         plays: "ספר המהלכים",
         stats: "סטטיסטיקה",
+        cliches: "קלישאות הגביע",
       },
     },
     postForm: {
