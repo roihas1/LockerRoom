@@ -39,9 +39,13 @@ export function notifyFeedPost(postId: number, title: string | null, opts: { kin
   });
 }
 
-/** Admin-only: a fan submitted a cup cliché that needs review. */
-export function notifyClichePending(clicheId: number, body: string) {
-  queuePush("admin", {
+/**
+ * Admin-only: a fan submitted a cup cliché that needs review.
+ * Awaits send (unlike queuePush) so the push isn't dropped when the serverless
+ * request ends — same reliability as broadcast / birthday dispatch.
+ */
+export async function notifyClichePending(clicheId: number, body: string) {
+  await sendPush("admin", {
     title: he.push.newClicheTitle,
     body,
     url: "/admin/cliches",

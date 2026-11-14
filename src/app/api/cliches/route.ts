@@ -105,7 +105,7 @@ export async function POST(request: Request) {
   if (!Number.isFinite(id)) return reply({ ok: false, reason: "failed" }, 500);
 
   try {
-    notifyClichePending(id, parsed.data.body);
+    await notifyClichePending(id, parsed.data.body);
   } catch (err) {
     console.error("notifyClichePending failed", err);
   }
