@@ -57,14 +57,17 @@ export async function sendPush(topic: PushTopic | "all", message: PushMessage): 
       await Promise.all(
         subs.slice(i, i + BATCH_SIZE).map(async (sub) => {
           try {
+            // Always high urgency: Android Doze / OEM savers delay or batch "normal".
+            // Do not set Web Push Topic — FCM would keep only the last message per topic
+            // while the device is offline, which feels like missing notifications.
             await webpush.sendNotification({ endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } }, payload, {
-              TTL: 60 * 60 * 12,
-              urgency: topic === "live" ? "high" : "normal",
-              topic: message.tag?.slice(0, 32).replace(/[^A-Za-z0-9_-]/g, "_"),
+              TTL: 60 * 60 * 24,
+              urgency: "high",
             });
             delivered.push(sub.id);
           } catch (err) {
             if (err instanceof WebPushError && (err.statusCode === 404 || err.statusCode === 410)) expired.push(sub.id);
+            else console.error("webpush send failed", sub.id, err);
           }
         }),
       );

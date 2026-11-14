@@ -12,16 +12,19 @@ self.addEventListener("push", (event) => {
   }
   const title = payload.title || "LockerRoom";
   const url = payload.url || "/";
+  const scope = self.registration.scope;
   event.waitUntil(
     Promise.all([
       self.registration.showNotification(title, {
         body: payload.body || "",
-        icon: "/app-icon/192",
-        badge: "/app-icon/badge",
+        // Absolute URLs: Android Chrome is unreliable with root-relative icon paths.
+        icon: new URL("/app-icon/192", scope).href,
+        badge: new URL("/app-icon/badge", scope).href,
         tag: payload.tag || undefined,
         renotify: Boolean(payload.tag),
         lang: "he",
         dir: "rtl",
+        vibrate: [120, 60, 120],
         data: { url },
       }),
       // iOS hides the banner while the app is on screen, so open pages also get an in-app toast.
