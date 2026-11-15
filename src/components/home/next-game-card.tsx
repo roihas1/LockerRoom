@@ -1,23 +1,32 @@
 import Link from "next/link";
 import { MapPin } from "lucide-react";
+import { LiveBadge } from "@/components/common/live-badge";
 import { ScoreBoard } from "@/components/common/scoreboard";
 import { AddToCalendar } from "@/components/games/add-to-calendar";
 import { WazeButton } from "@/components/games/waze-button";
+import { buttonVariants } from "@/components/ui/button";
 import { homeAwayLabels } from "@/config/labels";
 import { he } from "@/config/strings";
 import { isCalendarEligible } from "@/lib/calendar";
 import { gameKindLabel } from "@/lib/stats/games";
+import { cn } from "@/lib/utils/cn";
 import { formatGameMoment, formatLongDate } from "@/lib/utils/dates";
 import type { Game, Team } from "@/types/domain";
 import { Countdown } from "./countdown";
 
 export function NextGameCard({ game, team }: { game: Game; team: Team }) {
   const kind = gameKindLabel(game);
+  const isLive = game.status === "live";
   return (
-    <div className="card court-bg transition-colors hover:border-team/50">
+    <div
+      className={cn(
+        "card court-bg transition-colors hover:border-team/50",
+        isLive && "border-loss/50 ring-1 ring-loss/30",
+      )}
+    >
       <Link href={`/games/${game.id}`} className="block space-y-4 p-5">
         <div className="flex items-center justify-between text-xs text-muted">
-          <span className="font-bold tracking-wide text-team">{he.home.nextGame}</span>
+          {isLive ? <LiveBadge /> : <span className="font-bold tracking-wide text-team">{he.home.nextGame}</span>}
           <span>
             {kind ? `${kind} · ` : null}
             {homeAwayLabels[game.homeAway]}
@@ -34,7 +43,11 @@ export function NextGameCard({ game, team }: { game: Game; team: Team }) {
             </p>
           ) : null}
         </div>
-        <Countdown to={game.tipoffAt} />
+        {isLive ? (
+          <span className={cn(buttonVariants({ variant: "primary", size: "lg" }), "w-full")}>{he.live.watch}</span>
+        ) : (
+          <Countdown to={game.tipoffAt} />
+        )}
       </Link>
       <div className="flex flex-wrap justify-center gap-2 px-5 pb-5">
         <Link
@@ -51,7 +64,7 @@ export function NextGameCard({ game, team }: { game: Game; team: Team }) {
             {he.fun.cliche.fromGame}
           </Link>
         ) : null}
-        {isCalendarEligible(game) ? <AddToCalendar game={game} team={team} /> : null}
+        {!isLive && isCalendarEligible(game) ? <AddToCalendar game={game} team={team} /> : null}
         {game.location ? <WazeButton address={game.location} /> : null}
       </div>
     </div>

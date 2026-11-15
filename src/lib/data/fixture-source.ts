@@ -11,17 +11,42 @@ import {
   fixtureTeam,
 } from "@/fixtures";
 import { he } from "@/config/strings";
-import type { FeedItem, Media, Post } from "@/types/domain";
+import type { FeedItem, Game, Media, Post } from "@/types/domain";
 import { isRoastPost, parseRoastBody } from "@/lib/fun/roasts";
 import { emptyReactions } from "@/lib/reactions";
 import type { DataSource } from "./types";
 
 const allMedia = (): Media[] => [...fixtureGameMedia, ...fixturePosts.flatMap((p) => p.media)];
 
+/** Fixture game id flipped to `live` when `DEMO_LIVE_UI=1` (local UI preview only; no push). */
+const LIVE_DEMO_GAME_ID = 7;
+
+function isLiveUiDemo(): boolean {
+  return process.env.DEMO_LIVE_UI === "1";
+}
+
+/** Overlay a mid-game score on the next scheduled fixture so home + games list show the live CTA. */
+function withLiveUiDemo(game: Game): Game {
+  if (!isLiveUiDemo() || game.id !== LIVE_DEMO_GAME_ID) return game;
+  return {
+    ...game,
+    status: "live",
+    tipoffAt: new Date(Date.now() - 42 * 60_000).toISOString(),
+    teamScore: 48,
+    opponentScore: 45,
+  };
+}
+
+function demoGames(includeDrafts: boolean): Game[] {
+  const visible = includeDrafts ? fixtureGames : fixtureGames.filter((g) => g.isPublished);
+  return visible.map(withLiveUiDemo);
+}
+
 /** In-memory implementation backed by the typed fixtures. Used when Supabase is not configured. */
 export function createFixtureSource({ includeDrafts = false } = {}): DataSource {
   const visible = <T extends { isPublished: boolean }>(items: T[]) => (includeDrafts ? items : items.filter((i) => i.isPublished));
-  const publishedGameIds = () => new Set(visible(fixtureGames).map((g) => g.id));
+  const games = () => demoGames(includeDrafts);
+  const publishedGameIds = () => new Set(games().map((g) => g.id));
   const toFeedItem = (p: Post): FeedItem => {
     const award = fixtureAwards.find((a) => a.id === p.awardId) ?? null;
     const mentionedPlayers = isRoastPost(p)
@@ -41,7 +66,7 @@ export function createFixtureSource({ includeDrafts = false } = {}): DataSource 
       awardPlayer: award ? (fixturePlayers.find((pl) => pl.id === award.playerId) ?? null) : null,
       quotePlayer: fixturePlayers.find((pl) => pl.id === p.quotePlayerId) ?? null,
       milestonePlayer: fixturePlayers.find((pl) => pl.id === p.milestonePlayerId) ?? null,
-      game: fixtureGames.find((g) => g.id === p.gameId) ?? null,
+      game: games().find((g) => g.id === p.gameId) ?? null,
       play: visible(fixtureExercises).find((e) => e.id === p.exerciseId) ?? null,
       mentionedPlayers,
       reactions: emptyReactions(),
@@ -63,15 +88,15 @@ export function createFixtureSource({ includeDrafts = false } = {}): DataSource 
       return fixtureSeasons.find((s) => String(s.id) === String(idOrSlug) || s.slug === idOrSlug) ?? null;
     },
     async getGames(seasonId) {
-      return visible(fixtureGames)
+      return games()
         .filter((g) => g.seasonId === seasonId)
         .sort((a, b) => a.tipoffAt.localeCompare(b.tipoffAt));
     },
     async getGame(id) {
-      return visible(fixtureGames).find((g) => g.id === id) ?? null;
+      return games().find((g) => g.id === id) ?? null;
     },
     async getGameDetail(id) {
-      const game = visible(fixtureGames).find((g) => g.id === id);
+      const game = games().find((g) => g.id === id);
       if (!game) return null;
       const media = fixtureGameMedia.filter((m) => m.gameId === id);
       const lines = fixtureStatLines.filter((l) => l.gameId === id);
@@ -96,7 +121,7 @@ export function createFixtureSource({ includeDrafts = false } = {}): DataSource 
     },
     async getSeasonStatLines(seasonId) {
       const ids = new Set(
-        visible(fixtureGames)
+        games()
           .filter((g) => g.seasonId === seasonId && g.status === "final" && !g.excludeFromStats)
           .map((g) => g.id),
       );
@@ -104,7 +129,7 @@ export function createFixtureSource({ includeDrafts = false } = {}): DataSource 
     },
     async getPlayerSeasonStatLines(playerId, seasonId) {
       const ids = new Set(
-        visible(fixtureGames)
+        games()
           .filter((g) => g.seasonId === seasonId && g.status === "final" && !g.excludeFromStats)
           .map((g) => g.id),
       );

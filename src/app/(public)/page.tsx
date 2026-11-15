@@ -83,8 +83,8 @@ export default async function HomePage() {
       ) : (
         <section className="space-y-4">
           <p className="font-display text-xl font-black text-team motion-safe:animate-fade-up">
-            <span aria-hidden>{mode === "gameDay" ? "🏀 " : "📣 "}</span>
-            {mode === "gameDay" ? he.home.gameDay : he.home.postGame}
+            <span aria-hidden>{mode === "gameDay" ? (next?.status === "live" ? "🔴 " : "🏀 ") : "📣 "}</span>
+            {mode === "gameDay" ? (next?.status === "live" ? he.live.badge : he.home.gameDay) : he.home.postGame}
           </p>
           {mode === "gameDay" ? nextCard : lastCard}
           {mode === "gameDay" && last ? <div className="opacity-80">{lastCard}</div> : null}

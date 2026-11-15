@@ -2,6 +2,7 @@ import Link from "next/link";
 import { MapPin } from "lucide-react";
 import { ResultBadge } from "@/components/common/result-badge";
 import { OpponentBadge } from "@/components/common/team-logo";
+import { buttonVariants } from "@/components/ui/button";
 import { homeAwayLabels } from "@/config/labels";
 import { he } from "@/config/strings";
 import { gameKindLabel, gameResult, isUpcomingGame, weAreOnRight } from "@/lib/stats/games";
@@ -14,12 +15,14 @@ export function GameCard({ game, teamShortName, compact = false }: { game: Game;
   const result = gameResult(game);
   const hasScore = game.teamScore !== null && game.opponentScore !== null;
   const kind = gameKindLabel(game);
+  const isLive = game.status === "live";
   return (
     <div
       className={cn(
         "card group relative overflow-hidden transition-colors hover:border-team/50",
         result === "win" && "border-s-4 border-s-win",
         result === "loss" && "border-s-4 border-s-loss",
+        isLive && "border-loss/50 ring-1 ring-loss/30",
       )}
     >
       <Link href={`/games/${game.id}`} className="block p-4">
@@ -72,9 +75,12 @@ export function GameCard({ game, teamShortName, compact = false }: { game: Game;
             <span className="num shrink-0">{formatDate(game.tipoffAt)}</span>
           </div>
         ) : null}
+        {isLive ? (
+          <span className={cn(buttonVariants({ variant: "primary", size: "sm" }), "mt-3 w-full")}>{he.live.watch}</span>
+        ) : null}
         <span className="sr-only">{teamShortName}</span>
       </Link>
-      {!compact && game.location && isUpcomingGame(game) ? (
+      {!compact && game.location && isUpcomingGame(game) && !isLive ? (
         <div className="px-4 pb-4">
           <WazeButton address={game.location} />
         </div>
